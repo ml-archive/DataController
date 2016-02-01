@@ -62,6 +62,14 @@ public abstract class DataController<TResponse> {
         return dataStore != null ? dataStore.get() : null;
     }
 
+    protected synchronized void setState(State state) {
+        this.state = state;
+    }
+
+    public State getState() {
+        return state;
+    }
+
     public boolean hasStoredData() {
         return !isEmpty(getStoredData());
     }
@@ -104,13 +112,6 @@ public abstract class DataController<TResponse> {
         getDataFetcher().call();
     }
 
-    protected synchronized void setState(State state) {
-        this.state = state;
-    }
-
-    public State getState() {
-        return state;
-    }
 
     public IDataCallback<TResponse> getDataCallback() {
         return dataCallback;
@@ -146,6 +147,11 @@ public abstract class DataController<TResponse> {
         }
     }
 
+    /**
+     * Called when we're going to store the response.
+     *
+     * @param response The response that we received.
+     */
     protected void storeResponseData(TResponse response) {
         if (dataStore != null) {
             dataStore.store(response);
@@ -153,7 +159,7 @@ public abstract class DataController<TResponse> {
     }
 
     /**
-     * @param response
+     * @param response The response directly from our {@link DataFetcher}.
      * @return whether a successful {@link TResponse} should be considered empty. Be careful as returning
      * true will cause {@link IDataControllerCallback#onEmpty()} to get invoked.
      */
