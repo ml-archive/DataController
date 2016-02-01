@@ -128,7 +128,7 @@ public abstract class DataController<TResponse> {
     }
 
     /**
-     * Clears stored data and will set its state back to {@link com.belk.android.api.data.DataController.State#NONE}.
+     * Clears stored data and will set its state back to {@link State#NONE}.
      */
     public void close() {
         setState(State.NONE);
@@ -152,8 +152,16 @@ public abstract class DataController<TResponse> {
         }
     }
 
+    /**
+     * @param response
+     * @return whether a successful {@link TResponse} should be considered empty. Be careful as returning
+     * true will cause {@link IDataControllerCallback#onEmpty()} to get invoked.
+     */
     protected abstract boolean isEmpty(TResponse response);
 
+    /**
+     * @return How we're supposed to fetch our data here.
+     */
     protected abstract DataFetcher<TResponse> createDataFetcher();
 
     /**

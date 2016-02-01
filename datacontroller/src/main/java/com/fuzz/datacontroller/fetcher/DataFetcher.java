@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller.fetcher;
 
+import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.IDataCallback;
 
@@ -8,13 +9,13 @@ import com.fuzz.datacontroller.IDataCallback;
  */
 public abstract class DataFetcher<TResponse> {
 
-    private final IDataCallback<TResponse> callback;
+    private final IDataCallback<DataControllerResponse<TResponse>> callback;
 
-    protected DataFetcher(IDataCallback<TResponse> callback) {
+    protected DataFetcher(IDataCallback<DataControllerResponse<TResponse>> callback) {
         this.callback = callback;
     }
 
-    public IDataCallback<TResponse> getCallback() {
+    public IDataCallback<DataControllerResponse<TResponse>> getCallback() {
         return callback;
     }
 
@@ -22,6 +23,11 @@ public abstract class DataFetcher<TResponse> {
      * Call this data fetcher.
      */
     public abstract void call();
+
+    /**
+     * @return The kind of response this fetcher gets its information from.
+     */
+    public abstract DataControllerResponse.ResponseType getResponseType();
 
     /**
      * Attempts to cancel itself.
@@ -32,11 +38,12 @@ public abstract class DataFetcher<TResponse> {
 
     /**
      * Invoke this method when the datafetcher completes, or override this method to suit your needs.
-     * @param response The response from a {@link DataFetcher}.
+     *
+     * @param response    The response from a {@link DataFetcher}.
      * @param originalUrl
      */
     public void onSuccess(TResponse response, String originalUrl) {
-        getCallback().onSuccess(response, originalUrl);
+        getCallback().onSuccess(new DataControllerResponse<>(response, getResponseType()), originalUrl);
     }
 
     public void onFailure(DataResponseError error) {
