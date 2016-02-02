@@ -5,7 +5,16 @@ import com.fuzz.datacontroller.strategy.IRefreshStrategy;
 
 /**
  * Description: Responsible for managing how data is loaded, stored, and handled outside of Activity,
- * or Android lifecycles.
+ * or Android life-cycle events.
+ * <p>
+ * Each hook in this class provides an abstracted mechanism by which you must supply that pipes the
+ * information back through the {@link IDataControllerCallback}.
+ * <p>
+ * {@link DataController} utilize a {@link DataFetcher} to define how we retrieve data, mapping it back to the {@link IDataCallback}
+ * within this {@link DataController}.
+ * <p>
+ * Data storage is defined by the {@link IDataStore} interface. For most uses you will want to use a {@link MemoryDataStore}
+ * to keep it in memory as you need it.
  */
 public abstract class DataController<TResponse> {
 
@@ -70,6 +79,10 @@ public abstract class DataController<TResponse> {
         return state;
     }
 
+    public IDataCallback<TResponse> getDataCallback() {
+        return dataCallback;
+    }
+
     public boolean hasStoredData() {
         return !isEmpty(getStoredData());
     }
@@ -100,21 +113,20 @@ public abstract class DataController<TResponse> {
 
     public TResponse requestData() {
         TResponse response = getStoredData();
-        if (!state.equals(State.LOADING) && (refreshStrategy == null || refreshStrategy.shouldRefresh(this))) {
-            setState(State.LOADING);
-            dataControllerGroup.onStartLoading();
-            requestDataAsync();
-        }
+        requestDataAsync();
         return response;
     }
 
-    public final void requestDataAsync() {
-        getDataFetcher().call();
+    public void requestDataAsync() {
+        if (!state.equals(State.LOADING) && (refreshStrategy == null || refreshStrategy.shouldRefresh(this))) {
+            setState(State.LOADING);
+            dataControllerGroup.onStartLoading();
+            requestDataForce();
+        }
     }
 
-
-    public IDataCallback<TResponse> getDataCallback() {
-        return dataCallback;
+    public final void requestDataForce() {
+        getDataFetcher().call();
     }
 
     public void clearStoredData() {
@@ -171,7 +183,7 @@ public abstract class DataController<TResponse> {
     protected abstract DataFetcher<TResponse> createDataFetcher();
 
     /**
-     * Nulls it out to request a {@link #createDataFetcher()} next {@link #requestDataAsync()}.
+     * Nulls it out to request a {@link #createDataFetcher()} next {@link #requestDataForce()}.
      */
     protected void destroyDataFetcher() {
         dataFetcher = null;
