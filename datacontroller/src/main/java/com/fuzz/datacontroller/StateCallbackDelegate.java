@@ -3,12 +3,21 @@ package com.fuzz.datacontroller;
 import com.fuzz.datacontroller.DataController.State;
 
 /**
- * Description: Provides handy logic to wrap a callback in {@link State}
+ * Description: Provides handy logic to wrap a callback in {@link State}. This allows you to respond to state
+ * changes in an efficient way.
  */
 public class StateCallbackDelegate<TResponse> implements IDataControllerCallback<TResponse> {
 
+    /**
+     * Simple interface for setting state. Use this to update your View hierarchy or some object that needs it.
+     */
     public interface StateSetter {
 
+        /**
+         * The state to set.
+         *
+         * @param state State from the callbacks.
+         */
         void setState(State state);
     }
 
@@ -28,13 +37,17 @@ public class StateCallbackDelegate<TResponse> implements IDataControllerCallback
 
     @Override
     public void onFailure(DataResponseError error) {
-        stateSetter.setState(State.FAILURE);
+        if (shouldShowFailureState()) {
+            stateSetter.setState(State.FAILURE);
+        }
         containedCallback.onFailure(error);
     }
 
     @Override
     public void onEmpty() {
-        stateSetter.setState(State.EMPTY);
+        if (shouldShowEmptyState()) {
+            stateSetter.setState(State.EMPTY);
+        }
         containedCallback.onEmpty();
     }
 
@@ -53,6 +66,14 @@ public class StateCallbackDelegate<TResponse> implements IDataControllerCallback
     }
 
     protected boolean shouldShowLoadingState() {
+        return true;
+    }
+
+    protected boolean shouldShowFailureState() {
+        return true;
+    }
+
+    protected boolean shouldShowEmptyState() {
         return true;
     }
 
