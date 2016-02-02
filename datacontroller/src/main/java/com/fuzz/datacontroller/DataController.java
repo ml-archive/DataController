@@ -49,39 +49,9 @@ public abstract class DataController<TResponse> {
     private DataFetcher<TResponse> dataFetcher;
     private IDataStore<TResponse> dataStore;
     private IRefreshStrategy refreshStrategy;
-    private final DataControllerCallbackGroup<TResponse> dataControllerGroup = new DataControllerCallbackGroup<>();
     private State state = State.NONE;
 
-    public DataFetcher<TResponse> getDataFetcher() {
-        if (dataFetcher == null) {
-            dataFetcher = createDataFetcher();
-        }
-        return dataFetcher;
-    }
-
-    public void setRefreshStrategy(IRefreshStrategy refreshStrategy) {
-        this.refreshStrategy = refreshStrategy;
-    }
-
-    public void setDataStore(IDataStore<TResponse> dataStore) {
-        this.dataStore = dataStore;
-    }
-
-    public TResponse getStoredData() {
-        return dataStore != null ? dataStore.get() : null;
-    }
-
-    protected synchronized void setState(State state) {
-        this.state = state;
-    }
-
-    public State getState() {
-        return state;
-    }
-
-    public IDataCallback<TResponse> getDataCallback() {
-        return dataCallback;
-    }
+    private final DataControllerCallbackGroup<TResponse> dataControllerGroup = new DataControllerCallbackGroup<>();
 
     public boolean hasStoredData() {
         return !isEmpty(getStoredData());
@@ -101,40 +71,68 @@ public abstract class DataController<TResponse> {
      * @return Stored data.
      */
     public TResponse requestDataCancel() {
-        getDataFetcher().cancel();
-        setState(State.NONE);
+        cancel();
         return requestData();
     }
 
+    /**
+     * Cancels any current running requests. It does not report its state to the {@link DataControllerCallbackGroup}.
+     */
     public void cancel() {
         getDataFetcher().cancel();
         setState(State.NONE);
     }
 
+    /**
+     * The standard method for execution, this method retrieves any fast-access data from the {@link IDataStore}.
+     * We then request data in the background that will come in asynchronously.
+     *
+     * @return Stored data via {@link #getStoredData()}.
+     * @see #requestDataAsync()
+     */
     public TResponse requestData() {
         TResponse response = getStoredData();
         requestDataAsync();
         return response;
     }
 
-    public void requestDataAsync() {
+    /**
+     * Requests data from the {@link DataFetcher}.
+     *
+     * @return true if we successfully requested data, false if its {@link State#LOADING} or {@link IRefreshStrategy}
+     * disallows requesting.
+     */
+    public boolean requestDataAsync() {
         if (!state.equals(State.LOADING) && (refreshStrategy == null || refreshStrategy.shouldRefresh(this))) {
             setState(State.LOADING);
             dataControllerGroup.onStartLoading();
             requestDataForce();
+            return true;
+        } else {
+            return false;
         }
     }
 
+    /**
+     * Directly calls the {@link DataFetcher} with no regards to state or strategy.
+     */
     public final void requestDataForce() {
         getDataFetcher().call();
     }
 
+    /**
+     * Clears out any stored data via {@link IDataStore}, if it exists.
+     */
     public void clearStoredData() {
         if (dataStore != null) {
             dataStore.clear();
         }
     }
 
+    /**
+     * @param <T> the type of {@link IRefreshStrategy} you wish to return.
+     * @return Unsafely casts the underlying strategy to the return type.
+     */
     @SuppressWarnings("unchecked")
     public <T extends IRefreshStrategy> T getRefreshStrategy() {
         return (T) refreshStrategy;
@@ -144,7 +142,7 @@ public abstract class DataController<TResponse> {
      * Clears stored data and will set its state back to {@link State#NONE}.
      */
     public void close() {
-        setState(State.NONE);
+        cancel();
         clearStoredData();
         dataControllerGroup.onClosed();
     }
@@ -189,6 +187,63 @@ public abstract class DataController<TResponse> {
         dataFetcher = null;
     }
 
+    public DataFetcher<TResponse> getDataFetcher() {
+        if (dataFetcher == null) {
+            dataFetcher = createDataFetcher();
+        }
+        return dataFetcher;
+    }
+
+    public void setRefreshStrategy(IRefreshStrategy refreshStrategy) {
+        this.refreshStrategy = refreshStrategy;
+    }
+
+    /**
+     * Sets what {@link IDataStore} this datacontroller uses. This is usually invoked in the constructor.
+     *
+     * @param dataStore The dataStore to use.
+     */
+    public void setDataStore(IDataStore<TResponse> dataStore) {
+        this.dataStore = dataStore;
+    }
+
+    /**
+     * @return The stored data from the {@link IDataStore}. It serves as a "fast-access" pipeline. So
+     * any data that is readily available and not usually IO or network should go here.
+     */
+    public TResponse getStoredData() {
+        return dataStore != null ? dataStore.get() : null;
+    }
+
+    /**
+     * Sets the current state on this DC.
+     *
+     * @param state The state to set.
+     */
+    protected synchronized void setState(State state) {
+        this.state = state;
+    }
+
+    /**
+     * @return The current state of this DC.
+     */
+    public State getState() {
+        return state;
+    }
+
+    /**
+     * @return The {@link IDataCallback} handle that is contained here.
+     */
+    public IDataCallback<TResponse> getDataCallback() {
+        return dataCallback;
+    }
+
+    /**
+     * Called when we got a successful callback.
+     *
+     * @param response   The response received.
+     * @param requestUrl The url that was requested.
+     */
     protected void onSuccess(TResponse response, String requestUrl) {
         storeResponseData(response);
         if (isEmpty(response)) {
@@ -200,6 +255,11 @@ public abstract class DataController<TResponse> {
         }
     }
 
+    /**
+     * The failure we received.
+     *
+     * @param error The error that was received.
+     */
     protected final void onFailure(DataResponseError error) {
         setState(State.FAILURE);
         dataControllerGroup.onFailure(error);
