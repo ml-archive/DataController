@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller;
+package com.fuzz.datacontroller.data;
 
 /**
  * Description: Holds onto data received in memory.

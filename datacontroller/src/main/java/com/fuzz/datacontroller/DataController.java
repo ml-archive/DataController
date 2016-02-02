@@ -1,5 +1,7 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.data.IDataStore;
+import com.fuzz.datacontroller.data.MemoryDataStore;
 import com.fuzz.datacontroller.fetcher.DataFetcher;
 import com.fuzz.datacontroller.strategy.IRefreshStrategy;
 
@@ -57,11 +59,11 @@ public abstract class DataController<TResponse> {
         return !isEmpty(getStoredData());
     }
 
-    public void registerForCallbacks(IDataControllerCallback<TResponse> dataControllerCallback) {
+    public void registerForCallbacks(IDataControllerCallback<DataControllerResponse<TResponse>> dataControllerCallback) {
         dataControllerGroup.registerForCallbacks(dataControllerCallback);
     }
 
-    public void deregisterForCallbacks(IDataControllerCallback<TResponse> dataControllerCallback) {
+    public void deregisterForCallbacks(IDataControllerCallback<DataControllerResponse<TResponse>> dataControllerCallback) {
         dataControllerGroup.deregisterForCallbacks(dataControllerCallback);
     }
 
@@ -234,7 +236,7 @@ public abstract class DataController<TResponse> {
     /**
      * @return The {@link IDataCallback} handle that is contained here.
      */
-    public IDataCallback<TResponse> getDataCallback() {
+    public IDataCallback<DataControllerResponse<TResponse>> getDataCallback() {
         return dataCallback;
     }
 
@@ -244,9 +246,9 @@ public abstract class DataController<TResponse> {
      * @param response   The response received.
      * @param requestUrl The url that was requested.
      */
-    protected void onSuccess(TResponse response, String requestUrl) {
-        storeResponseData(response);
-        if (isEmpty(response)) {
+    protected void onSuccess(DataControllerResponse<TResponse> response, String requestUrl) {
+        storeResponseData(response.getResponse());
+        if (isEmpty(response.getResponse())) {
             setState(State.EMPTY);
             dataControllerGroup.onEmpty();
         } else {
@@ -266,9 +268,9 @@ public abstract class DataController<TResponse> {
     }
 
 
-    private final IDataCallback<TResponse> dataCallback = new IDataCallback<TResponse>() {
+    private final IDataCallback<DataControllerResponse<TResponse>> dataCallback = new IDataCallback<DataControllerResponse<TResponse>>() {
         @Override
-        public void onSuccess(TResponse tResponse, String originalUrl) {
+        public void onSuccess(DataControllerResponse<TResponse> tResponse, String originalUrl) {
             DataController.this.onSuccess(tResponse, originalUrl);
         }
 

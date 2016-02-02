@@ -4,19 +4,20 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Description:
+ * Description: Represents a set of {@link IDataControllerCallback}. It contains methods to allow
+ * multiple callbacks, and itself is a {@link IDataControllerCallback}.
  */
-public class DataControllerCallbackGroup<TResponse> implements IDataControllerCallback<TResponse> {
+public class DataControllerCallbackGroup<TResponse> implements IDataControllerCallback<DataControllerResponse<TResponse>> {
 
-    private final Set<IDataControllerCallback<TResponse>> callbacks = new LinkedHashSet<>();
+    private final Set<IDataControllerCallback<DataControllerResponse<TResponse>>> callbacks = new LinkedHashSet<>();
 
-    public void registerForCallbacks(IDataControllerCallback<TResponse> dataControllerCallback) {
+    public void registerForCallbacks(IDataControllerCallback<DataControllerResponse<TResponse>> dataControllerCallback) {
         synchronized (callbacks) {
             callbacks.add(dataControllerCallback);
         }
     }
 
-    public void deregisterForCallbacks(IDataControllerCallback<TResponse> dataControllerCallback) {
+    public void deregisterForCallbacks(IDataControllerCallback<DataControllerResponse<TResponse>> dataControllerCallback) {
         synchronized (callbacks) {
             callbacks.remove(dataControllerCallback);
         }
@@ -27,36 +28,36 @@ public class DataControllerCallbackGroup<TResponse> implements IDataControllerCa
     }
 
     @Override
-    public void onSuccess(TResponse response, String requestUrl) {
-        for (IDataControllerCallback<TResponse> callback : callbacks) {
+    public void onSuccess(DataControllerResponse<TResponse> response, String requestUrl) {
+        for (IDataControllerCallback<DataControllerResponse<TResponse>> callback : callbacks) {
             callback.onSuccess(response, requestUrl);
         }
     }
 
     @Override
     public void onFailure(DataResponseError error) {
-        for (IDataControllerCallback<TResponse> callback : callbacks) {
+        for (IDataControllerCallback<DataControllerResponse<TResponse>> callback : callbacks) {
             callback.onFailure(error);
         }
     }
 
     @Override
     public void onEmpty() {
-        for (IDataControllerCallback<TResponse> callback : callbacks) {
+        for (IDataControllerCallback<DataControllerResponse<TResponse>> callback : callbacks) {
             callback.onEmpty();
         }
     }
 
     @Override
     public void onStartLoading() {
-        for (IDataControllerCallback<TResponse> callback : callbacks) {
+        for (IDataControllerCallback<DataControllerResponse<TResponse>> callback : callbacks) {
             callback.onStartLoading();
         }
     }
 
     @Override
     public void onClosed() {
-        for (IDataControllerCallback<TResponse> callback : callbacks) {
+        for (IDataControllerCallback<DataControllerResponse<TResponse>> callback : callbacks) {
             callback.onClosed();
         }
     }
