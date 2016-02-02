@@ -3,7 +3,7 @@ package com.fuzz.datacontroller.strategy;
 import com.fuzz.datacontroller.DataController;
 
 /**
- * Description: Only every gets called once, but can get reset.
+ * Description: Only ever gets called once, but can get reset.
  */
 public class OneShotRefreshStrategy implements IRefreshStrategy {
 

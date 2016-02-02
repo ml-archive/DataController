@@ -30,7 +30,7 @@ public abstract class DataFetcher<TResponse> {
     public abstract DataControllerResponse.ResponseType getResponseType();
 
     /**
-     * Attempts to cancel itself.
+     * Attempts to cancel itself. Override to properly cancel when called.
      */
     public void cancel() {
 
@@ -40,12 +40,17 @@ public abstract class DataFetcher<TResponse> {
      * Invoke this method when the datafetcher completes, or override this method to suit your needs.
      *
      * @param response    The response from a {@link DataFetcher}.
-     * @param originalUrl
+     * @param originalUrl The original url called.
      */
     public void onSuccess(TResponse response, String originalUrl) {
         getCallback().onSuccess(new DataControllerResponse<>(response, getResponseType()), originalUrl);
     }
 
+    /**
+     * Called when we experience some kind of error.
+     *
+     * @param error The error we experienced.
+     */
     public void onFailure(DataResponseError error) {
         getCallback().onFailure(error);
     }
