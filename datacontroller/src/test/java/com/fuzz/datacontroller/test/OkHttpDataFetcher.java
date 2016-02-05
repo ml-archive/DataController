@@ -47,9 +47,15 @@ public abstract class OkHttpDataFetcher<TResponse> extends DataFetcher<TResponse
         }
         try {
             Response response = call.execute();
-            return NetworkApiManager.get().getGson().fromJson(response.body().charStream(), responseClass);
+            if (response.isSuccessful()) {
+                TResponse response1 = NetworkApiManager.get().getGson().fromJson(response.body().charStream(), responseClass);
+                onSuccess(response1, call.request().url().toString());
+                return response1;
+            } else {
+                onFailure(new DataResponseError(response.message()));
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            onFailure(new DataResponseError(e));
             return null;
         }
     }

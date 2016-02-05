@@ -147,10 +147,32 @@ public class DataController<TResponse> {
     }
 
     /**
-     * Directly calls the {@link DataFetcher} with no regards to state or strategy.
+     * Synchronously executes the fetch, respecting the {@link IRefreshStrategy}.
+     *
+     * @return The response from the call. Null may be returned if we do not refresh.
+     */
+    public TResponse requestDataSync() {
+        if (!state.equals(State.LOADING) && (refreshStrategy == null || refreshStrategy.shouldRefresh(this))) {
+            setState(State.LOADING);
+            dataControllerGroup.onStartLoading();
+            return requestDataSyncForce();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Directly calls the {@link DataFetcher#callAsync()} with no regards to state or strategy.
      */
     public final void requestDataForce() {
         getDataFetcher().callAsync();
+    }
+
+    /**
+     * Directly calls the {@link DataFetcher#call()} with no regards to state or strategy.
+     */
+    public final TResponse requestDataSyncForce() {
+        return getDataFetcher().call();
     }
 
     /**

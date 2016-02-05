@@ -9,6 +9,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -22,15 +23,15 @@ public class FuzzQuizDataControllerTest {
         FuzzQuizDataController dataController = new FuzzQuizDataController();
 
         assertNotNull(dataController.getDataFetcher());
-        List<DataItem> dataItems = dataController.getDataFetcher().call();
+        List<DataItem> dataItems = dataController.requestDataSync();
         assertNotNull(dataItems);
         assertTrue(!dataItems.isEmpty());
-
-        dataController.onSuccessfulResponse(new DataControllerResponse<>(dataItems, DataControllerResponse.ResponseType.NETWORK), "");
 
         assertEquals(dataController.getState(), DataController.State.SUCCESS);
 
         assertNotNull(dataController.getStoredData());
         assertEquals(dataController.getStoredData(), dataItems);
+
+        assertNull(dataController.requestDataSync());
     }
 }
