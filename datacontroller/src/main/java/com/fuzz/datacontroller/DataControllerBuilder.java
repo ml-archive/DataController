@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.data.IDataStore;
 import com.fuzz.datacontroller.fetcher.DataFetcher;
 import com.fuzz.datacontroller.strategy.IRefreshStrategy;
 
@@ -9,49 +10,57 @@ import com.fuzz.datacontroller.strategy.IRefreshStrategy;
  */
 public class DataControllerBuilder<TResponse> {
 
-    /**
-     * Simple interface for checking if empty.
-     *
-     * @param <TResponse>
-     */
-    public interface IEmpty<TResponse> {
-
-        /**
-         * @param response The response to validate.
-         * @return True if the response is deemed empty here.
-         */
-        boolean isEmpty(TResponse response);
-    }
-
     private DataFetcher<TResponse> dataFetcher;
     private IRefreshStrategy refreshStrategy;
+    private IDataStore<TResponse> dataStore;
+    private DataController.IEmptyChecker<TResponse> emptyChecker;
 
+    /**
+     * Sets a {@link DataFetcher} that defines how this object fetches data.
+     *
+     * @param dataFetcher Defines how this {@link DataController} fetches data.
+     */
     public DataControllerBuilder<TResponse> setDataFetcher(DataFetcher<TResponse> dataFetcher) {
         this.dataFetcher = dataFetcher;
         return this;
     }
 
+    /**
+     * Defines how data gets refreshed when a call to {@link DataController#requestDataAsync()} is called.
+     *
+     * @param refreshStrategy The strategy to use.
+     */
     public DataControllerBuilder<TResponse> setRefreshStrategy(IRefreshStrategy refreshStrategy) {
         this.refreshStrategy = refreshStrategy;
         return this;
     }
 
-    public DataController<TResponse> build(final IEmpty<TResponse> emptyMethod) {
-        DataController<TResponse> dataController = new DataController<TResponse>() {
-            @Override
-            public boolean isEmpty(TResponse tResponse) {
-                return emptyMethod != null && emptyMethod.isEmpty(tResponse);
-            }
+    /**
+     * Defines where this {@link DataController} stores its data. Could be a database, in memory, or
+     * more.
+     *
+     * @param dataStore The storage interface container.
+     */
+    public DataControllerBuilder<TResponse> setDataStore(IDataStore<TResponse> dataStore) {
+        this.dataStore = dataStore;
+        return this;
+    }
 
-            @Override
-            protected DataFetcher<TResponse> createDataFetcher() {
-                return dataFetcher;
-            }
-        };
-        if (refreshStrategy != null) {
-            dataController.setRefreshStrategy(refreshStrategy);
-        }
-        return dataController;
+    /**
+     * Sets the calculator for when a {@link TResponse} is considered empty. This will default to false.
+     *
+     * @param emptyChecker The empty checker.
+     */
+    public DataControllerBuilder<TResponse> setEmptyChecker(DataController.IEmptyChecker<TResponse> emptyChecker) {
+        this.emptyChecker = emptyChecker;
+        return this;
+    }
+
+    /**
+     * @return A new {@link DataController}. Subsequent calls constructs a new instance. This is fully atomic.
+     */
+    public DataController<TResponse> build() {
+        return new DataController<>(dataFetcher, dataStore, refreshStrategy, emptyChecker);
     }
 
 }

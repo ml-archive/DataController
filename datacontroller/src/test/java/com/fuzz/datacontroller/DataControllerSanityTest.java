@@ -36,12 +36,7 @@ public class DataControllerSanityTest {
                     public boolean shouldRefresh(DataController dataController) {
                         return true;
                     }
-                }).build(new DataControllerBuilder.IEmpty<String>() {
-                    @Override
-                    public boolean isEmpty(String s) {
-                        return false;
-                    }
-                });
+                }).build();
     }
 
     @Test
@@ -59,6 +54,6 @@ public class DataControllerSanityTest {
         assertEquals(dataController.getState(), DataController.State.EMPTY);
     }
 
-    
+
 
 }

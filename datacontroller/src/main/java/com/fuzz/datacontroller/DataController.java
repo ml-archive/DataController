@@ -8,17 +8,32 @@ import com.fuzz.datacontroller.strategy.IRefreshStrategy;
 /**
  * Description: Responsible for managing how data is loaded, stored, and handled outside of Activity,
  * or Android life-cycle events.
- * <p>
+ * <p/>
  * Each hook in this class provides an abstracted mechanism by which you must supply that pipes the
  * information back through the {@link IDataControllerCallback}.
- * <p>
+ * <p/>
  * {@link DataController} utilize a {@link DataFetcher} to define how we retrieve data, mapping it back to the {@link IDataCallback}
  * within this {@link DataController}.
- * <p>
+ * <p/>
  * Data storage is defined by the {@link IDataStore} interface. For most uses you will want to use a {@link MemoryDataStore}
  * to keep it in memory as you need it.
  */
-public abstract class DataController<TResponse> implements DataControllerBuilder.IEmpty<TResponse> {
+public class DataController<TResponse> {
+
+
+    /**
+     * Simple interface for checking if empty.
+     *
+     * @param <TResponse>
+     */
+    public interface IEmptyChecker<TResponse> {
+
+        /**
+         * @param response The response to validate.
+         * @return True if the response is deemed empty here.
+         */
+        boolean isEmpty(TResponse response);
+    }
 
     public enum State {
         /**
@@ -52,17 +67,41 @@ public abstract class DataController<TResponse> implements DataControllerBuilder
     private IDataStore<TResponse> dataStore;
     private IRefreshStrategy refreshStrategy;
     private State state = State.NONE;
+    private IEmptyChecker<TResponse> emptyChecker;
 
     private final DataControllerCallbackGroup<TResponse> dataControllerGroup = new DataControllerCallbackGroup<>();
 
+
+    /**
+     * Public constructor.
+     */
+    public DataController() {
+    }
+
+    DataController(DataFetcher<TResponse> dataFetcher, IDataStore<TResponse> dataStore, IRefreshStrategy refreshStrategy, IEmptyChecker<TResponse> emptyChecker) {
+        this.dataFetcher = dataFetcher;
+        this.dataStore = dataStore;
+        this.refreshStrategy = refreshStrategy;
+        this.emptyChecker = emptyChecker;
+    }
+
+    /**
+     * @return True if {@link #getStoredData()} is considered {@link #isEmpty(TResponse)}.
+     */
     public boolean hasStoredData() {
         return !isEmpty(getStoredData());
     }
 
+    /**
+     * Register for callbacks on this instance to get notified when {@link State} changes.
+     */
     public void registerForCallbacks(IDataControllerCallback<DataControllerResponse<TResponse>> dataControllerCallback) {
         dataControllerGroup.registerForCallbacks(dataControllerCallback);
     }
 
+    /**
+     * Deregister for callbacks.
+     */
     public void deregisterForCallbacks(IDataControllerCallback<DataControllerResponse<TResponse>> dataControllerCallback) {
         dataControllerGroup.deregisterForCallbacks(dataControllerCallback);
     }
@@ -75,14 +114,6 @@ public abstract class DataController<TResponse> implements DataControllerBuilder
     public TResponse requestDataCancel() {
         cancel();
         return requestData();
-    }
-
-    /**
-     * Cancels any current running requests. It does not report its state to the {@link DataControllerCallbackGroup}.
-     */
-    public void cancel() {
-        getDataFetcher().cancel();
-        setState(State.NONE);
     }
 
     /**
@@ -141,6 +172,14 @@ public abstract class DataController<TResponse> implements DataControllerBuilder
     }
 
     /**
+     * Cancels any current running requests. It does not report its state to the {@link DataControllerCallbackGroup}.
+     */
+    public void cancel() {
+        getDataFetcher().cancel();
+        setState(State.NONE);
+    }
+
+    /**
      * Clears stored data and will set its state back to {@link State#NONE}.
      */
     public void close() {
@@ -175,34 +214,35 @@ public abstract class DataController<TResponse> implements DataControllerBuilder
      * @return whether a successful {@link TResponse} should be considered empty. Be careful as returning
      * true will cause {@link IDataControllerCallback#onEmpty()} to get invoked.
      */
-    @Override
-    public abstract boolean isEmpty(TResponse response);
-
-    /**
-     * @return How we're supposed to fetch our data here.
-     */
-    protected abstract DataFetcher<TResponse> createDataFetcher();
-
-    /**
-     * Nulls it out to request a {@link #createDataFetcher()} next {@link #requestDataForce()}.
-     */
-    protected void destroyDataFetcher() {
-        dataFetcher = null;
+    public boolean isEmpty(TResponse response) {
+        return emptyChecker != null && emptyChecker.isEmpty(response);
     }
 
     public DataFetcher<TResponse> getDataFetcher() {
         if (dataFetcher == null) {
-            dataFetcher = createDataFetcher();
+            throw new IllegalStateException("You must define a DataFetcher for this DataController");
         }
         return dataFetcher;
     }
 
+    /**
+     * Defines how it fetches data. This is required.
+     */
+    public void setDataFetcher(DataFetcher<TResponse> dataFetcher) {
+        this.dataFetcher = dataFetcher;
+    }
+
+    /**
+     * Defines how data gets refreshed. Not required, by default it will always trigger an update if
+     * it is not {@link State#LOADING}
+     */
     public void setRefreshStrategy(IRefreshStrategy refreshStrategy) {
         this.refreshStrategy = refreshStrategy;
     }
 
     /**
      * Sets what {@link IDataStore} this datacontroller uses. This is usually invoked in the constructor.
+     * Not required, by default we do not store any leftover data.
      *
      * @param dataStore The dataStore to use.
      */
@@ -212,7 +252,7 @@ public abstract class DataController<TResponse> implements DataControllerBuilder
 
     /**
      * @return The stored data from the {@link IDataStore}. It serves as a "fast-access" pipeline. So
-     * any data that is readily available and not usually IO or network should go here.
+     * any data that is readily available and not usually IO or network should get returned here.
      */
     public TResponse getStoredData() {
         return dataStore != null ? dataStore.get() : null;
