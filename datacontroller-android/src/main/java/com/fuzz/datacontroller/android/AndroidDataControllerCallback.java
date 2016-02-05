@@ -7,7 +7,8 @@ import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.IDataControllerCallback;
 
 /**
- * Description: All call backs will run on the UI thread.
+ * Description: All call backs will run on the UI thread. This will either post to a {@link Handler}
+ * if this comes from a background thread, otherwise it will execute the callbacks immediately.
  */
 public abstract class AndroidDataControllerCallback<TResponse> implements IDataControllerCallback<TResponse> {
 
@@ -17,7 +18,7 @@ public abstract class AndroidDataControllerCallback<TResponse> implements IDataC
 
     @Override
     public final void onSuccess(final TResponse tResponse, final String requestUrl) {
-        setCurrentRunnable(new Runnable() {
+        executeCurrent(new Runnable() {
             @Override
             public void run() {
                 onFGSuccess(tResponse, requestUrl);
@@ -27,7 +28,7 @@ public abstract class AndroidDataControllerCallback<TResponse> implements IDataC
 
     @Override
     public final void onFailure(final DataResponseError error) {
-        setCurrentRunnable(new Runnable() {
+        executeCurrent(new Runnable() {
             @Override
             public void run() {
                 onFGFailure(error);
@@ -37,7 +38,7 @@ public abstract class AndroidDataControllerCallback<TResponse> implements IDataC
 
     @Override
     public final void onEmpty() {
-        setCurrentRunnable(new Runnable() {
+        executeCurrent(new Runnable() {
             @Override
             public void run() {
                 onFGEmpty();
@@ -47,7 +48,7 @@ public abstract class AndroidDataControllerCallback<TResponse> implements IDataC
 
     @Override
     public final void onStartLoading() {
-        setCurrentRunnable(new Runnable() {
+        executeCurrent(new Runnable() {
             @Override
             public void run() {
                 onFGStartLoading();
@@ -57,7 +58,7 @@ public abstract class AndroidDataControllerCallback<TResponse> implements IDataC
 
     @Override
     public final void onClosed() {
-        setCurrentRunnable(new Runnable() {
+        executeCurrent(new Runnable() {
             @Override
             public void run() {
                 onFGClosed();
@@ -72,12 +73,16 @@ public abstract class AndroidDataControllerCallback<TResponse> implements IDataC
         }
     }
 
-    private void setCurrentRunnable(Runnable runnable) {
+    private void executeCurrent(Runnable runnable) {
         if (currentRunnable != null) {
             handler.removeCallbacks(currentRunnable);
         }
         currentRunnable = runnable;
-        handler.post(currentRunnable);
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            handler.post(currentRunnable);
+        } else {
+            currentRunnable.run();
+        }
     }
 
     public abstract void onFGSuccess(TResponse response, String requestUrl);
