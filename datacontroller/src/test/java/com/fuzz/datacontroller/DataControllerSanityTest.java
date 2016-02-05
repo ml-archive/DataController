@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.data.MemoryDataStore;
 import com.fuzz.datacontroller.fetcher.DataFetcher;
 import com.fuzz.datacontroller.strategy.IRefreshStrategy;
 
@@ -36,24 +37,41 @@ public class DataControllerSanityTest {
                     public boolean shouldRefresh(DataController dataController) {
                         return true;
                     }
-                }).build();
+                })
+                .setEmptyChecker(new DataController.IEmptyChecker<String>() {
+                    @Override
+                    public boolean isEmpty(String s) {
+                        return s == null || s.trim().length() == 0;
+                    }
+                })
+                .setDataStore(new MemoryDataStore<String>())
+                .build();
     }
 
     @Test
     public void test_dataControllerPopulation() {
-
         assertNotNull(dataController.getDataFetcher());
         assertTrue(dataController.getDataFetcher().getResponseType().equals(DataControllerResponse.ResponseType.NETWORK));
         assertNotNull(dataController.getRefreshStrategy());
         assertNotNull(dataController.getState());
+        assertNotNull(dataController.getDataStore());
     }
 
     @Test
     public void test_stateSetting() {
         dataController.setState(DataController.State.EMPTY);
         assertEquals(dataController.getState(), DataController.State.EMPTY);
-    }
 
+        dataController.onSuccessfulResponse(new DataControllerResponse<>("This is a test", DataControllerResponse.ResponseType.NETWORK), "no url");
+
+        assertEquals(dataController.getState(), DataController.State.SUCCESS);
+        assertEquals("This is a test", dataController.getStoredData());
+
+        dataController.onSuccessfulResponse(new DataControllerResponse<String>(null, DataControllerResponse.ResponseType.NETWORK), "no url");
+        assertEquals(dataController.getState(), DataController.State.EMPTY);
+
+        assertEquals(null, dataController.getStoredData());
+    }
 
 
 }

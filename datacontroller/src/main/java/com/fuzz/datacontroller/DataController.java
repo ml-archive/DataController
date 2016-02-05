@@ -258,6 +258,10 @@ public class DataController<TResponse> {
         return dataStore != null ? dataStore.get() : null;
     }
 
+    public IDataStore<TResponse> getDataStore() {
+        return dataStore;
+    }
+
     /**
      * Sets the current state on this DC.
      *
@@ -287,7 +291,7 @@ public class DataController<TResponse> {
      * @param response   The response received.
      * @param requestUrl The url that was requested.
      */
-    protected void onSuccess(DataControllerResponse<TResponse> response, String requestUrl) {
+    protected void onSuccessfulResponse(DataControllerResponse<TResponse> response, String requestUrl) {
         storeResponseData(response.getResponse());
         if (isEmpty(response.getResponse())) {
             setState(State.EMPTY);
@@ -312,7 +316,7 @@ public class DataController<TResponse> {
     private final IDataCallback<DataControllerResponse<TResponse>> dataCallback = new IDataCallback<DataControllerResponse<TResponse>>() {
         @Override
         public void onSuccess(DataControllerResponse<TResponse> tResponse, String originalUrl) {
-            DataController.this.onSuccess(tResponse, originalUrl);
+            DataController.this.onSuccessfulResponse(tResponse, originalUrl);
         }
 
         @Override
