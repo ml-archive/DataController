@@ -39,7 +39,7 @@ public class DataControllerBuilder<TResponse> {
     public DataController<TResponse> build(final IEmpty<TResponse> emptyMethod) {
         DataController<TResponse> dataController = new DataController<TResponse>() {
             @Override
-            protected boolean isEmpty(TResponse tResponse) {
+            public boolean isEmpty(TResponse tResponse) {
                 return emptyMethod != null && emptyMethod.isEmpty(tResponse);
             }
 

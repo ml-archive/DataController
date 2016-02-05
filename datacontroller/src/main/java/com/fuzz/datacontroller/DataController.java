@@ -18,7 +18,7 @@ import com.fuzz.datacontroller.strategy.IRefreshStrategy;
  * Data storage is defined by the {@link IDataStore} interface. For most uses you will want to use a {@link MemoryDataStore}
  * to keep it in memory as you need it.
  */
-public abstract class DataController<TResponse> {
+public abstract class DataController<TResponse> implements DataControllerBuilder.IEmpty<TResponse> {
 
     public enum State {
         /**
@@ -175,7 +175,8 @@ public abstract class DataController<TResponse> {
      * @return whether a successful {@link TResponse} should be considered empty. Be careful as returning
      * true will cause {@link IDataControllerCallback#onEmpty()} to get invoked.
      */
-    protected abstract boolean isEmpty(TResponse response);
+    @Override
+    public abstract boolean isEmpty(TResponse response);
 
     /**
      * @return How we're supposed to fetch our data here.

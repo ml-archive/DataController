@@ -9,9 +9,16 @@ import com.fuzz.datacontroller.IDataCallback;
  */
 public abstract class DataFetcher<TResponse> {
 
-    private final IDataCallback<DataControllerResponse<TResponse>> callback;
+    private IDataCallback<DataControllerResponse<TResponse>> callback;
 
     protected DataFetcher(IDataCallback<DataControllerResponse<TResponse>> callback) {
+        this.callback = callback;
+    }
+
+    protected DataFetcher() {
+    }
+
+    public void setCallback(IDataCallback<DataControllerResponse<TResponse>> callback) {
         this.callback = callback;
     }
 
