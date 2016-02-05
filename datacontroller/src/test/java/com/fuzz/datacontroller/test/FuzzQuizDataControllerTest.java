@@ -1,7 +1,6 @@
 package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataController;
-import com.fuzz.datacontroller.DataControllerResponse;
 
 import org.junit.Test;
 
@@ -32,6 +31,8 @@ public class FuzzQuizDataControllerTest {
         assertNotNull(dataController.getStoredData());
         assertEquals(dataController.getStoredData(), dataItems);
 
-        assertNull(dataController.requestDataSync());
+        assertNull(dataController.requestDataSync()); // null due to refresh strategy
+
+
     }
 }
