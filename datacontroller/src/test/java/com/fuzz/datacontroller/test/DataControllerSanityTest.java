@@ -1,5 +1,8 @@
-package com.fuzz.datacontroller;
+package com.fuzz.datacontroller.test;
 
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerBuilder;
+import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.data.MemoryDataStore;
 import com.fuzz.datacontroller.fetcher.DataFetcher;
 import com.fuzz.datacontroller.strategy.IRefreshStrategy;
@@ -23,7 +26,7 @@ public class DataControllerSanityTest {
         dataController = new DataControllerBuilder<String>()
                 .setDataFetcher(new DataFetcher<String>() {
                     @Override
-                    public void call() {
+                    public void callAsync() {
 
                     }
 

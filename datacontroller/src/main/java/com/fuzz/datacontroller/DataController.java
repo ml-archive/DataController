@@ -150,7 +150,7 @@ public class DataController<TResponse> {
      * Directly calls the {@link DataFetcher} with no regards to state or strategy.
      */
     public final void requestDataForce() {
-        getDataFetcher().call();
+        getDataFetcher().callAsync();
     }
 
     /**
@@ -267,7 +267,7 @@ public class DataController<TResponse> {
      *
      * @param state The state to set.
      */
-    protected synchronized void setState(State state) {
+    public synchronized void setState(State state) {
         this.state = state;
     }
 
@@ -291,7 +291,7 @@ public class DataController<TResponse> {
      * @param response   The response received.
      * @param requestUrl The url that was requested.
      */
-    protected void onSuccessfulResponse(DataControllerResponse<TResponse> response, String requestUrl) {
+    public void onSuccessfulResponse(DataControllerResponse<TResponse> response, String requestUrl) {
         storeResponseData(response.getResponse());
         if (isEmpty(response.getResponse())) {
             setState(State.EMPTY);
@@ -307,7 +307,7 @@ public class DataController<TResponse> {
      *
      * @param error The error that was received.
      */
-    protected final void onFailure(DataResponseError error) {
+    public final void onFailure(DataResponseError error) {
         setState(State.FAILURE);
         dataControllerGroup.onFailure(error);
     }

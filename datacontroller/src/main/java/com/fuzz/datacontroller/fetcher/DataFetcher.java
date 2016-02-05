@@ -27,9 +27,17 @@ public abstract class DataFetcher<TResponse> {
     }
 
     /**
-     * Call this data fetcher.
+     * Call this data fetcher async.
      */
-    public abstract void call();
+    public abstract void callAsync();
+
+    /**
+     * Call to execute synchronously. This should happen on a non-UI thread on an
+     * Android device.
+     */
+    public TResponse call() {
+        throw new IllegalStateException("This method should be overridden with proper implementation");
+    }
 
     /**
      * @return The kind of response this fetcher gets its information from.
