@@ -53,11 +53,13 @@ public abstract class OkHttpDataFetcher<TResponse> extends DataFetcher<TResponse
                 return response1;
             } else {
                 onFailure(new DataResponseError(response.message()));
+                return null;
             }
         } catch (IOException e) {
             onFailure(new DataResponseError(e));
             return null;
         }
+
     }
 
     @Override
