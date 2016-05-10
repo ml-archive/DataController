@@ -29,6 +29,11 @@ public class DataControllerResponse<TResponse> {
         FILE,
 
         /**
+         * Pulled from memory.
+         */
+        MEMORY,
+
+        /**
          * Some other undefined kind of response.
          */
         OTHER
