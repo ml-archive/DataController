@@ -21,6 +21,9 @@ public class DefaultStrategyTest {
         OneShotRefreshStrategy<List<DataItem>> oneShotRefreshStrategy = new OneShotRefreshStrategy<>();
         assertTrue(oneShotRefreshStrategy.shouldRefresh(null));
         assertFalse(oneShotRefreshStrategy.shouldRefresh(null));
+
+        oneShotRefreshStrategy.setShouldRefresh(true);
+        assertTrue(oneShotRefreshStrategy.shouldRefresh(null));
     }
 
     @Test
