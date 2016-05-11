@@ -1,6 +1,6 @@
-package com.fuzz.datacontroller.datacontroller2;
+package com.fuzz.datacontroller;
 
-import com.fuzz.datacontroller.datacontroller2.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource;
 
 /**
  * Description: Represents a response object called from a {@link com.fuzz.datacontroller.DataController}.

@@ -1,6 +1,6 @@
-package com.fuzz.datacontroller.datacontroller2;
+package com.fuzz.datacontroller;
 
-import com.fuzz.datacontroller.datacontroller2.DataController.DataControllerCallback;
+import com.fuzz.datacontroller.DataController.DataControllerCallback;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

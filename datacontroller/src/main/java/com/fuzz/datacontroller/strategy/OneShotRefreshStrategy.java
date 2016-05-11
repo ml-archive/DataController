@@ -1,6 +1,6 @@
-package com.fuzz.datacontroller.datacontroller2.strategy;
+package com.fuzz.datacontroller.strategy;
 
-import com.fuzz.datacontroller.datacontroller2.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource;
 
 /**
  * Description: Only ever gets called once, but can get reset.

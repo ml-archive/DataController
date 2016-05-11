@@ -1,14 +1,14 @@
-package com.fuzz.datacontroller.datacontroller2.source;
+package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
  * Description: Provides default memory based source. It will always succeed in returning because
  * the storage may or may not have data in it. It does not rely on a network call or database lookup.
  * It stores only information coming from other sources.
  */
-public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
+public class MemoryDataSource<TResponse> extends com.fuzz.datacontroller.datacontroller2.source.DataSource<TResponse> {
 
     private TResponse storage;
 

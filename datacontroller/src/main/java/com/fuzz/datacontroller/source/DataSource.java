@@ -1,7 +1,7 @@
-package com.fuzz.datacontroller.datacontroller2.source;
+package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
  * Description: Provides a source of where information comes from.

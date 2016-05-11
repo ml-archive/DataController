@@ -1,7 +1,7 @@
-package com.fuzz.datacontroller.datacontroller2;
+package com.fuzz.datacontroller;
 
-import com.fuzz.datacontroller.datacontroller2.source.DataSource;
-import com.fuzz.datacontroller.datacontroller2.source.DataSource.SourceType;
+import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource.SourceType;
 
 import java.util.ArrayList;
 import java.util.Collection;

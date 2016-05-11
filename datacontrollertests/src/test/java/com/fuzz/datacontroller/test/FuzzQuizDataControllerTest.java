@@ -2,10 +2,10 @@ package com.fuzz.datacontroller.test;
 
 import android.os.Build.VERSION_CODES;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
-import com.fuzz.datacontroller.datacontroller2.DataResponseError;
-import com.fuzz.datacontroller.datacontroller2.source.DataSource;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
+import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.tests.BuildConfig;
 import com.raizlabs.android.dbflow.config.FlowConfig;
 import com.raizlabs.android.dbflow.config.FlowManager;

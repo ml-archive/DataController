@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.datacontroller2.strategy.OneShotRefreshStrategy;
-import com.fuzz.datacontroller.datacontroller2.strategy.TimebasedRefreshStrategy;
+import com.fuzz.datacontroller.strategy.OneShotRefreshStrategy;
+import com.fuzz.datacontroller.strategy.TimebasedRefreshStrategy;
 
 import org.junit.Test;
 

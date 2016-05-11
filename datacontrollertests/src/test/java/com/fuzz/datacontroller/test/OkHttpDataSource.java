@@ -1,9 +1,9 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
-import com.fuzz.datacontroller.datacontroller2.DataResponseError;
-import com.fuzz.datacontroller.datacontroller2.source.DataSource;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
+import com.fuzz.datacontroller.source.DataSource;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.datacontroller2.DataResponseError;
+import com.fuzz.datacontroller.DataResponseError;
 
 import org.junit.Test;
 

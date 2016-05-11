@@ -1,8 +1,8 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.source.MemoryDataSource;
-import com.fuzz.datacontroller.datacontroller2.strategy.TimebasedRefreshStrategy;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.source.MemoryDataSource;
+import com.fuzz.datacontroller.strategy.TimebasedRefreshStrategy;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.List;

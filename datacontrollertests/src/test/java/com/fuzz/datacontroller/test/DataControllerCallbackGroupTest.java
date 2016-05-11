@@ -1,9 +1,9 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.DataControllerCallbackGroup;
-import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
-import com.fuzz.datacontroller.datacontroller2.DataResponseError;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerCallbackGroup;
+import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
 
 import org.junit.Test;
 

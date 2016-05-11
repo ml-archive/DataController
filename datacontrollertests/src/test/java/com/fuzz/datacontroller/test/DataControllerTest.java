@@ -1,8 +1,8 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.datacontroller2.DataController;
-import com.fuzz.datacontroller.datacontroller2.source.DataSource;
-import com.fuzz.datacontroller.datacontroller2.source.MemoryDataSource;
+import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.MemoryDataSource;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller.datacontroller2;
+package com.fuzz.datacontroller;
 
 /**
  * Description:
