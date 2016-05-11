@@ -18,7 +18,7 @@ import static org.junit.Assert.assertNotNull;
 public class FuzzQuizDataControllerTest {
 
     @Test
-    public void test_fuzzQuizDataController_DataFetcher() {
+    public void test_fuzzQuizDataController_DataFetcher() {g
 
         FuzzQuizDataController dataController = new FuzzQuizDataController();
 

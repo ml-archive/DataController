@@ -1,1 +1,1 @@
-include ':app', ':datacontroller'
+include ':app', ':datacontroller', ':datacontrollertests'

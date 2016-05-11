@@ -30,6 +30,11 @@ public class DataController<TResponse> {
         void onSuccess(DataControllerResponse<TResponse> response);
     }
 
+    /**
+     * The main callback interface for getting callbacks on the the {@link DataController} class.
+     *
+     * @param <TResponse>
+     */
     public interface DataControllerCallback<TResponse> extends Error, Success<TResponse> {
     }
 
