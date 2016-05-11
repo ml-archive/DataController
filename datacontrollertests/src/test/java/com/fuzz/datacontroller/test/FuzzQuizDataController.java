@@ -2,7 +2,7 @@ package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.source.MemoryDataSource;
-import com.fuzz.datacontroller.strategy.TimebasedRefreshStrategy;
+import com.fuzz.datacontroller.strategy.TimeBasedRefreshStrategy;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class FuzzQuizDataController extends DataController<List<DataItem>> {
         registerDataSource(new MemoryDataSource<List<DataItem>>());
         registerDataSource(new DBFlowDataSource<>(DataItem.class));
         registerDataSource(new OkHttpDataSource<List<DataItem>>(
-                new TimebasedRefreshStrategy<List<DataItem>>(5000L),
+                new TimeBasedRefreshStrategy<List<DataItem>>(5000L),
                 new TypeToken<List<DataItem>>() {
                 }.getType()) {
             @Override

@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.strategy.OneShotRefreshStrategy;
-import com.fuzz.datacontroller.strategy.TimebasedRefreshStrategy;
+import com.fuzz.datacontroller.strategy.TimeBasedRefreshStrategy;
 
 import org.junit.Test;
 
@@ -28,22 +28,22 @@ public class DefaultStrategyTest {
 
     @Test
     public void test_TimeBasedRefresh() {
-        TimebasedRefreshStrategy<List<DataItem>> timebasedRefreshStrategy = new TimebasedRefreshStrategy<>(1000L);
-        assertTrue(timebasedRefreshStrategy.shouldRefresh(null));
-        assertFalse(timebasedRefreshStrategy.shouldRefresh(null));
+        TimeBasedRefreshStrategy<List<DataItem>> timeBasedRefreshStrategy = new TimeBasedRefreshStrategy<>(1000L);
+        assertTrue(timeBasedRefreshStrategy.shouldRefresh(null));
+        assertFalse(timeBasedRefreshStrategy.shouldRefresh(null));
 
         try {
             Thread.sleep(1000L);
         } catch (InterruptedException e) {
         }
 
-        assertTrue(timebasedRefreshStrategy.shouldRefresh(null));
+        assertTrue(timeBasedRefreshStrategy.shouldRefresh(null));
 
-        timebasedRefreshStrategy.forceRefresh();
-        assertTrue(timebasedRefreshStrategy.shouldRefresh(null));
+        timeBasedRefreshStrategy.forceRefresh();
+        assertTrue(timeBasedRefreshStrategy.shouldRefresh(null));
 
         long time = System.currentTimeMillis();
-        timebasedRefreshStrategy.setLastUpdateTime(time);
-        assertEquals(time, timebasedRefreshStrategy.getLastUpdateTime());
+        timeBasedRefreshStrategy.setLastUpdateTime(time);
+        assertEquals(time, timeBasedRefreshStrategy.getLastUpdateTime());
     }
 }
