@@ -3,7 +3,7 @@ package com.fuzz.datacontroller;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.source.DataSource.SourceType;
 import com.fuzz.datacontroller.source.DataSourceStorage;
-import com.fuzz.datacontroller.source.TreeMapDataSourceContainer;
+import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +47,7 @@ public class DataController<TResponse> {
     }
 
     public DataController() {
-        this(new TreeMapDataSourceContainer<TResponse>());
+        this(new TreeMapSingleTypeDataSourceContainer<TResponse>());
     }
 
     public void registerDataSource(DataSource<TResponse> dataSource) {
