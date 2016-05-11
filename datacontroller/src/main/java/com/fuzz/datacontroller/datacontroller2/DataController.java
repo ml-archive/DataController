@@ -1,6 +1,5 @@
 package com.fuzz.datacontroller.datacontroller2;
 
-import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.source.DataSource;
 import com.fuzz.datacontroller.datacontroller2.source.DataSource.SourceType;
 
@@ -99,7 +98,12 @@ public class DataController<TResponse> {
     private final Success<TResponse> internalSuccessCallback = new Success<TResponse>() {
         @Override
         public void onSuccess(DataControllerResponse<TResponse> response) {
-            dataSourceMap.get(response.getSourceType()).store(response.getResponse());
+            synchronized (dataSourceMap) {
+                Collection<DataSource<TResponse>> dataSources = dataSourceMap.values();
+                for (DataSource<TResponse> dataSource : dataSources) {
+                    dataSource.store(response);
+                }
+            }
 
             callbackGroup.onSuccess(response);
         }

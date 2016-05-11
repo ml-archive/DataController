@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.IDataCallback;
 import com.fuzz.datacontroller.fetcher.DataFetcher;

@@ -2,7 +2,7 @@ package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerBuilder;
-import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.data.MemoryDataStore;
 import com.fuzz.datacontroller.fetcher.DataFetcher;
 import com.fuzz.datacontroller.strategy.IRefreshStrategy;

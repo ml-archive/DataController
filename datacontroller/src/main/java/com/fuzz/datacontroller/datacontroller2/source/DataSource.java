@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller.datacontroller2.source;
 
+import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.DataController;
 import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 
@@ -62,8 +63,9 @@ public abstract class DataSource<TResponse> {
 
     /**
      * Stores a response.
+     * @param tResponse
      */
-    public abstract void store(TResponse tResponse);
+    public abstract void store(DataControllerResponse<TResponse> tResponse);
 
     /**
      * Requests a call on the underlying data to return on the specified success and error callbacks. This

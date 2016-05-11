@@ -1,9 +1,9 @@
-package com.fuzz.datacontroller;
+package com.fuzz.datacontroller.datacontroller2;
 
 import com.fuzz.datacontroller.datacontroller2.source.DataSource;
 
 /**
- * Description: Represents a response object called from a {@link DataController}.
+ * Description: Represents a response object called from a {@link com.fuzz.datacontroller.DataController}.
  */
 public class DataControllerResponse<TResponse> {
 

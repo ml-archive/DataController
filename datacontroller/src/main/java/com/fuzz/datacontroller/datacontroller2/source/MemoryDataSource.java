@@ -1,12 +1,13 @@
 package com.fuzz.datacontroller.datacontroller2.source;
 
-import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.DataController;
+import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 
 /**
  * Description: Provides default memory based source. It will always succeed in returning because
  * the storage may or may not have data in it. It does not rely on a network call or database lookup.
+ * It stores only information coming from other sources.
  */
 public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
 
@@ -20,8 +21,10 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
-    public void store(TResponse tResponse) {
-        this.storage = tResponse;
+    public void store(DataControllerResponse<TResponse> tResponse) {
+        if (!tResponse.getSourceType().equals(SourceType.MEMORY)) {
+            this.storage = tResponse.getResponse();
+        }
     }
 
     @Override
