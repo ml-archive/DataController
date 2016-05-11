@@ -47,4 +47,3 @@ public class TimeBasedRefreshStrategy<TResponse> implements DataSource.RefreshSt
         return shouldRefresh;
     }
 }
-git
