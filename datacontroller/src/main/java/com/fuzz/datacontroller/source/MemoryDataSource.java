@@ -8,7 +8,7 @@ import com.fuzz.datacontroller.DataControllerResponse;
  * the storage may or may not have data in it. It does not rely on a network call or database lookup.
  * It stores only information coming from other sources.
  */
-public class MemoryDataSource<TResponse> extends com.fuzz.datacontroller.datacontroller2.source.DataSource<TResponse> {
+public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
 
     private TResponse storage;
 
@@ -37,5 +37,9 @@ public class MemoryDataSource<TResponse> extends com.fuzz.datacontroller.datacon
     @Override
     public TResponse getStoredData(SourceParams sourceParams) {
         return storage;
+    }
+
+    @Override
+    public void cancel() {
     }
 }

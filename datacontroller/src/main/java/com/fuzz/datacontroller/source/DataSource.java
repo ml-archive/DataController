@@ -122,6 +122,11 @@ public abstract class DataSource<TResponse> {
     }
 
     /**
+     * Attempts to cancel any pending asynchronous operation on this {@link DataSource}.
+     */
+    public abstract void cancel();
+
+    /**
      * Perform the actual information retrieval here. This might call a network, database, or file-based system.
      * Anything that is IO should be done on a separate thread. It is also up to the {@link DataSource}
      * to ensure that both success and error are properly called.

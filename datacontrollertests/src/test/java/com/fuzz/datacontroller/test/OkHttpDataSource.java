@@ -68,6 +68,13 @@ public abstract class OkHttpDataSource<TResponse> extends DataSource<TResponse> 
     protected void doStore(DataControllerResponse<TResponse> dataControllerResponse) {
     }
 
+    @Override
+    public void cancel() {
+        if (call != null && !call.isCanceled()) {
+            call.cancel();
+        }
+    }
+
     protected void callSuccess(TResponse response, String originalUrl, DataController.Success<TResponse> success) {
         success.onSuccess(new DataControllerResponse<>(response, SourceType.NETWORK, originalUrl));
     }

@@ -3,7 +3,7 @@ package com.fuzz.datacontroller;
 import com.fuzz.datacontroller.source.DataSource;
 
 /**
- * Description: Represents a response object called from a {@link com.fuzz.datacontroller.DataController}.
+ * Description: Represents a response object called from a {@link DataController}.
  */
 public class DataControllerResponse<TResponse> {
 
@@ -27,5 +27,9 @@ public class DataControllerResponse<TResponse> {
 
     public DataSource.SourceType getSourceType() {
         return sourceType;
+    }
+
+    public String getOriginalUrl() {
+        return originalUrl;
     }
 }

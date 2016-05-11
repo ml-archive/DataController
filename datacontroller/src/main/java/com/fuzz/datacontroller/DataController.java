@@ -104,6 +104,18 @@ public class DataController<TResponse> {
         dataSource.get(sourceParams, internalSuccessCallback, internalErrorCallback);
     }
 
+    /**
+     * Cancels all attached {@link DataSource}.
+     */
+    public void cancel() {
+        synchronized (dataSourceMap) {
+            Collection<DataSource<TResponse>> sourceCollection = dataSourceMap.values();
+            for (DataSource<TResponse> source : sourceCollection) {
+                source.cancel();
+            }
+        }
+    }
+
     public List<DataSource<TResponse>> getSources() {
         return new ArrayList<>(dataSourceMap.values());
     }

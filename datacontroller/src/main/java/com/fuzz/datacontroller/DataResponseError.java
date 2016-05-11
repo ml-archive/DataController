@@ -1,7 +1,8 @@
 package com.fuzz.datacontroller;
 
 /**
- * Description:
+ * Description: The main Error class that returns in a callback. Override this class to provide different kind
+ * of errors.
  */
 public class DataResponseError {
 
