@@ -61,8 +61,12 @@ public abstract class DataSource<TResponse> {
         return refreshStrategy;
     }
 
-    public TResponse getStoredData() {
+    public TResponse getStoredData(SourceParams sourceParams) {
         return null;
+    }
+
+    public final TResponse getStoredData() {
+        return getStoredData(new SourceParams());
     }
 
     /**

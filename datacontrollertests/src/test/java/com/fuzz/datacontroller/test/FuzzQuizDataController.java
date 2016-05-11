@@ -16,6 +16,7 @@ public class FuzzQuizDataController extends DataController<List<DataItem>> {
 
     public FuzzQuizDataController() {
         registerDataSource(new MemoryDataSource<List<DataItem>>());
+        registerDataSource(new DBFlowDataSource<>(DataItem.class));
         registerDataSource(new OkHttpDataSource<List<DataItem>>(
                 new TimebasedRefreshStrategy<List<DataItem>>(5000L),
                 new TypeToken<List<DataItem>>() {

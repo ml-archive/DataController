@@ -116,11 +116,9 @@ public class DataController<TResponse> {
     private final Success<TResponse> internalSuccessCallback = new Success<TResponse>() {
         @Override
         public void onSuccess(DataControllerResponse<TResponse> response) {
-            synchronized (dataSourceMap) {
-                Collection<DataSource<TResponse>> dataSources = dataSourceMap.values();
-                for (DataSource<TResponse> dataSource : dataSources) {
-                    dataSource.store(response);
-                }
+            Collection<DataSource<TResponse>> dataSources = dataSourceMap.values();
+            for (DataSource<TResponse> dataSource : dataSources) {
+                dataSource.store(response);
             }
 
             callbackGroup.onSuccess(response);

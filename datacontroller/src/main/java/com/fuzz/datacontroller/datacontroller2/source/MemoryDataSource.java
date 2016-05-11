@@ -36,7 +36,7 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
-    public TResponse getStoredData() {
+    public TResponse getStoredData(SourceParams sourceParams) {
         return storage;
     }
 }
