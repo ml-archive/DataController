@@ -1,0 +1,45 @@
+package com.fuzz.datacontroller.datacontroller2;
+
+import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.datacontroller2.DataController.DataControllerCallback;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+/**
+ * Description: Provides easy grouping of callbacks.
+ */
+public class DataControllerCallbackGroup<TResponse> implements DataControllerCallback<TResponse> {
+
+    private final Set<DataControllerCallback<TResponse>> callbacks = new LinkedHashSet<>();
+
+    public void registerForCallbacks(DataControllerCallback<TResponse> dataControllerCallback) {
+        synchronized (callbacks) {
+            callbacks.add(dataControllerCallback);
+        }
+    }
+
+    public void deregisterForCallbacks(DataControllerCallback<TResponse> dataControllerCallback) {
+        synchronized (callbacks) {
+            callbacks.remove(dataControllerCallback);
+        }
+    }
+
+    @Override
+    public void onFailure(DataResponseError dataResponseError) {
+        synchronized (callbacks) {
+            for (DataControllerCallback<TResponse> callback : callbacks) {
+                callback.onFailure(dataResponseError);
+            }
+        }
+    }
+
+    @Override
+    public void onSuccess(DataControllerResponse<TResponse> response) {
+        synchronized (callbacks) {
+            for (DataControllerCallback<TResponse> callback : callbacks) {
+                callback.onSuccess(response);
+            }
+        }
+    }
+}
