@@ -95,9 +95,11 @@ public abstract class DataSource<TResponse> {
     }
 
     /**
-     * Stores a response.
+     * Calls {@link #doStore(DataControllerResponse)}
+     * only if the {@link DataControllerResponse#getSourceType()} is different.
+     * i.e comes from a different source.
      *
-     * @param tResponse
+     * @param tResponse The response returned here.
      */
     public final void store(DataControllerResponse<TResponse> tResponse) {
         if (!tResponse.getSourceType().equals(getSourceType())) {

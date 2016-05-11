@@ -29,6 +29,7 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<List<TMod
     }
 
     private final Class<TModel> modelClass;
+    private Transaction currentTransaction;
 
     public DBFlowDataSource(RefreshStrategy<List<TModel>> refreshStrategy, Class<TModel> modelClass) {
         super(refreshStrategy);
@@ -42,7 +43,7 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<List<TMod
     @Override
     protected void doGet(SourceParams sourceParams, final DataController.Success<List<TModel>> success, final DataController.Error error) {
         DatabaseDefinition database = FlowManager.getDatabaseForTable(modelClass);
-        database.beginTransactionAsync(new QueryTransaction.Builder<>(getModelQueriableFromParams(sourceParams))
+        currentTransaction = database.beginTransactionAsync(new QueryTransaction.Builder<>(getModelQueriableFromParams(sourceParams))
                 .queryResult(new QueryTransaction.QueryResultCallback<TModel>() {
                     @Override
                     public void onQueryResult(QueryTransaction transaction, @NonNull CursorResult<TModel> tResult) {
@@ -56,7 +57,8 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<List<TMod
                         error.onFailure(new DataResponseError(throwable));
                     }
                 })
-                .build().execute();
+                .build();
+        currentTransaction.execute();
     }
 
     @Override
@@ -84,6 +86,14 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<List<TMod
     @Override
     public SourceType getSourceType() {
         return SourceType.DISK;
+    }
+
+    @Override
+    public void cancel() {
+        if (currentTransaction != null) {
+            currentTransaction.cancel();
+        }
+        currentTransaction = null;
     }
 
     /**

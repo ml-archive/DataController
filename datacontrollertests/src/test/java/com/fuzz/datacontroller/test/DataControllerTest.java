@@ -24,6 +24,10 @@ public class DataControllerTest {
         dataController = new DataController<>();
         dataController.registerDataSource(new MockDataSource<String>() {
             @Override
+            public void cancel() {
+            }
+
+            @Override
             public SourceType getSourceType() {
                 return SourceType.NETWORK;
             }
