@@ -6,7 +6,6 @@ import com.fuzz.datacontroller.datacontroller2.DataController;
 import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.DataResponseError;
 import com.fuzz.datacontroller.datacontroller2.source.DataSource;
-import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 import com.raizlabs.android.dbflow.config.DatabaseDefinition;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.language.CursorResult;

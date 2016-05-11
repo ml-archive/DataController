@@ -6,7 +6,7 @@ import com.fuzz.datacontroller.datacontroller2.source.DataSource;
  * Description: Stores a last update timestamp to only refresh content if its sufficiently "old". Which
  * the constructor will tell us how long before refreshing content.
  */
-public class TimebasedRefreshStrategy<TResponse> implements RefreshStrategy<TResponse> {
+public class TimebasedRefreshStrategy<TResponse> implements DataSource.RefreshStrategy<TResponse> {
 
     private final long refreshTime;
     private long lastUpdateTime;

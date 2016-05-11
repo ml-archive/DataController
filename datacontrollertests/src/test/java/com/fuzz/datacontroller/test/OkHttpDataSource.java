@@ -4,7 +4,6 @@ import com.fuzz.datacontroller.datacontroller2.DataController;
 import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.DataResponseError;
 import com.fuzz.datacontroller.datacontroller2.source.DataSource;
-import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

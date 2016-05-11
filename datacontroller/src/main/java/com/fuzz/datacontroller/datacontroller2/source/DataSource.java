@@ -2,7 +2,6 @@ package com.fuzz.datacontroller.datacontroller2.source;
 
 import com.fuzz.datacontroller.datacontroller2.DataController;
 import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
-import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 
 /**
  * Description: Provides a source of where information comes from.
@@ -41,6 +40,21 @@ public abstract class DataSource<TResponse> {
         public Object data;
     }
 
+    /**
+     * Description: A simple interface for determining when data should get refreshed. If the call
+     * returns a false, a call to {@link #get(SourceParams, DataController.Success, DataController.Error)}
+     * does not do anything.
+     */
+    public interface RefreshStrategy<TResponse> {
+
+        /**
+         * @param dataSource The data source that we're calling.
+         * @return True if we should refresh by calling {@link #get(SourceParams, DataController.Success, DataController.Error)}.
+         * If false, we do not refresh data.
+         */
+        boolean shouldRefresh(DataSource<TResponse> dataSource);
+    }
+
     private final RefreshStrategy<TResponse> refreshStrategy;
 
     public DataSource(RefreshStrategy<TResponse> refreshStrategy) {
@@ -57,7 +71,7 @@ public abstract class DataSource<TResponse> {
     }
 
 
-    public RefreshStrategy<TResponse> getRefreshStrategy() {
+    public final RefreshStrategy<TResponse> getRefreshStrategy() {
         return refreshStrategy;
     }
 
@@ -127,4 +141,5 @@ public abstract class DataSource<TResponse> {
     protected abstract void doStore(DataControllerResponse<TResponse> dataControllerResponse);
 
     public abstract SourceType getSourceType();
+
 }

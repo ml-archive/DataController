@@ -5,7 +5,7 @@ import com.fuzz.datacontroller.datacontroller2.source.DataSource;
 /**
  * Description: Only ever gets called once, but can get reset.
  */
-public class OneShotRefreshStrategy<TResponse> implements RefreshStrategy<TResponse> {
+public class OneShotRefreshStrategy<TResponse> implements DataSource.RefreshStrategy<TResponse> {
 
     private boolean shouldRefresh = true;
 

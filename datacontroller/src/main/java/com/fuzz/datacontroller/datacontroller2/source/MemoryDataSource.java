@@ -2,7 +2,6 @@ package com.fuzz.datacontroller.datacontroller2.source;
 
 import com.fuzz.datacontroller.datacontroller2.DataController;
 import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
-import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 
 /**
  * Description: Provides default memory based source. It will always succeed in returning because

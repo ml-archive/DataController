@@ -23,12 +23,23 @@ public class DataResponseError {
         isNetworkError = false;
     }
 
+    public DataResponseError() {
+    }
+
     public void setMessage(String message) {
         this.message = message;
     }
 
     public void setStatusCode(long statusCode) {
         this.statusCode = statusCode;
+    }
+
+    public void setNetworkError(boolean networkError) {
+        isNetworkError = networkError;
+    }
+
+    public void setThrowable(Throwable throwable) {
+        this.throwable = throwable;
     }
 
     @Override
