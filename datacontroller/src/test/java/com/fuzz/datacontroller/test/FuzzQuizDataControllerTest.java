@@ -1,15 +1,16 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.datacontroller2.DataController;
+import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
+import com.fuzz.datacontroller.datacontroller2.DataResponseError;
+import com.fuzz.datacontroller.datacontroller2.source.DataSource;
 
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Description:
@@ -21,17 +22,31 @@ public class FuzzQuizDataControllerTest {
 
         FuzzQuizDataController dataController = new FuzzQuizDataController();
 
-        assertNotNull(dataController.getDataFetcher());
-        List<DataItem> dataItems = dataController.requestDataSync();
-        assertNotNull(dataItems);
-        assertTrue(!dataItems.isEmpty());
+        final CountDownLatch lock = new CountDownLatch(2);
+        final DataControllerResponse[] responseArray = new DataControllerResponse[1];
+        dataController.registerForCallbacks(new DataController.DataControllerCallback<List<DataItem>>() {
+            @Override
+            public void onFailure(DataResponseError dataResponseError) {
+                lock.countDown();
+            }
 
-        assertEquals(dataController.getState(), DataController.State.SUCCESS);
+            @Override
+            public void onSuccess(DataControllerResponse<List<DataItem>> response) {
+                lock.countDown();
+                responseArray[0] = response;
+            }
+        });
 
-        assertNotNull(dataController.getStoredData());
-        assertEquals(dataController.getStoredData(), dataItems);
+        dataController.requestData(); // call here
+        try {
+            lock.await();
+        } catch (InterruptedException e) {
+        }
 
-        assertNull(dataController.requestDataSync()); // null due to refresh strategy
+        assertNotNull(responseArray[0]);
+
+        DataSource<List<DataItem>> source = dataController.getSource(DataSource.SourceType.MEMORY);
+        assertNotNull(source.getStoredData());
 
 
     }

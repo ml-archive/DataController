@@ -9,10 +9,16 @@ public class DataControllerResponse<TResponse> {
 
     private final TResponse response;
     private final DataSource.SourceType sourceType;
+    private final String originalUrl;
 
-    public DataControllerResponse(TResponse response, DataSource.SourceType type) {
+    public DataControllerResponse(TResponse response, DataSource.SourceType type, String originalUrl) {
         this.response = response;
         this.sourceType = type;
+        this.originalUrl = originalUrl;
+    }
+
+    public DataControllerResponse(TResponse response, DataSource.SourceType type) {
+        this(response, type, null);
     }
 
     public TResponse getResponse() {

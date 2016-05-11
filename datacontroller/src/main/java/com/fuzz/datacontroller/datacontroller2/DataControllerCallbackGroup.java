@@ -24,6 +24,12 @@ public class DataControllerCallbackGroup<TResponse> implements DataControllerCal
         }
     }
 
+    public void clearCallbacks() {
+        synchronized (callbacks) {
+            callbacks.clear();
+        }
+    }
+
     @Override
     public void onFailure(DataResponseError dataResponseError) {
         synchronized (callbacks) {

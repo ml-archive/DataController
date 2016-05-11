@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.datacontroller2.source;
 
-import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.DataController;
+import com.fuzz.datacontroller.datacontroller2.DataControllerResponse;
 import com.fuzz.datacontroller.datacontroller2.strategy.RefreshStrategy;
 
 /**
@@ -61,11 +61,20 @@ public abstract class DataSource<TResponse> {
         return refreshStrategy;
     }
 
+    public TResponse getStoredData() {
+        return null;
+    }
+
     /**
      * Stores a response.
+     *
      * @param tResponse
      */
-    public abstract void store(DataControllerResponse<TResponse> tResponse);
+    public final void store(DataControllerResponse<TResponse> tResponse) {
+        if (!tResponse.getSourceType().equals(getSourceType())) {
+            doStore(tResponse);
+        }
+    }
 
     /**
      * Requests a call on the underlying data to return on the specified success and error callbacks. This
@@ -84,4 +93,8 @@ public abstract class DataSource<TResponse> {
     }
 
     protected abstract void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error);
+
+    protected abstract void doStore(DataControllerResponse<TResponse> dataControllerResponse);
+
+    public abstract SourceType getSourceType();
 }

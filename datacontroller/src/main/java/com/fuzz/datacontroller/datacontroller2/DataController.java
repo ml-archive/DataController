@@ -3,7 +3,9 @@ package com.fuzz.datacontroller.datacontroller2;
 import com.fuzz.datacontroller.datacontroller2.source.DataSource;
 import com.fuzz.datacontroller.datacontroller2.source.DataSource.SourceType;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -36,10 +38,9 @@ public class DataController<TResponse> {
 
     private final DataControllerCallbackGroup<TResponse> callbackGroup = new DataControllerCallbackGroup<>();
 
-    public void registerDataSource(SourceType sourceType,
-                                   DataSource<TResponse> dataSource) {
+    public void registerDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.put(sourceType, dataSource);
+            dataSourceMap.put(dataSource.getSourceType(), dataSource);
         }
     }
 
@@ -55,6 +56,10 @@ public class DataController<TResponse> {
 
     public void deregisterForCallbacks(DataControllerCallback<TResponse> dataControllerCallback) {
         callbackGroup.deregisterForCallbacks(dataControllerCallback);
+    }
+
+    public void clearCallbacks() {
+        callbackGroup.clearCallbacks();
     }
 
     /**
@@ -92,6 +97,14 @@ public class DataController<TResponse> {
         }
 
         dataSource.get(sourceParams, internalSuccessCallback, internalErrorCallback);
+    }
+
+    public List<DataSource<TResponse>> getSources() {
+        return new ArrayList<>(dataSourceMap.values());
+    }
+
+    public DataSource<TResponse> getSource(SourceType sourceType) {
+        return dataSourceMap.get(sourceType);
     }
 
 

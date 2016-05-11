@@ -21,14 +21,22 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
-    public void store(DataControllerResponse<TResponse> tResponse) {
-        if (!tResponse.getSourceType().equals(SourceType.MEMORY)) {
-            this.storage = tResponse.getResponse();
-        }
+    public void doStore(DataControllerResponse<TResponse> tResponse) {
+        this.storage = tResponse.getResponse();
     }
 
     @Override
     public void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error) {
-        success.onSuccess(new DataControllerResponse<>(storage, SourceType.MEMORY));
+        success.onSuccess(new DataControllerResponse<>(storage, getSourceType()));
+    }
+
+    @Override
+    public SourceType getSourceType() {
+        return SourceType.MEMORY;
+    }
+
+    @Override
+    public TResponse getStoredData() {
+        return storage;
     }
 }
