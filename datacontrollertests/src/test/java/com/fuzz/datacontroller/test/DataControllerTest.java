@@ -2,6 +2,7 @@ package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSourceStorage.DataSourceParams;
 import com.fuzz.datacontroller.source.MemoryDataSource;
 
 import org.junit.Before;
@@ -46,14 +47,17 @@ public class DataControllerTest {
 
     @Test
     public void test_callSpecific() {
-        MockDataSource<String> source = (MockDataSource<String>) dataController.getSource(DataSource.SourceType.NETWORK);
-        dataController.requestSpecific(DataSource.SourceType.NETWORK, new DataSource.SourceParams());
+        DataSourceParams networkParams = new DataSourceParams(DataSource.SourceType.NETWORK);
+        MockDataSource<String> source = (MockDataSource<String>) dataController
+                .getSource(networkParams);
+        dataController.requestSpecific(networkParams, new DataSource.SourceParams());
         assertTrue(source.isGetCalled());
 
-        dataController.requestSpecific(DataSource.SourceType.MEMORY, new DataSource.SourceParams());
+        dataController.requestSpecific(new DataSourceParams(DataSource.SourceType.MEMORY),
+                new DataSource.SourceParams());
         assertTrue(source.isStoreCalled());
 
-        dataController.getSource(DataSource.SourceType.NETWORK).getStoredData(null);
+        dataController.getSource(networkParams).getStoredData(null);
         assertTrue(source.isGetStoredCalled());
     }
 
@@ -61,7 +65,7 @@ public class DataControllerTest {
     public void test_requestInvalidSource() {
         boolean failed = false;
         try {
-            dataController.requestSpecific(DataSource.SourceType.DISK, null);
+            dataController.requestSpecific(new DataSourceParams(DataSource.SourceType.DISK), null);
         } catch (RuntimeException r) {
             failed = true;
         }

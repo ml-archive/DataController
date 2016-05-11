@@ -6,6 +6,7 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSourceStorage.DataSourceParams;
 import com.fuzz.datacontroller.tests.BuildConfig;
 import com.raizlabs.android.dbflow.config.FlowConfig;
 import com.raizlabs.android.dbflow.config.FlowManager;
@@ -69,10 +70,11 @@ public class FuzzQuizDataControllerTest {
         assertNotNull(responseArray[0]);
         assertNotNull(responseArray[1]);
 
-        DataSource<List<DataItem>> source = dataController.getSource(DataSource.SourceType.MEMORY);
+        DataSource<List<DataItem>> source = dataController.getSource(new DataSourceParams(DataSource.SourceType.MEMORY));
         assertNotNull(source.getStoredData());
 
-        List<DataItem> dataItems = dataController.getSource(DataSource.SourceType.DISK).getStoredData();
+        List<DataItem> dataItems = dataController
+                .getSource(new DataSourceParams(DataSource.SourceType.DISK)).getStoredData();
         assertFalse(dataItems.isEmpty());
     }
 }

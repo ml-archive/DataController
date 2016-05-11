@@ -117,7 +117,8 @@ public abstract class DataSource<TResponse> {
      * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
      */
-    public final void get(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error) {
+    public final void get(SourceParams sourceParams, DataController.Success<TResponse> success,
+                          DataController.Error error) {
         if (getRefreshStrategy().shouldRefresh(this)) {
             doGet(sourceParams, success, error);
         }
@@ -147,6 +148,9 @@ public abstract class DataSource<TResponse> {
      */
     protected abstract void doStore(DataControllerResponse<TResponse> dataControllerResponse);
 
+    /**
+     * @return The kind of source, i.e. where it comes from. Must be defined.
+     */
     public abstract SourceType getSourceType();
 
 }
