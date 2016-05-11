@@ -61,10 +61,21 @@ public abstract class DataSource<TResponse> {
         return refreshStrategy;
     }
 
+    /**
+     * Queries this {@link DataSource} for data stored. This potentially can be expensive since
+     * if this is a {@link SourceType#DISK}, it will perform an IO operation on the calling thread.
+     * This method is useful for retrieving data in same thread, but should be avoided unless absolutely
+     * necessary. Prefer using the {@link #get(SourceParams, DataController.Success, DataController.Error)} method.
+     *
+     * @param sourceParams The set of params to query data from. Its up to this {@link DataSource} to handle the values.
+     */
     public TResponse getStoredData(SourceParams sourceParams) {
         return null;
     }
 
+    /**
+     * Performs {@link #getStoredData(SourceParams)} with default params.
+     */
     public final TResponse getStoredData() {
         return getStoredData(new SourceParams());
     }
@@ -96,8 +107,23 @@ public abstract class DataSource<TResponse> {
         }
     }
 
+    /**
+     * Perform the actual information retrieval here. This might call a network, database, or file-based system.
+     * Anything that is IO should be done on a separate thread. It is also up to the {@link DataSource}
+     * to ensure that both success and error are properly called.
+     *
+     * @param sourceParams The params used to retrieve information from the {@link DataSource}.
+     * @param success      Called when a successful request returns.
+     * @param error        Called when a request fails.
+     */
     protected abstract void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error);
 
+    /**
+     * Perform the actual information storage here. This might call a network, database, or file-based system.
+     * Anything that is IO should be done on a separate thread to prevent blocking.
+     *
+     * @param dataControllerResponse The response to store.
+     */
     protected abstract void doStore(DataControllerResponse<TResponse> dataControllerResponse);
 
     public abstract SourceType getSourceType();
