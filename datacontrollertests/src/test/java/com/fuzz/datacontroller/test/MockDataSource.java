@@ -35,6 +35,10 @@ public abstract class MockDataSource<TResponse> extends DataSource<TResponse> {
         return null;
     }
 
+    @Override
+    public void cancel() {
+    }
+
     public boolean isGetCalled() {
         return isGetCalled;
     }
