@@ -84,6 +84,11 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<List<TMod
     }
 
     @Override
+    public boolean hasStoredData() {
+        return !getStoredData().isEmpty();
+    }
+
+    @Override
     public SourceType getSourceType() {
         return SourceType.DISK;
     }

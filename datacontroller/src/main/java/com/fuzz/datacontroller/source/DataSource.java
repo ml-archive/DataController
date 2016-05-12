@@ -95,6 +95,14 @@ public abstract class DataSource<TResponse> {
     }
 
     /**
+     * @return true if stored data exists. this is determined by nullability. Override for other kinds
+     * of checks.
+     */
+    public boolean hasStoredData() {
+        return getStoredData() != null;
+    }
+
+    /**
      * Calls {@link #doStore(DataControllerResponse)}
      * only if the {@link DataControllerResponse#getSourceType()} is different.
      * i.e comes from a different source.

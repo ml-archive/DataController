@@ -40,14 +40,24 @@ public class DataController<TResponse> {
 
     private final DataSourceStorage<TResponse> dataSourceStorage;
 
-    private final DataControllerCallbackGroup<TResponse> callbackGroup = new DataControllerCallbackGroup<>();
+    private final DataControllerCallbackGroup<TResponse> callbackGroup
+            = new DataControllerCallbackGroup<>();
 
-    public DataController(DataSourceStorage<TResponse> dataSourceStorage) {
+    private final DataSourceChainer<TResponse> dataSourceChainer;
+
+    public DataController(DataSourceStorage<TResponse> dataSourceStorage, DataSourceChainer<TResponse> dataSourceChainer) {
         this.dataSourceStorage = dataSourceStorage;
+        this.dataSourceChainer = dataSourceChainer;
     }
 
     public DataController() {
-        this(new TreeMapSingleTypeDataSourceContainer<TResponse>());
+        this(new TreeMapSingleTypeDataSourceContainer<TResponse>(),
+                new DataSourceChainer<TResponse>() {
+                    @Override
+                    public boolean shouldQueryNext(DataSource<TResponse> lastSource, DataSource<TResponse> sourceToChain) {
+                        return true;
+                    }
+                });
     }
 
     public void registerDataSource(DataSource<TResponse> dataSource) {
@@ -84,17 +94,20 @@ public class DataController<TResponse> {
      * @param sourceParams The params to use for a query.
      */
     public void requestData(DataSource.SourceParams sourceParams) {
-        Collection<DataSource<TResponse>> sourceCollection = dataSourceStorage.sources();
-        for (DataSource<TResponse> source : sourceCollection) {
-            source.get(sourceParams, internalSuccessCallback, internalErrorCallback);
+        List<DataSource<TResponse>> sourceCollection = getSources();
+        for (int i = 0; i < sourceCollection.size(); i++) {
+            DataSource<TResponse> source = sourceCollection.get(i);
+            if (i == 0 || dataSourceChainer.shouldQueryNext(sourceCollection.get(i - 1), source)) {
+                source.get(sourceParams, internalSuccessCallback, internalErrorCallback);
+            }
         }
     }
 
     /**
      * Requests a specific source with specified params.
      *
-     * @param dataSourceParams   The type of source to request via {@link SourceType}
-     * @param sourceParams The params used in the request.
+     * @param dataSourceParams The type of source to request via {@link SourceType}
+     * @param sourceParams     The params used in the request.
      */
     public void requestSpecific(DataSourceStorage.DataSourceParams dataSourceParams,
                                 DataSource.SourceParams sourceParams) {

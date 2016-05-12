@@ -1,7 +1,9 @@
 package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.FirstStorageDataSourceChainer;
 import com.fuzz.datacontroller.source.MemoryDataSource;
+import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;
 import com.fuzz.datacontroller.strategy.TimeBasedRefreshStrategy;
 import com.google.gson.reflect.TypeToken;
 
@@ -15,6 +17,8 @@ import okhttp3.Call;
 public class FuzzQuizDataController extends DataController<List<DataItem>> {
 
     public FuzzQuizDataController() {
+        super(new TreeMapSingleTypeDataSourceContainer<List<DataItem>>(),
+                new FirstStorageDataSourceChainer<List<DataItem>>());
         registerDataSource(new MemoryDataSource<List<DataItem>>());
         registerDataSource(new DBFlowDataSource<>(DataItem.class));
         registerDataSource(new OkHttpDataSource<List<DataItem>>(
