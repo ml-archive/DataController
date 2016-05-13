@@ -1,12 +1,12 @@
 package com.fuzz.datacontroller.strategy;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.source.DataSource;
 
 /**
  * Description: Stores a last update timestamp to only refresh content if its sufficiently "old". Which
  * the constructor will tell us how long before refreshing content.
  */
-public class TimebasedRefreshStrategy implements IRefreshStrategy {
+public class TimeBasedRefreshStrategy<TResponse> implements DataSource.RefreshStrategy<TResponse> {
 
     private final long refreshTime;
     private long lastUpdateTime;
@@ -16,12 +16,12 @@ public class TimebasedRefreshStrategy implements IRefreshStrategy {
      *
      * @param refreshTime The time in between refreshes that we deem refreshing to be valid.
      */
-    public TimebasedRefreshStrategy(long refreshTime) {
+    public TimeBasedRefreshStrategy(long refreshTime) {
         this.refreshTime = refreshTime;
     }
 
     /**
-     * On next call to {@link #shouldRefresh(DataController)}, it will always refresh.
+     * On next call to {@link #shouldRefresh(DataSource)}, it will always refresh.
      */
     public void forceRefresh() {
         lastUpdateTime = 0;
@@ -31,8 +31,12 @@ public class TimebasedRefreshStrategy implements IRefreshStrategy {
         this.lastUpdateTime = lastUpdateTime;
     }
 
+    public long getLastUpdateTime() {
+        return lastUpdateTime;
+    }
+
     @Override
-    public boolean shouldRefresh(DataController dataController) {
+    public boolean shouldRefresh(DataSource<TResponse> dataSource) {
         long current = System.currentTimeMillis();
         boolean shouldRefresh = lastUpdateTime == 0 || (current - lastUpdateTime) >= refreshTime;
 
@@ -41,9 +45,5 @@ public class TimebasedRefreshStrategy implements IRefreshStrategy {
             lastUpdateTime = System.currentTimeMillis();
         }
         return shouldRefresh;
-    }
-
-    public long getLastUpdateTime() {
-        return lastUpdateTime;
     }
 }

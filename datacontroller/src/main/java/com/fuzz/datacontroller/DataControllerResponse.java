@@ -1,49 +1,35 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.source.DataSource;
+
 /**
  * Description: Represents a response object called from a {@link DataController}.
  */
 public class DataControllerResponse<TResponse> {
 
     private final TResponse response;
-    private final ResponseType type;
+    private final DataSource.SourceType sourceType;
+    private final String originalUrl;
 
-    /**
-     * Represents the type of response we received from where.
-     */
-    public enum ResponseType {
-
-        /**
-         * This response is returned from a database-like storage.
-         */
-        DATABASE,
-
-        /**
-         * This response is called from the network.
-         */
-        NETWORK,
-
-        /**
-         * Response is pulled from a file.
-         */
-        FILE,
-
-        /**
-         * Some other undefined kind of response.
-         */
-        OTHER
+    public DataControllerResponse(TResponse response, DataSource.SourceType type, String originalUrl) {
+        this.response = response;
+        this.sourceType = type;
+        this.originalUrl = originalUrl;
     }
 
-    public DataControllerResponse(TResponse response, ResponseType type) {
-        this.response = response;
-        this.type = type;
+    public DataControllerResponse(TResponse response, DataSource.SourceType type) {
+        this(response, type, null);
     }
 
     public TResponse getResponse() {
         return response;
     }
 
-    public ResponseType getType() {
-        return type;
+    public DataSource.SourceType getSourceType() {
+        return sourceType;
+    }
+
+    public String getOriginalUrl() {
+        return originalUrl;
     }
 }
