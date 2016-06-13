@@ -9,6 +9,18 @@ public interface DataSourceStorage<TResponse> {
 
     class DataSourceParams {
 
+        public static DataSourceParams networkParams() {
+            return new DataSourceParams(DataSource.SourceType.NETWORK);
+        }
+
+        public static DataSourceParams diskParams() {
+            return new DataSourceParams(DataSource.SourceType.DISK);
+        }
+
+        public static DataSourceParams memoryParams() {
+            return new DataSourceParams(DataSource.SourceType.MEMORY);
+        }
+
         int position = -1;
 
         DataSource.SourceType sourceType;
