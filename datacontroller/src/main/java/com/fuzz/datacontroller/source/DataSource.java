@@ -103,6 +103,13 @@ public abstract class DataSource<TResponse> {
     }
 
     /**
+     * Clears out stored data. Will either delete its db instance, clear out memory, or erase something on disk.
+     */
+    public void clearStoredData(SourceParams sourceParams) {
+
+    }
+
+    /**
      * Calls {@link #doStore(DataControllerResponse)}
      * only if the {@link DataControllerResponse#getSourceType()} is different.
      * i.e comes from a different source.

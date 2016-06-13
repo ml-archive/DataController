@@ -40,6 +40,11 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
+    public void clearStoredData(SourceParams sourceParams) {
+        storage = null;
+    }
+
+    @Override
     public void cancel() {
     }
 }
