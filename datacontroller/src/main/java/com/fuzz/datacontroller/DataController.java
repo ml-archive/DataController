@@ -125,6 +125,13 @@ public class DataController<TResponse> {
         }
     }
 
+    /**
+     * @return True if we have associated callbacks on this DC.
+     */
+    public boolean hasCallbacks() {
+        return callbackGroup.hasCallbacks();
+    }
+
     public List<DataSource<TResponse>> getSources() {
         return new ArrayList<>(dataSourceStorage.sources());
     }
