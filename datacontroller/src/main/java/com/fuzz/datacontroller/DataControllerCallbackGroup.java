@@ -32,7 +32,7 @@ public class DataControllerCallbackGroup<TResponse> implements DataControllerCal
 
     public boolean hasCallbacks() {
         synchronized (callbacks) {
-            return !callbacks.isEmpty()
+            return !callbacks.isEmpty();
         }
     }
 
