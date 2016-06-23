@@ -51,4 +51,11 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
         return fromDataSource.getSourceType();
     }
 
+    public DataSource<TFromResponse> getFromDataSource() {
+        return fromDataSource;
+    }
+
+    public Mapper<TFromResponse, TResponse> getMapper() {
+        return mapper;
+    }
 }
