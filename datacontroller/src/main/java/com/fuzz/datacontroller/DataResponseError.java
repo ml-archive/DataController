@@ -62,9 +62,9 @@ public class DataResponseError {
     public Builder newBuilder() {
         Builder builder;
         if (exception != null) {
-            builder = new Builder(exception);
+            builder = new Builder(failedSource, exception);
         } else {
-            builder = new Builder(message);
+            builder = new Builder(failedSource, message);
         }
         return builder
                 .userFacingMessage(userFacingMessage)
@@ -101,7 +101,6 @@ public class DataResponseError {
             this.userFacingMessage = userFacingMessage;
             return this;
         }
-
 
         public DataResponseError build() {
             return new DataResponseError(this);

@@ -9,6 +9,10 @@ import com.fuzz.datacontroller.DataControllerResponse;
 public abstract class DataSource<TResponse> {
 
 
+    /**
+     * Describes where this {@link DataSource} information came from. This is especially useful
+     * when distinguishing whether information was loaded from network or storage.
+     */
     public enum SourceType {
 
         /**
@@ -27,6 +31,13 @@ public abstract class DataSource<TResponse> {
         NETWORK
     }
 
+    /**
+     * SourceParams provide the base class for all information passing between
+     * caller {@link DataController#requestData(SourceParams)} and receiver {@link DataSource}.
+     * <p></p>
+     * Some {@link DataSource} require more information that this base class cannot represent. It
+     * is up to them to provide the kind of params they expect.
+     */
     public static class SourceParams {
 
         /**
@@ -69,7 +80,6 @@ public abstract class DataSource<TResponse> {
             }
         });
     }
-
 
     public final RefreshStrategy<TResponse> getRefreshStrategy() {
         return refreshStrategy;
@@ -148,6 +158,10 @@ public abstract class DataSource<TResponse> {
      * Perform the actual information retrieval here. This might call a network, database, or file-based system.
      * Anything that is IO should be done on a separate thread. It is also up to the {@link DataSource}
      * to ensure that both success and error are properly called.
+     * <p></p>
+     * Also, it is up to the implementation of this method to provide a custom set
+     * of {@link SourceParams} if needed, so it can retrieve the specific information it might
+     * need to get.
      *
      * @param sourceParams The params used to retrieve information from the {@link DataSource}.
      * @param success      Called when a successful request returns.

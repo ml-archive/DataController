@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource.SourceParams;
 import com.fuzz.datacontroller.source.DataSource.SourceType;
 import com.fuzz.datacontroller.source.DataSourceStorage;
 import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;
@@ -61,7 +62,8 @@ public class DataController<TResponse> {
 
     private final DataSourceChainer<TResponse> dataSourceChainer;
 
-    public DataController(DataSourceStorage<TResponse> dataSourceStorage, DataSourceChainer<TResponse> dataSourceChainer) {
+    public DataController(DataSourceStorage<TResponse> dataSourceStorage,
+                          DataSourceChainer<TResponse> dataSourceChainer) {
         this.dataSourceStorage = dataSourceStorage;
         this.dataSourceChainer = dataSourceChainer;
     }
@@ -76,10 +78,17 @@ public class DataController<TResponse> {
                 });
     }
 
+    /**
+     * Registers a {@link DataSource} to provide data to this {@link DataController}.
+     */
     public void registerDataSource(DataSource<TResponse> dataSource) {
         dataSourceStorage.registerDataSource(dataSource);
     }
 
+    /**
+     * Removes a {@link DataSource} from this {@link DataController}, meaning info is no longer
+     * passed into the other sources within this {@link DataController}.
+     */
     public void deregisterDataSource(DataSource<TResponse> dataSource) {
         dataSourceStorage.deregisterDataSource(dataSource);
     }
@@ -92,24 +101,29 @@ public class DataController<TResponse> {
         callbackGroup.deregisterForCallbacks(dataControllerCallback);
     }
 
+    /**
+     * Removes all {@link DataControllerCallback} listening to this {@link DataController}.
+     */
     public void clearCallbacks() {
         callbackGroup.clearCallbacks();
     }
 
     /**
-     * Requests data with default parameters.
+     * Requests data with default parameters {@link SourceParams}
      */
     public void requestData() {
-        requestData(new DataSource.SourceParams());
+        requestData(new SourceParams());
     }
 
     /**
      * Requests data from each of the {@link DataSource} here, passing in a sourceParams object.
      * It will iterate through all sources and call each one.
      *
-     * @param sourceParams The params to use for a query.
+     * @param sourceParams The params to use for a query. Some {@link DataSource} require different
+     *                     parameters.
+     * @see SourceParams
      */
-    public void requestData(DataSource.SourceParams sourceParams) {
+    public void requestData(SourceParams sourceParams) {
         List<DataSource<TResponse>> sourceCollection = getSources();
         for (int i = 0; i < sourceCollection.size(); i++) {
             DataSource<TResponse> source = sourceCollection.get(i);
@@ -126,7 +140,7 @@ public class DataController<TResponse> {
      * @param sourceParams     The params used in the request.
      */
     public void requestSpecific(DataSourceStorage.DataSourceParams dataSourceParams,
-                                DataSource.SourceParams sourceParams) {
+                                SourceParams sourceParams) {
         DataSource<TResponse> dataSource = dataSourceStorage.getDataSource(dataSourceParams);
         dataSource.get(sourceParams, internalSuccessCallback, internalErrorCallback);
     }
