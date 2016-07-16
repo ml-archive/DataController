@@ -66,7 +66,7 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
         QueryTransaction.Builder<TModel> queryBuilder
                 = new QueryTransaction.Builder<>(modelQueriable);
         prepareQuery(queryBuilder, success);
-        currentLoadTransaction = FlowManager.getDatabase(getModelClass())
+        currentLoadTransaction = FlowManager.getDatabaseForTable(getModelClass())
                 .beginTransactionAsync(queryBuilder
                         .build())
                 .error(new Transaction.Error() {
@@ -84,7 +84,7 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
         ProcessModelTransaction.Builder<TModel> processBuilder = new ProcessModelTransaction
                 .Builder<>(this);
         prepareStore(processBuilder, dataControllerResponse);
-        currentSaveTransaction = FlowManager.getDatabase(getModelClass())
+        currentSaveTransaction = FlowManager.getDatabaseForTable(getModelClass())
                 .beginTransactionAsync(processBuilder.build())
                 .build();
         currentSaveTransaction.execute();
