@@ -7,6 +7,11 @@ import java.util.Collection;
  */
 public interface DataSourceStorage<TResponse> {
 
+    /**
+     * Used to distinctly acquire a {@link DataSource} from a {@link DataSourceStorage}. This
+     * flexibility enables multiple of the same {@link DataSource} via
+     * the {@link ListBasedDataSourceContainer}.
+     */
     class DataSourceParams {
 
         public static DataSourceParams networkParams() {

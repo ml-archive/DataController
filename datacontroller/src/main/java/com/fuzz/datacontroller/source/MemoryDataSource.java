@@ -25,7 +25,9 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
-    public void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error) {
+    public void doGet(SourceParams sourceParams,
+                      DataController.Success<TResponse> success,
+                      DataController.Error error) {
         success.onSuccess(new DataControllerResponse<>(storage, getSourceType()));
     }
 

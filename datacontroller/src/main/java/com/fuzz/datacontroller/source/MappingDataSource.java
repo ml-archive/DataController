@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller.source;
 
 import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController.DataControllerCallback;
 import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
@@ -8,15 +9,39 @@ import com.fuzz.datacontroller.DataControllerResponse;
  */
 public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TResponse> {
 
+    /**
+     * Defines how we map from one type of response to another.
+     *
+     * @param <TFromResponse> The response that is unique to this source and not its parent
+     *                        {@link DataController}.
+     * @param <TResponse>     The response the parent {@link DataController} expects that we map to.
+     */
     public interface Mapper<TFromResponse, TResponse> {
 
+        /**
+         * Provide the mapping from the {@link TFromResponse} to the {@link TResponse} so that
+         * the parent {@link DataController} can share it with other {@link DataSource} and
+         * {@link DataControllerCallback}.
+         */
         TResponse mapFrom(TFromResponse fromResponse);
 
+        /**
+         * Maps from a response of the {@link TResponse} that the parent {@link DataController}
+         * uses.
+         */
         TFromResponse mapTo(TResponse response);
     }
 
     private final DataSource<TFromResponse> fromDataSource;
     private final Mapper<TFromResponse, TResponse> mapper;
+
+    public DataSource<TFromResponse> getFromDataSource() {
+        return fromDataSource;
+    }
+
+    public Mapper<TFromResponse, TResponse> getMapper() {
+        return mapper;
+    }
 
     public MappingDataSource(DataSource<TFromResponse> fromDataSource,
                              Mapper<TFromResponse, TResponse> mapper) {
@@ -30,11 +55,17 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
     }
 
     @Override
+    public SourceType getSourceType() {
+        return fromDataSource.getSourceType();
+    }
+
+    @Override
     protected void doGet(SourceParams sourceParams, final DataController.Success<TResponse> success, DataController.Error error) {
         fromDataSource.doGet(sourceParams, new DataController.Success<TFromResponse>() {
             @Override
             public void onSuccess(DataControllerResponse<TFromResponse> response) {
-                success.onSuccess(new DataControllerResponse<>(mapper.mapFrom(response.getResponse()),
+                TResponse transformedResponse = mapper.mapFrom(response.getResponse());
+                success.onSuccess(new DataControllerResponse<>(transformedResponse,
                         response.getSourceType(), response.getOriginalUrl()));
             }
         }, error);
@@ -42,20 +73,9 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
 
     @Override
     protected void doStore(DataControllerResponse<TResponse> response) {
-        fromDataSource.doStore(new DataControllerResponse<>(mapper.mapTo(response.getResponse()),
+        TFromResponse transformedResponse = mapper.mapTo(response.getResponse());
+        fromDataSource.doStore(new DataControllerResponse<>(transformedResponse,
                 response.getSourceType(), response.getOriginalUrl()));
     }
 
-    @Override
-    public SourceType getSourceType() {
-        return fromDataSource.getSourceType();
-    }
-
-    public DataSource<TFromResponse> getFromDataSource() {
-        return fromDataSource;
-    }
-
-    public Mapper<TFromResponse, TResponse> getMapper() {
-        return mapper;
-    }
 }
