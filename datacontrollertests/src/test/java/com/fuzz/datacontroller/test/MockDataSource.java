@@ -18,7 +18,7 @@ public abstract class MockDataSource<TResponse> extends DataSource<TResponse> {
     protected void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error) {
         isGetCalled = true;
         if (sourceParams == null) {
-            error.onFailure(new DataResponseError(""));
+            error.onFailure(new DataResponseError.Builder(getSourceType(), "").build());
         } else {
             success.onSuccess(new DataControllerResponse<TResponse>(null, getSourceType()));
         }

@@ -45,14 +45,15 @@ public abstract class OkHttpDataSource<TResponse> extends DataSource<TResponse> 
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                error.onFailure(new DataResponseError(e));
+                error.onFailure(new DataResponseError.Builder(getSourceType(), e).build());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 if (response.isSuccessful()) {
                     try {
-                        TResponse tResponse = NetworkApiManager.get().getGson().fromJson(response.body().charStream(), responseClass);
+                        TResponse tResponse = NetworkApiManager.get().getGson()
+                                .fromJson(response.body().charStream(), responseClass);
                         callSuccess(tResponse, call.request().url().toString(), success);
                     } catch (Exception e) {
                         callFailure(e, null, error);
@@ -81,9 +82,9 @@ public abstract class OkHttpDataSource<TResponse> extends DataSource<TResponse> 
 
     protected void callFailure(Throwable throwable, String responseError, DataController.Error error) {
         if (throwable != null) {
-            error.onFailure(new DataResponseError(throwable));
+            error.onFailure(new DataResponseError.Builder(getSourceType(), throwable).build());
         } else {
-            error.onFailure(new DataResponseError(responseError));
+            error.onFailure(new DataResponseError.Builder(getSourceType(), responseError).build());
         }
     }
 

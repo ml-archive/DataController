@@ -1,11 +1,11 @@
 package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataResponseError;
+import com.fuzz.datacontroller.source.DataSource;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -16,20 +16,25 @@ public class DataResponseErrorTest {
 
     @Test
     public void test_dataResponse() {
-        DataResponseError responseError = new DataResponseError("This is a test");
+        DataResponseError responseError = new DataResponseError.Builder(
+                DataSource.SourceType.NETWORK,
+                "This is a test")
+                .build();
         assertEquals("This is a test", responseError.message());
         assertEquals(responseError.message(), responseError.userFacingMessage());
         assertEquals(0, responseError.status());
-        assertEquals(false, responseError.isNetworkError());
+        assertEquals(DataSource.SourceType.NETWORK, responseError.failedSource());
         assertNull(null, responseError.exception());
     }
 
     @Test
     public void test_throwableResponse() {
-        DataResponseError responseError = new DataResponseError(new RuntimeException());
+        DataResponseError responseError = new DataResponseError.Builder(
+                DataSource.SourceType.NETWORK, new RuntimeException())
+                .build();
         assertNotNull(responseError.exception());
         assertEquals(0, responseError.status());
         assertEquals(null, responseError.message());
-        assertFalse(responseError.isNetworkError());
+        assertEquals(DataSource.SourceType.NETWORK, responseError.failedSource());
     }
 }

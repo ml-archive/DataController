@@ -54,7 +54,8 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<List<TMod
                 .error(new Transaction.Error() {
                     @Override
                     public void onError(Transaction transaction, Throwable throwable) {
-                        error.onFailure(new DataResponseError(throwable));
+                        error.onFailure(new DataResponseError.Builder(getSourceType(), throwable)
+                                .build());
                     }
                 })
                 .build();
