@@ -35,4 +35,20 @@ public class DataItem extends BaseModel {
     public String getData() {
         return data;
     }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public void setData(String data) {
+        this.data = data;
+    }
 }

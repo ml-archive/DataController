@@ -53,4 +53,9 @@ public class DBFlowSingleDataSource<TModel extends Model>
             store(response);
         }
     }
+
+    @Override
+    public TModel getStoredData(SourceParams sourceParams) {
+        return getParams(sourceParams).getModelQueriable().querySingle();
+    }
 }

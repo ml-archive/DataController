@@ -58,6 +58,11 @@ public class DBFlowListDataSource<TModel extends Model>
         }
     }
 
+    @Override
+    public List<TModel> getStoredData(SourceParams sourceParams) {
+        return getParams(sourceParams).getModelQueriable().queryList();
+    }
+
     public void storeAll(List<TModel> modelList) {
         if (modelList != null && !modelList.isEmpty()) {
             //noinspection unchecked
