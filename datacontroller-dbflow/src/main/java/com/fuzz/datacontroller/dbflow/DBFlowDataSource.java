@@ -38,7 +38,9 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<TModel> {
     protected void doGet(SourceParams sourceParams,
                          DataController.Success<TModel> success,
                          DataController.Error error) {
-        TModel model = getParams(sourceParams).getModelQueriable().querySingle();
+        TModel model = DBFlowParams.getParams(defaultParams, sourceParams)
+                .getModelQueriable()
+                .querySingle();
         success.onSuccess(new DataControllerResponse<>(model, getSourceType()));
     }
 
@@ -61,17 +63,4 @@ public class DBFlowDataSource<TModel extends Model> extends DataSource<TModel> {
         }
     }
 
-    protected DBFlowParamsInterface<TModel> getParams(SourceParams sourceParams) {
-        DBFlowParamsInterface<TModel> params = defaultParams;
-        if (sourceParams instanceof DBFlowParamsInterface) {
-            //noinspection unchecked
-            params = (DBFlowParamsInterface<TModel>) sourceParams;
-        }
-
-        if (params == null) {
-            throw new IllegalArgumentException("The passed dataSource params must implement "
-                    + DBFlowParamsInterface.class.getSimpleName());
-        }
-        return params;
-    }
 }
