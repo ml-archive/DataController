@@ -17,19 +17,19 @@ public class DataResponseErrorTest {
     @Test
     public void test_dataResponse() {
         DataResponseError responseError = new DataResponseError("This is a test");
-        assertEquals("This is a test", responseError.getMessage());
-        assertEquals(responseError.getMessage(), responseError.getUserFacingMessage());
-        assertEquals(0, responseError.getStatusCode());
+        assertEquals("This is a test", responseError.message());
+        assertEquals(responseError.message(), responseError.userFacingMessage());
+        assertEquals(0, responseError.status());
         assertEquals(false, responseError.isNetworkError());
-        assertNull(null, responseError.getThrowable());
+        assertNull(null, responseError.exception());
     }
 
     @Test
     public void test_throwableResponse() {
         DataResponseError responseError = new DataResponseError(new RuntimeException());
-        assertNotNull(responseError.getThrowable());
-        assertEquals(0, responseError.getStatusCode());
-        assertEquals(null, responseError.getMessage());
+        assertNotNull(responseError.exception());
+        assertEquals(0, responseError.status());
+        assertEquals(null, responseError.message());
         assertFalse(responseError.isNetworkError());
     }
 }
