@@ -1,23 +1,24 @@
 package com.fuzz.datacontroller;
 
-import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource.SourceType;
 
 /**
- * Description: Represents a response object called from a {@link DataController}.
+ * Description: Represents a response object called from a {@link DataController}. This
+ * class contains the original response class, the {@link SourceType} and other information.
  */
 public class DataControllerResponse<TResponse> {
 
     private final TResponse response;
-    private final DataSource.SourceType sourceType;
+    private final SourceType sourceType;
     private final String originalUrl;
 
-    public DataControllerResponse(TResponse response, DataSource.SourceType type, String originalUrl) {
+    public DataControllerResponse(TResponse response, SourceType type, String originalUrl) {
         this.response = response;
         this.sourceType = type;
         this.originalUrl = originalUrl;
     }
 
-    public DataControllerResponse(TResponse response, DataSource.SourceType type) {
+    public DataControllerResponse(TResponse response, SourceType type) {
         this(response, type, null);
     }
 
@@ -25,7 +26,7 @@ public class DataControllerResponse<TResponse> {
         return response;
     }
 
-    public DataSource.SourceType getSourceType() {
+    public SourceType getSourceType() {
         return sourceType;
     }
 

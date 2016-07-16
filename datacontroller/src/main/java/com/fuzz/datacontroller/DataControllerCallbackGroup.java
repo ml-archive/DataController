@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Description: Provides easy grouping of callbacks.
+ * Description: Groups a set of {@link DataControllerCallback} into one unified group.
  */
 public class DataControllerCallbackGroup<TResponse> implements DataControllerCallback<TResponse> {
 

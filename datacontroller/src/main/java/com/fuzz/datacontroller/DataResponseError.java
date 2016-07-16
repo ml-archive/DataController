@@ -1,8 +1,10 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.source.DataSource;
+
 /**
- * Description: The main Error class that returns in a callback. Override this class to provide different kind
- * of errors.
+ * Description: The main error class that returns in a callback. Provides a unified set of data
+ * about the error that occurred here.
  */
 public class DataResponseError {
 
@@ -10,19 +12,23 @@ public class DataResponseError {
     private final long status;
     private final Throwable exception;
     private final String userFacingMessage;
+    private final DataSource.SourceType failedSource;
 
     private DataResponseError(Builder builder) {
         message = builder.message;
         status = builder.statusCode;
         exception = builder.exception;
         userFacingMessage = builder.userFacingMessage;
+        failedSource = builder.failedSource;
     }
 
     @Override
     public String toString() {
-        String value = userFacingMessage;
+        String value = "Failure within " + failedSource + ": ";
+        value += userFacingMessage;
         if (status > 0) {
-            value += ", status = " + status;}
+            value += ", status = " + status;
+        }
 
         if (exception != null) {
             value += ", exception = " + exception;
@@ -46,6 +52,10 @@ public class DataResponseError {
         return exception;
     }
 
+    public DataSource.SourceType failedSource() {
+        return failedSource;
+    }
+
     /**
      * @return A new instance of a {@link Builder} for modification.
      */
@@ -67,14 +77,17 @@ public class DataResponseError {
         private Throwable exception;
         private long statusCode;
         private String userFacingMessage;
+        private DataSource.SourceType failedSource;
 
-        public Builder(Throwable exception) {
+        public Builder(DataSource.SourceType failedSource, Throwable exception) {
+            this.failedSource = failedSource;
             this.exception = exception;
             this.message = exception.getMessage();
             this.userFacingMessage = exception.getMessage();
         }
 
-        public Builder(String message) {
+        public Builder(DataSource.SourceType failedSource, String message) {
+            this.failedSource = failedSource;
             this.message = message;
             this.userFacingMessage = message;
         }

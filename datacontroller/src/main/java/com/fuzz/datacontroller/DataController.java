@@ -10,7 +10,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Description: Provides basic implementation of a data controller.
+ * Description: Provides basic implementation of a data controller. DataControllers are managers
+ * for how data is retrieved and stored. Generally, best practice is to use one {@link DataController}
+ * per type of request. Such as a list loading one kind of information in a specific way should
+ * not be group with loading another kind of information.
  */
 public class DataController<TResponse> {
 
@@ -19,6 +22,13 @@ public class DataController<TResponse> {
      */
     public interface Error {
 
+        /**
+         * Called when a {@link DataSource} fails to load data. This can happen at any point within
+         * the source chain.
+         *
+         * @param dataResponseError The error that occurred. Whether its from the network or database.
+         *                          In memory sources should never call this method.
+         */
         void onFailure(DataResponseError dataResponseError);
     }
 
@@ -27,6 +37,12 @@ public class DataController<TResponse> {
      */
     public interface Success<TResponse> {
 
+        /**
+         * Called when a response succeeds. This is called once for EVERY {@link DataSource}
+         * registered in this {@link DataController}.
+         *
+         * @param response The response from a successful callback.
+         */
         void onSuccess(DataControllerResponse<TResponse> response);
     }
 
