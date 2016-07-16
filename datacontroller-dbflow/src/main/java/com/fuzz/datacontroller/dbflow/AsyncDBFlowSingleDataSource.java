@@ -9,7 +9,8 @@ import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTr
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
 
 /**
- * Description:
+ * Description: Loads and saves a single {@link TModel} to/from the database.
+ * Provides data from the DB when used.
  */
 public class AsyncDBFlowSingleDataSource<TModel extends Model>
         extends BaseAsyncDBFlowDataSource<TModel, TModel> {

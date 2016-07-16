@@ -9,24 +9,24 @@ import com.raizlabs.android.dbflow.structure.Model;
  * Description: Provides a {@link DataSource} for loading and storing a single {@link TModel}. These
  * operations happen synchronously.
  */
-public class DBFlowDataSource<TModel extends Model> extends DataSource<TModel> {
+public class DBFlowSingleDataSource<TModel extends Model> extends DataSource<TModel> {
 
     private DBFlowParamsInterface<TModel> defaultParams;
 
-    public DBFlowDataSource() {
+    public DBFlowSingleDataSource() {
     }
 
-    public DBFlowDataSource(RefreshStrategy<TModel> refreshStrategy) {
+    public DBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy) {
         super(refreshStrategy);
     }
 
-    public DBFlowDataSource(RefreshStrategy<TModel> refreshStrategy,
-                            DBFlowParamsInterface<TModel> defaultParams) {
+    public DBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
+                                  DBFlowParamsInterface<TModel> defaultParams) {
         super(refreshStrategy);
         this.defaultParams = defaultParams;
     }
 
-    public DBFlowDataSource(DBFlowParamsInterface<TModel> defaultParams) {
+    public DBFlowSingleDataSource(DBFlowParamsInterface<TModel> defaultParams) {
         this.defaultParams = defaultParams;
     }
 

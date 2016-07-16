@@ -5,7 +5,7 @@ import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
 import com.raizlabs.android.dbflow.structure.Model;
 
 /**
- * Description: Represent the default params for {@link DBFlowDataSource}. It specifies the
+ * Description: Represent the default params for {@link DBFlowSingleDataSource}. It specifies the
  * {@link ModelQueriable} it will use to load from the DB.
  */
 public class DBFlowParams<TModel extends Model>
