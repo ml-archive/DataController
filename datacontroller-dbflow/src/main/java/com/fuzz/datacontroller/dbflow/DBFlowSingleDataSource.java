@@ -24,12 +24,12 @@ public class DBFlowSingleDataSource<TModel extends Model>
     public DBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
                                   DBFlowParamsInterface<TModel> defaultParams,
                                   Class<TModel> tModelClass) {
-        super(refreshStrategy, defaultParams, tModelClass);
+        super(refreshStrategy, defaultParams);
     }
 
     public DBFlowSingleDataSource(DBFlowParamsInterface<TModel> defaultParams,
                                   Class<TModel> tModelClass) {
-        super(defaultParams, tModelClass);
+        super(defaultParams);
     }
 
     @Override

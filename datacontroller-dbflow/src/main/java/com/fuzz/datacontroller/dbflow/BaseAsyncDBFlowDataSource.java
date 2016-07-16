@@ -29,14 +29,12 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
     }
 
     public BaseAsyncDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
-                                     DBFlowParamsInterface<TModel> defaultParams,
-                                     Class<TModel> tModelClass) {
-        super(refreshStrategy, defaultParams, tModelClass);
+                                     DBFlowParamsInterface<TModel> defaultParams) {
+        super(refreshStrategy, defaultParams);
     }
 
-    public BaseAsyncDBFlowDataSource(DBFlowParamsInterface<TModel> defaultParams,
-                                     Class<TModel> tModelClass) {
-        super(defaultParams, tModelClass);
+    public BaseAsyncDBFlowDataSource(DBFlowParamsInterface<TModel> defaultParams) {
+        super(defaultParams);
     }
 
     public void cancelSaveIfNotNull() {

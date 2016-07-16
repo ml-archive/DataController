@@ -27,14 +27,12 @@ public class DBFlowListDataSource<TModel extends Model>
     }
 
     public DBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
-                                DBFlowParamsInterface<TModel> defaultParams,
-                                Class<TModel> tModelClass) {
-        super(refreshStrategy, defaultParams, tModelClass);
+                                DBFlowParamsInterface<TModel> defaultParams) {
+        super(refreshStrategy, defaultParams);
     }
 
-    public DBFlowListDataSource(DBFlowParamsInterface<TModel> defaultParams,
-                                Class<TModel> tModelClass) {
-        super(defaultParams, tModelClass);
+    public DBFlowListDataSource(DBFlowParamsInterface<TModel> defaultParams) {
+        super(defaultParams);
     }
 
     @Override

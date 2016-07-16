@@ -25,17 +25,15 @@ public abstract class BaseDBFlowDataSource<TModel extends Model, TSource>
     }
 
     public BaseDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
-                                DBFlowParamsInterface<TModel> defaultParams,
-                                Class<TModel> modelClass) {
+                                DBFlowParamsInterface<TModel> defaultParams) {
         super(refreshStrategy);
         this.defaultParams = defaultParams;
-        this.modelClass = modelClass;
+        this.modelClass = defaultParams.getModelQueriable().getTable();
     }
 
-    public BaseDBFlowDataSource(DBFlowParamsInterface<TModel> defaultParams,
-                                Class<TModel> modelClass) {
+    public BaseDBFlowDataSource(DBFlowParamsInterface<TModel> defaultParams) {
         this.defaultParams = defaultParams;
-        this.modelClass = modelClass;
+        this.modelClass = defaultParams.getModelQueriable().getTable();
     }
 
     @Override

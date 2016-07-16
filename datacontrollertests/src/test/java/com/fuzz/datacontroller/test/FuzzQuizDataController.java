@@ -24,7 +24,7 @@ public class FuzzQuizDataController extends DataController<List<DataItem>> {
         super(new TreeMapSingleTypeDataSourceContainer<List<DataItem>>(),
                 new FirstStorageDataSourceChainer<List<DataItem>>());
         registerDataSource(new MemoryDataSource<List<DataItem>>());
-        registerDataSource(new AsyncDBFlowListDataSource<DataItem>(TestDatabase.class,
+        registerDataSource(new AsyncDBFlowListDataSource<DataItem>(
                 new DBFlowParams<>(SQLite.select().from(DataItem.class))) {
             @Override
             protected void prepareQuery(QueryTransaction.Builder<DataItem> queryBuilder,

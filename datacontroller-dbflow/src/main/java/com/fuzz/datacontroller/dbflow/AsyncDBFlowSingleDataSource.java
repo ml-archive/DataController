@@ -15,24 +15,22 @@ import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransacti
 public class AsyncDBFlowSingleDataSource<TModel extends Model>
         extends BaseAsyncDBFlowDataSource<TModel, TModel> {
 
-    public AsyncDBFlowSingleDataSource(Class<?> databaseClass) {
-        super(databaseClass);
+    public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
+                                       Class<TModel> tModelClass) {
+        super(refreshStrategy, tModelClass);
+    }
+
+    public AsyncDBFlowSingleDataSource(Class<TModel> tModelClass) {
+        super(tModelClass);
     }
 
     public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
-                                       Class<?> databaseClass) {
-        super(refreshStrategy, databaseClass);
+                                       DBFlowParamsInterface<TModel> defaultParams) {
+        super(refreshStrategy, defaultParams);
     }
 
-    public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
-                                       Class<?> databaseClass,
-                                       DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy, databaseClass, defaultParams);
-    }
-
-    public AsyncDBFlowSingleDataSource(Class<?> databaseClass,
-                                       DBFlowParamsInterface<TModel> defaultParams) {
-        super(databaseClass, defaultParams);
+    public AsyncDBFlowSingleDataSource(DBFlowParamsInterface<TModel> defaultParams) {
+        super(defaultParams);
     }
 
     @Override
@@ -51,6 +49,7 @@ public class AsyncDBFlowSingleDataSource<TModel extends Model>
             }
         });
     }
+
     @Override
     protected void prepareStore(ProcessModelTransaction.Builder<TModel> processBuilder,
                                 DataControllerResponse<TModel> response) {

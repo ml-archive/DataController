@@ -18,24 +18,22 @@ public class AsyncDBFlowListDataSource<TModel extends Model>
         extends BaseAsyncDBFlowDataSource<TModel, List<TModel>>
         implements ProcessModelTransaction.ProcessModel<TModel> {
 
-    public AsyncDBFlowListDataSource(Class<?> databaseClass) {
-        super(databaseClass);
+    public AsyncDBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
+                                     Class<TModel> tModelClass) {
+        super(refreshStrategy, tModelClass);
+    }
+
+    public AsyncDBFlowListDataSource(Class<TModel> tModelClass) {
+        super(tModelClass);
     }
 
     public AsyncDBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
-                                     Class<?> databaseClass) {
-        super(refreshStrategy, databaseClass);
+                                     DBFlowParamsInterface<TModel> defaultParams) {
+        super(refreshStrategy, defaultParams);
     }
 
-    public AsyncDBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
-                                     Class<?> databaseClass,
-                                     DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy, databaseClass, defaultParams);
-    }
-
-    public AsyncDBFlowListDataSource(Class<?> databaseClass,
-                                     DBFlowParamsInterface<TModel> defaultParams) {
-        super(databaseClass, defaultParams);
+    public AsyncDBFlowListDataSource(DBFlowParamsInterface<TModel> defaultParams) {
+        super(defaultParams);
     }
 
     @Override
