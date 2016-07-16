@@ -9,25 +9,27 @@ import com.raizlabs.android.dbflow.structure.Model;
  * Description: Provides a {@link DataSource} for loading and storing a single {@link TModel}. These
  * operations happen synchronously.
  */
-public class DBFlowSingleDataSource<TModel extends Model> extends DataSource<TModel> {
+public class DBFlowSingleDataSource<TModel extends Model>
+        extends BaseDBFlowDataSource<TModel, TModel> {
 
-    private DBFlowParamsInterface<TModel> defaultParams;
-
-    public DBFlowSingleDataSource() {
+    public DBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
+                                  Class<TModel> tModelClass) {
+        super(refreshStrategy, tModelClass);
     }
 
-    public DBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy) {
-        super(refreshStrategy);
+    public DBFlowSingleDataSource(Class<TModel> tModelClass) {
+        super(tModelClass);
     }
 
     public DBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
-                                  DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy);
-        this.defaultParams = defaultParams;
+                                  DBFlowParamsInterface<TModel> defaultParams,
+                                  Class<TModel> tModelClass) {
+        super(refreshStrategy, defaultParams, tModelClass);
     }
 
-    public DBFlowSingleDataSource(DBFlowParamsInterface<TModel> defaultParams) {
-        this.defaultParams = defaultParams;
+    public DBFlowSingleDataSource(DBFlowParamsInterface<TModel> defaultParams,
+                                  Class<TModel> tModelClass) {
+        super(defaultParams, tModelClass);
     }
 
     @Override
@@ -38,7 +40,7 @@ public class DBFlowSingleDataSource<TModel extends Model> extends DataSource<TMo
     protected void doGet(SourceParams sourceParams,
                          DataController.Success<TModel> success,
                          DataController.Error error) {
-        TModel model = DBFlowParams.getParams(defaultParams, sourceParams)
+        TModel model = getParams(sourceParams)
                 .getModelQueriable()
                 .querySingle();
         success.onSuccess(new DataControllerResponse<>(model, getSourceType()));
@@ -51,16 +53,4 @@ public class DBFlowSingleDataSource<TModel extends Model> extends DataSource<TMo
             store(response);
         }
     }
-
-    @Override
-    public SourceType getSourceType() {
-        return SourceType.DISK;
-    }
-
-    public void store(TModel model) {
-        if (model != null) {
-            model.save();
-        }
-    }
-
 }

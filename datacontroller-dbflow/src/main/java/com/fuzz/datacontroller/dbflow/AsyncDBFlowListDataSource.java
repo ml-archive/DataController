@@ -39,6 +39,11 @@ public class AsyncDBFlowListDataSource<TModel extends Model>
     }
 
     @Override
+    public List<TModel> getStoredData(SourceParams sourceParams) {
+        return getParams(sourceParams).getModelQueriable().queryList();
+    }
+
+    @Override
     protected void prepareQuery(QueryTransaction.Builder<TModel> queryBuilder,
                                 final DataController.Success<List<TModel>> success) {
         queryBuilder.queryListResult(new QueryTransaction.QueryResultListCallback<TModel>() {

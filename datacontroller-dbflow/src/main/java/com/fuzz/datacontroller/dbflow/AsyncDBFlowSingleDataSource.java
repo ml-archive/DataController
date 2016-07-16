@@ -36,6 +36,11 @@ public class AsyncDBFlowSingleDataSource<TModel extends Model>
     }
 
     @Override
+    public TModel getStoredData(SourceParams sourceParams) {
+        return getParams(sourceParams).getModelQueriable().querySingle();
+    }
+
+    @Override
     protected void prepareQuery(QueryTransaction.Builder<TModel> queryBuilder,
                                 final DataController.Success<TModel> success) {
         queryBuilder.querySingleResult(new QueryTransaction.QueryResultSingleCallback<TModel>() {
@@ -46,7 +51,6 @@ public class AsyncDBFlowSingleDataSource<TModel extends Model>
             }
         });
     }
-
     @Override
     protected void prepareStore(ProcessModelTransaction.Builder<TModel> processBuilder,
                                 DataControllerResponse<TModel> response) {

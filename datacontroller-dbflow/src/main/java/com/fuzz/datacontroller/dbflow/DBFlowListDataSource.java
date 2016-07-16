@@ -15,26 +15,26 @@ import java.util.List;
  * come from the same database.
  */
 public class DBFlowListDataSource<TModel extends Model>
-        extends DataSource<List<TModel>>
-        implements ProcessModelTransaction.ProcessModel<TModel> {
+        extends BaseDBFlowDataSource<TModel, List<TModel>> {
 
-    private DBFlowParamsInterface<TModel> defaultParams;
-
-    public DBFlowListDataSource() {
+    public DBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
+                                Class<TModel> tModelClass) {
+        super(refreshStrategy, tModelClass);
     }
 
-    public DBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy) {
-        super(refreshStrategy);
+    public DBFlowListDataSource(Class<TModel> tModelClass) {
+        super(tModelClass);
     }
 
     public DBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
-                                DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy);
-        this.defaultParams = defaultParams;
+                                DBFlowParamsInterface<TModel> defaultParams,
+                                Class<TModel> tModelClass) {
+        super(refreshStrategy, defaultParams, tModelClass);
     }
 
-    public DBFlowListDataSource(DBFlowParamsInterface<TModel> defaultParams) {
-        this.defaultParams = defaultParams;
+    public DBFlowListDataSource(DBFlowParamsInterface<TModel> defaultParams,
+                                Class<TModel> tModelClass) {
+        super(defaultParams, tModelClass);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class DBFlowListDataSource<TModel extends Model>
     protected void doGet(SourceParams sourceParams,
                          DataController.Success<List<TModel>> success,
                          DataController.Error error) {
-        List<TModel> modelList = DBFlowParams.getParams(defaultParams, sourceParams)
+        List<TModel> modelList = getParams(sourceParams)
                 .getModelQueriable().queryList();
         success.onSuccess(new DataControllerResponse<>(modelList, getSourceType()));
     }
@@ -57,22 +57,6 @@ public class DBFlowListDataSource<TModel extends Model>
             if (response != null) {
                 storeAll(response);
             }
-        }
-    }
-
-    @Override
-    public SourceType getSourceType() {
-        return SourceType.DISK;
-    }
-
-    @Override
-    public void processModel(TModel model) {
-        store(model);
-    }
-
-    public void store(TModel model) {
-        if (model != null) {
-            model.save();
         }
     }
 

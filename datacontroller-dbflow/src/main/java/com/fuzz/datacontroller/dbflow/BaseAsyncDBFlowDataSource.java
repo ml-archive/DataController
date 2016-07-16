@@ -3,7 +3,6 @@ package com.fuzz.datacontroller.dbflow;
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
-import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
 import com.raizlabs.android.dbflow.structure.Model;
@@ -15,36 +14,29 @@ import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
  * Description: Provides common functionality for operating with DBFlow asynchronously.
  */
 public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
-        extends DataSource<TSource> implements ProcessModelTransaction.ProcessModel<TModel> {
-
-    private final Class<?> databaseClass;
-    private DBFlowParamsInterface<TModel> defaultParams;
+        extends BaseDBFlowDataSource<TModel, TSource> {
 
     private Transaction currentSaveTransaction;
     private Transaction currentLoadTransaction;
 
-    public BaseAsyncDBFlowDataSource(Class<?> databaseClass) {
-        this.databaseClass = databaseClass;
+    public BaseAsyncDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
+                                     Class<TModel> tModelClass) {
+        super(refreshStrategy, tModelClass);
+    }
+
+    public BaseAsyncDBFlowDataSource(Class<TModel> tModelClass) {
+        super(tModelClass);
     }
 
     public BaseAsyncDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
-                                     Class<?> databaseClass) {
-        super(refreshStrategy);
-        this.databaseClass = databaseClass;
+                                     DBFlowParamsInterface<TModel> defaultParams,
+                                     Class<TModel> tModelClass) {
+        super(refreshStrategy, defaultParams, tModelClass);
     }
 
-    public BaseAsyncDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
-                                     Class<?> databaseClass,
-                                     DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy);
-        this.databaseClass = databaseClass;
-        this.defaultParams = defaultParams;
-    }
-
-    public BaseAsyncDBFlowDataSource(Class<?> databaseClass,
-                                     DBFlowParamsInterface<TModel> defaultParams) {
-        this.databaseClass = databaseClass;
-        this.defaultParams = defaultParams;
+    public BaseAsyncDBFlowDataSource(DBFlowParamsInterface<TModel> defaultParams,
+                                     Class<TModel> tModelClass) {
+        super(defaultParams, tModelClass);
     }
 
     public void cancelSaveIfNotNull() {
@@ -61,12 +53,6 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
         }
     }
 
-    public void store(TModel model) {
-        if (model != null) {
-            model.save();
-        }
-    }
-
     @Override
     public void cancel() {
         cancelSaveIfNotNull();
@@ -77,12 +63,12 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
     protected void doGet(SourceParams sourceParams,
                          final DataController.Success<TSource> success,
                          final DataController.Error error) {
-        DBFlowParamsInterface<TModel> params = DBFlowParams.getParams(defaultParams, sourceParams);
+        DBFlowParamsInterface<TModel> params = getParams(sourceParams);
         ModelQueriable<TModel> modelQueriable = params.getModelQueriable();
         QueryTransaction.Builder<TModel> queryBuilder
                 = new QueryTransaction.Builder<>(modelQueriable);
         prepareQuery(queryBuilder, success);
-        currentLoadTransaction = FlowManager.getDatabase(databaseClass)
+        currentLoadTransaction = FlowManager.getDatabase(getModelClass())
                 .beginTransactionAsync(queryBuilder
                         .build())
                 .error(new Transaction.Error() {
@@ -100,24 +86,10 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
         ProcessModelTransaction.Builder<TModel> processBuilder = new ProcessModelTransaction
                 .Builder<>(this);
         prepareStore(processBuilder, dataControllerResponse);
-        currentSaveTransaction = FlowManager.getDatabase(databaseClass)
+        currentSaveTransaction = FlowManager.getDatabase(getModelClass())
                 .beginTransactionAsync(processBuilder.build())
                 .build();
         currentSaveTransaction.execute();
-    }
-
-    @Override
-    public void processModel(TModel model) {
-        store(model);
-    }
-
-    @Override
-    public SourceType getSourceType() {
-        return SourceType.DISK;
-    }
-
-    protected DBFlowParamsInterface<TModel> getParams(SourceParams sourceParams) {
-        return DBFlowParams.getParams(defaultParams, sourceParams);
     }
 
     protected abstract void prepareQuery(QueryTransaction.Builder<TModel> queryBuilder,
