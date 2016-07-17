@@ -8,7 +8,8 @@ import okhttp3.Call;
  * Description: Represent the default params for {@link OkHttpDataSource}. It specifies the specific
  * {@link Call} to use when it loads from network.
  */
-public class OkHttpParams extends DataSource.SourceParams {
+public class OkHttpParams extends DataSource.SourceParams
+        implements OkHttpDataSource.OkHttpParamsInterface {
 
     private final Call call;
 
@@ -16,6 +17,7 @@ public class OkHttpParams extends DataSource.SourceParams {
         this.call = call;
     }
 
+    @Override
     public Call getCall() {
         return call;
     }

@@ -24,13 +24,13 @@ dependencies {
 
     compile project(":datacontroller")
     compile project(":datacontroller-dbflow")
+    compile project(":datacontroller-okhttp")
 
     testApt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
     testCompile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflow_version}"
     testCompile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
 
     testCompile 'junit:junit:4.12'
-    testCompile 'com.squareup.okhttp3:okhttp:3.2.0'
     testCompile 'com.google.code.gson:gson:2.6.2'
     testCompile "org.robolectric:robolectric:3.0"
 }

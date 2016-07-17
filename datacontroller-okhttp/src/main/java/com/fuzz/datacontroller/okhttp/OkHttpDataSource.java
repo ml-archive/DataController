@@ -104,17 +104,35 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
         return new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                error.onFailure(new DataResponseError.Builder(getSourceType(), e)
-                        .build());
+                handleFailure(call, e, success, error);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                success.onSuccess(new DataControllerResponse<>(
-                        responseConverter.convert(call, response), getSourceType()
-                ));
+                handleResponse(call, response, success, error);
             }
         };
+    }
+
+    protected void handleFailure(Call call, IOException e,
+                                 DataController.Success<TResponse> success,
+                                 DataController.Error error) {
+        error.onFailure(new DataResponseError.Builder(getSourceType(), e)
+                .build());
+    }
+
+    protected void handleResponse(Call call, Response response,
+                                  DataController.Success<TResponse> success,
+                                  DataController.Error error) {
+        if (response.isSuccessful()) {
+            success.onSuccess(new DataControllerResponse<>(
+                    responseConverter.convert(call, response), getSourceType()
+            ));
+        } else {
+            error.onFailure(new DataResponseError
+                    .Builder(getSourceType(), response.message())
+                    .build());
+        }
     }
 
     protected OkHttpParamsInterface getParams(SourceParams sourceParams) {
