@@ -1,0 +1,7 @@
+apply plugin: 'java'
+
+dependencies {
+    compile project(":datacontroller")
+
+    compile 'com.squareup.okhttp3:okhttp:3.4.1'
+}

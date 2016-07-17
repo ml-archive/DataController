@@ -1,1 +1,1 @@
-include ':datacontroller', ':datacontrollertests', ':datacontroller-dbflow'
+include ':datacontroller', ':datacontrollertests', ':datacontroller-dbflow', ':datacontroller-okhttp'

@@ -25,6 +25,14 @@ public class DataResponseErrorTest {
         assertEquals(0, responseError.status());
         assertEquals(DataSource.SourceType.NETWORK, responseError.failedSource());
         assertNull(null, responseError.exception());
+
+        DataResponseError newError = responseError.newBuilder().build();
+        assertEquals(responseError.message(), newError.message());
+        assertEquals(responseError.userFacingMessage(), newError.userFacingMessage());
+        assertEquals(responseError.exception(), newError.exception());
+        assertEquals(responseError.failedSource(), newError.failedSource());
+        assertEquals(responseError.status(), newError.status());
+        assertEquals(responseError.toString(), newError.toString());
     }
 
     @Test
@@ -36,5 +44,14 @@ public class DataResponseErrorTest {
         assertEquals(0, responseError.status());
         assertEquals(null, responseError.message());
         assertEquals(DataSource.SourceType.NETWORK, responseError.failedSource());
+
+        DataResponseError newError = responseError.newBuilder().build();
+        assertEquals(responseError.message(), newError.message());
+        assertEquals(responseError.userFacingMessage(), newError.userFacingMessage());
+        assertEquals(responseError.exception(), newError.exception());
+        assertEquals(responseError.failedSource(), newError.failedSource());
+        assertEquals(responseError.status(), newError.status());
+        assertEquals(responseError.toString(), newError.toString());
     }
+
 }

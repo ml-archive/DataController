@@ -113,7 +113,16 @@ public abstract class DataSource<TResponse> {
     }
 
     /**
-     * Clears out stored data. Will either delete its db instance, clear out memory, or erase something on disk.
+     * Clears out stored data. Will either delete its db instance, clear out memory,
+     * or erase something on disk.
+     */
+    public void clearStoredData() {
+        clearStoredData(new SourceParams());
+    }
+
+    /**
+     * Clears out stored data. Will either delete its db instance, clear out memory,
+     * or erase something on disk.
      */
     public void clearStoredData(SourceParams sourceParams) {
 
