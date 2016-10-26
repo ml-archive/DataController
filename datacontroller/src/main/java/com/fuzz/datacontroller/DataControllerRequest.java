@@ -21,7 +21,8 @@ public class DataControllerRequest<T> {
 
     private DataSource.SourceParams sourceParams;
 
-    private final DataControllerCallbackGroup<T> callbackGroup = new DataControllerCallbackGroup<>();
+    private final DataControllerCallbackGroup<T> callbackGroup
+            = new DataControllerCallbackGroup<>();
 
     private final DataResponseError.ErrorFilter errorFilter;
 
