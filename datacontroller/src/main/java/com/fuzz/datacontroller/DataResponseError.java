@@ -8,6 +8,11 @@ import com.fuzz.datacontroller.source.DataSource;
  */
 public class DataResponseError {
 
+    public interface ErrorFilter {
+
+        DataResponseError filter(DataResponseError dataResponseError);
+    }
+
     private final String message;
     private final long status;
     private final Throwable exception;
