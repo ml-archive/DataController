@@ -3,6 +3,7 @@ package com.fuzz.datacontroller.source;
 import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerRequest;
 import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
 
 /**
  * Description: Provides a source of where information comes from.
@@ -66,6 +67,10 @@ public abstract class DataSource<TResponse> {
          */
         boolean shouldRefresh(DataSource<TResponse> dataSource);
     }
+
+    private final Object syncLock = new Object();
+
+    private boolean isBusy = false;
 
     private final RefreshStrategy<TResponse> refreshStrategy;
 
@@ -154,8 +159,9 @@ public abstract class DataSource<TResponse> {
      */
     public final void get(SourceParams sourceParams, DataController2.Success<TResponse> success,
                           DataController2.Error error) {
-        if (getRefreshStrategy().shouldRefresh(this)) {
-            doGet(sourceParams, success, error);
+        if (getRefreshStrategy().shouldRefresh(this) && !isBusy()) {
+            setBusy(true);
+            doGet(sourceParams, wrapBusySuccess(success), wrapBusyError(error));
         }
     }
 
@@ -177,7 +183,9 @@ public abstract class DataSource<TResponse> {
      * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
      */
-    protected abstract void doGet(SourceParams sourceParams, DataController2.Success<TResponse> success, DataController2.Error error);
+    protected abstract void doGet(SourceParams sourceParams,
+                                  DataController2.Success<TResponse> success,
+                                  DataController2.Error error);
 
     /**
      * Perform the actual information storage here. This might call a network, database, or file-based system.
@@ -191,5 +199,44 @@ public abstract class DataSource<TResponse> {
      * @return The kind of source, i.e. where it comes from. Must be defined.
      */
     public abstract SourceType getSourceType();
+
+    protected void setBusy(boolean isBusy) {
+        synchronized (syncLock) {
+            this.isBusy = isBusy;
+        }
+    }
+
+    protected boolean isBusy() {
+        synchronized (syncLock) {
+            return isBusy;
+        }
+    }
+
+    /**
+     * @return convenience method designed to communicate busy state completion.
+     */
+    protected DataController2.Error wrapBusyError(final DataController2.Error error) {
+        return new DataController2.Error() {
+            @Override
+            public void onFailure(DataResponseError dataResponseError) {
+                setBusy(false);
+                error.onFailure(dataResponseError);
+            }
+        };
+    }
+
+    /**
+     * @return convenience method designed to communicate busy state completion.
+     */
+    protected DataController2.Success<TResponse> wrapBusySuccess(
+            final DataController2.Success<TResponse> success) {
+        return new DataController2.Success<TResponse>() {
+            @Override
+            public void onSuccess(DataControllerResponse<TResponse> response) {
+                setBusy(false);
+                success.onSuccess(response);
+            }
+        };
+    }
 
 }
