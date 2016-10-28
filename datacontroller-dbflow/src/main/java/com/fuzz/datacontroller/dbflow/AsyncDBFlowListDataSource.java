@@ -2,7 +2,7 @@ package com.fuzz.datacontroller.dbflow;
 
 import android.support.annotation.Nullable;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.raizlabs.android.dbflow.structure.Model;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
@@ -43,7 +43,7 @@ public class AsyncDBFlowListDataSource<TModel extends Model>
 
     @Override
     protected void prepareQuery(QueryTransaction.Builder<TModel> queryBuilder,
-                                final DataController.Success<List<TModel>> success) {
+                                final DataController2.Success<List<TModel>> success) {
         queryBuilder.queryListResult(new QueryTransaction.QueryResultListCallback<TModel>() {
             @Override
             public void onListQueryResult(QueryTransaction transaction,

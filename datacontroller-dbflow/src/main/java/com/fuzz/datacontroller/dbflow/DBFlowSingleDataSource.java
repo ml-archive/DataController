@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.dbflow;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.structure.Model;
@@ -38,8 +38,8 @@ public class DBFlowSingleDataSource<TModel extends Model>
 
     @Override
     protected void doGet(SourceParams sourceParams,
-                         DataController.Success<TModel> success,
-                         DataController.Error error) {
+                         DataController2.Success<TModel> success,
+                         DataController2.Error error) {
         TModel model = getParams(sourceParams)
                 .getModelQueriable()
                 .querySingle();

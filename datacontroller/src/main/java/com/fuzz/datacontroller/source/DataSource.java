@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataControllerRequest;
 import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
@@ -33,7 +34,7 @@ public abstract class DataSource<TResponse> {
 
     /**
      * SourceParams provide the base class for all information passing between
-     * caller {@link DataController#requestData(SourceParams)} and receiver {@link DataSource}.
+     * caller {@link DataControllerRequest} and receiver {@link DataSource}.
      * <p></p>
      * Some {@link DataSource} require more information that this base class cannot represent. It
      * is up to them to provide the kind of params they expect.
@@ -53,14 +54,14 @@ public abstract class DataSource<TResponse> {
 
     /**
      * Description: A simple interface for determining when data should get refreshed. If the call
-     * returns a false, a call to {@link #get(SourceParams, DataController.Success, DataController.Error)}
+     * returns a false, a call to {@link #get(SourceParams, DataController2.Success, DataController2.Error)}
      * does not do anything.
      */
     public interface RefreshStrategy<TResponse> {
 
         /**
          * @param dataSource The data source that we're calling.
-         * @return True if we should refresh by calling {@link #get(SourceParams, DataController.Success, DataController.Error)}.
+         * @return True if we should refresh by calling {@link #get(SourceParams, DataController2.Success, DataController2.Error)}.
          * If false, we do not refresh data.
          */
         boolean shouldRefresh(DataSource<TResponse> dataSource);
@@ -81,7 +82,7 @@ public abstract class DataSource<TResponse> {
         });
     }
 
-    public final RefreshStrategy<TResponse> getRefreshStrategy() {
+    public RefreshStrategy<TResponse> getRefreshStrategy() {
         return refreshStrategy;
     }
 
@@ -89,7 +90,7 @@ public abstract class DataSource<TResponse> {
      * Queries this {@link DataSource} for data stored. This potentially can be expensive since
      * if this is a {@link SourceType#DISK}, it will perform an IO operation on the calling thread.
      * This method is useful for retrieving data in same thread, but should be avoided unless absolutely
-     * necessary. Prefer using the {@link #get(SourceParams, DataController.Success, DataController.Error)} method.
+     * necessary. Prefer using the {@link #get(SourceParams, DataController2.Success, DataController2.Error)} method.
      *
      * @param sourceParams The set of params to query data from. Its up to this {@link DataSource} to handle the values.
      */
@@ -151,8 +152,8 @@ public abstract class DataSource<TResponse> {
      * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
      */
-    public final void get(SourceParams sourceParams, DataController.Success<TResponse> success,
-                          DataController.Error error) {
+    public final void get(SourceParams sourceParams, DataController2.Success<TResponse> success,
+                          DataController2.Error error) {
         if (getRefreshStrategy().shouldRefresh(this)) {
             doGet(sourceParams, success, error);
         }
@@ -176,7 +177,7 @@ public abstract class DataSource<TResponse> {
      * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
      */
-    protected abstract void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error);
+    protected abstract void doGet(SourceParams sourceParams, DataController2.Success<TResponse> success, DataController2.Error error);
 
     /**
      * Perform the actual information storage here. This might call a network, database, or file-based system.

@@ -18,13 +18,15 @@ android {
     }
 }
 
-def dbflow_version = "3.1.1"
+def dbflow_version = "4.0.0-beta1"
 
 dependencies {
 
     compile project(":datacontroller")
     compile project(":datacontroller-dbflow")
     compile project(":datacontroller-okhttp")
+
+    compile 'org.mockito:mockito-core:2.2.9'
 
     testApt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
     testCompile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflow_version}"
@@ -33,4 +35,16 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'com.google.code.gson:gson:2.6.2'
     testCompile "org.robolectric:robolectric:3.0"
+}
+
+task createTestResources << {
+    def mockMakerFile = new File("$projectDir/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker")
+    if (System.env.MOCK_MAKER != null) {
+        logger.info("Using MockMaker ${System.env.MOCK_MAKER}")
+        mockMakerFile.parentFile.mkdirs()
+        mockMakerFile.createNewFile()
+        mockMakerFile.write(System.env.MOCK_MAKER)
+    } else {
+        logger.info("Using default MockMaker")
+    }
 }

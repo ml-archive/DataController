@@ -1,11 +1,11 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 
 public class ValidateCallback<TResponse>
-        implements DataController.DataControllerCallback<TResponse> {
+        implements DataController2.DataControllerCallback<TResponse> {
 
     private boolean isSuccessCalled;
     private boolean isFailureCalled;

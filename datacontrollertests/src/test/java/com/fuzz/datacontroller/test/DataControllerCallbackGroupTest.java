@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerCallbackGroup;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
@@ -54,7 +54,7 @@ public class DataControllerCallbackGroupTest {
         assertFalse(isFailureCalled);
     }
 
-    private final DataController.DataControllerCallback dataControllerCallback = new DataController.DataControllerCallback() {
+    private final DataController2.DataControllerCallback dataControllerCallback = new DataController2.DataControllerCallback() {
         @Override
         public void onFailure(DataResponseError dataResponseError) {
             isFailureCalled = true;

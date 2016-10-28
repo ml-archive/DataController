@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
@@ -26,8 +26,8 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
 
     @Override
     public void doGet(SourceParams sourceParams,
-                      DataController.Success<TResponse> success,
-                      DataController.Error error) {
+                      DataController2.Success<TResponse> success,
+                      DataController2.Error error) {
         success.onSuccess(new DataControllerResponse<>(storage, getSourceType()));
     }
 

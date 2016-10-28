@@ -1,16 +1,16 @@
 package com.fuzz.datacontroller;
 
-import com.fuzz.datacontroller.DataController.DataControllerCallback;
+import com.fuzz.datacontroller.DataController2.DataControllerCallback;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Description: Groups a set of {@link DataControllerCallback} into one unified group.
  */
 public class DataControllerCallbackGroup<TResponse> implements DataControllerCallback<TResponse> {
 
-    private final Set<DataControllerCallback<TResponse>> callbacks = new LinkedHashSet<>();
+    private final Set<DataControllerCallback<TResponse>> callbacks = new CopyOnWriteArraySet<>();
 
     public void registerForCallbacks(DataControllerCallback<TResponse> dataControllerCallback) {
         synchronized (callbacks) {
@@ -40,7 +40,9 @@ public class DataControllerCallbackGroup<TResponse> implements DataControllerCal
     public void onFailure(DataResponseError dataResponseError) {
         synchronized (callbacks) {
             for (DataControllerCallback<TResponse> callback : callbacks) {
-                callback.onFailure(dataResponseError);
+                if (callback != null) {
+                    callback.onFailure(dataResponseError);
+                }
             }
         }
     }
@@ -49,7 +51,9 @@ public class DataControllerCallbackGroup<TResponse> implements DataControllerCal
     public void onSuccess(DataControllerResponse<TResponse> response) {
         synchronized (callbacks) {
             for (DataControllerCallback<TResponse> callback : callbacks) {
-                callback.onSuccess(response);
+                if (callback != null) {
+                    callback.onSuccess(response);
+                }
             }
         }
     }

@@ -3,7 +3,7 @@ package com.fuzz.datacontroller;
 import com.fuzz.datacontroller.source.DataSource.SourceType;
 
 /**
- * Description: Represents a response object called from a {@link DataController}. This
+ * Description: Represents a response object called from a {@link DataController2}. This
  * class contains the original response class, the {@link SourceType} and other information.
  */
 public class DataControllerResponse<TResponse> {

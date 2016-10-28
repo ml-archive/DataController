@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.DataController;
-import com.fuzz.datacontroller.DataController.DataControllerCallback;
+import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController2.DataControllerCallback;
 import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
@@ -13,20 +13,20 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
      * Defines how we map from one type of response to another.
      *
      * @param <TFromResponse> The response that is unique to this source and not its parent
-     *                        {@link DataController}.
-     * @param <TResponse>     The response the parent {@link DataController} expects that we map to.
+     *                        {@link DataController2}.
+     * @param <TResponse>     The response the parent {@link DataController2} expects that we map to.
      */
     public interface Mapper<TFromResponse, TResponse> {
 
         /**
          * Provide the mapping from the {@link TFromResponse} to the {@link TResponse} so that
-         * the parent {@link DataController} can share it with other {@link DataSource} and
+         * the parent {@link DataController2} can share it with other {@link DataSource} and
          * {@link DataControllerCallback}.
          */
         TResponse mapFrom(TFromResponse fromResponse);
 
         /**
-         * Maps from a response of the {@link TResponse} that the parent {@link DataController}
+         * Maps from a response of the {@link TResponse} that the parent {@link DataController2}
          * uses.
          */
         TFromResponse mapTo(TResponse response);
@@ -60,8 +60,8 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
     }
 
     @Override
-    protected void doGet(SourceParams sourceParams, final DataController.Success<TResponse> success, DataController.Error error) {
-        fromDataSource.doGet(sourceParams, new DataController.Success<TFromResponse>() {
+    protected void doGet(SourceParams sourceParams, final DataController2.Success<TResponse> success, DataController2.Error error) {
+        fromDataSource.doGet(sourceParams, new DataController2.Success<TFromResponse>() {
             @Override
             public void onSuccess(DataControllerResponse<TFromResponse> response) {
                 TResponse transformedResponse = mapper.mapFrom(response.getResponse());

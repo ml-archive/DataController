@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.dbflow;
 
-import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataController2;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.config.FlowManager;
@@ -41,8 +41,8 @@ public class DBFlowListDataSource<TModel extends Model>
 
     @Override
     protected void doGet(SourceParams sourceParams,
-                         DataController.Success<List<TModel>> success,
-                         DataController.Error error) {
+                         DataController2.Success<List<TModel>> success,
+                         DataController2.Error error) {
         List<TModel> modelList = getParams(sourceParams)
                 .getModelQueriable().queryList();
         success.onSuccess(new DataControllerResponse<>(modelList, getSourceType()));
