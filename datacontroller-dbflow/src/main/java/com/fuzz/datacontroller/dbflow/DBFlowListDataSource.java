@@ -1,8 +1,9 @@
 package com.fuzz.datacontroller.dbflow;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource2;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.structure.Model;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
@@ -17,7 +18,7 @@ import java.util.List;
 public class DBFlowListDataSource<TModel extends Model>
         extends BaseDBFlowDataSource<TModel, List<TModel>> {
 
-    public DBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
+    public DBFlowListDataSource(DataSource2.RefreshStrategy<List<TModel>> refreshStrategy,
                                 Class<TModel> tModelClass) {
         super(refreshStrategy, tModelClass);
     }
@@ -26,7 +27,7 @@ public class DBFlowListDataSource<TModel extends Model>
         super(tModelClass);
     }
 
-    public DBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
+    public DBFlowListDataSource(DataSource2.RefreshStrategy<List<TModel>> refreshStrategy,
                                 DBFlowParamsInterface<TModel> defaultParams) {
         super(refreshStrategy, defaultParams);
     }
@@ -41,8 +42,8 @@ public class DBFlowListDataSource<TModel extends Model>
 
     @Override
     protected void doGet(SourceParams sourceParams,
-                         DataController2.Success<List<TModel>> success,
-                         DataController2.Error error) {
+                         DataController.Success<List<TModel>> success,
+                         DataController.Error error) {
         List<TModel> modelList = getParams(sourceParams)
                 .getModelQueriable().queryList();
         success.onSuccess(new DataControllerResponse<>(modelList, getSourceType()));

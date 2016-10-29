@@ -1,9 +1,10 @@
 package com.fuzz.datacontroller.okhttp;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource2;
 
 import java.io.IOException;
 
@@ -45,7 +46,7 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
 
     private Call currentCall;
 
-    public OkHttpDataSource(RefreshStrategy<TResponse> refreshStrategy,
+    public OkHttpDataSource(DataSource2.RefreshStrategy<TResponse> refreshStrategy,
                             ResponseConverter<TResponse> responseConverter,
                             OkHttpParamsInterface defaultParams) {
         super(refreshStrategy);
@@ -59,7 +60,7 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
         this.defaultParams = defaultParams;
     }
 
-    public OkHttpDataSource(RefreshStrategy<TResponse> refreshStrategy,
+    public OkHttpDataSource(DataSource2.RefreshStrategy<TResponse> refreshStrategy,
                             ResponseConverter<TResponse> responseConverter) {
         super(refreshStrategy);
         this.responseConverter = responseConverter;
@@ -78,8 +79,8 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
-    protected void doGet(SourceParams sourceParams, DataController2.Success<TResponse> success,
-                         DataController2.Error error) {
+    protected void doGet(SourceParams sourceParams, DataController.Success<TResponse> success,
+                         DataController.Error error) {
         OkHttpParamsInterface params = getParams(sourceParams);
         currentCall = params.getCall();
         if (responseConverter == null) {
@@ -100,8 +101,8 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
         return SourceType.NETWORK;
     }
 
-    protected Callback newCallback(DataController2.Success<TResponse> success,
-                                   DataController2.Error error) {
+    protected Callback newCallback(DataController.Success<TResponse> success,
+                                   DataController.Error error) {
         return new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -116,15 +117,15 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     protected void handleFailure(Call call, IOException e,
-                                 DataController2.Success<TResponse> success,
-                                 DataController2.Error error) {
+                                 DataController.Success<TResponse> success,
+                                 DataController.Error error) {
         error.onFailure(new DataResponseError.Builder(getSourceType(), e)
                 .build());
     }
 
     protected void handleResponse(Call call, Response response,
-                                  DataController2.Success<TResponse> success,
-                                  DataController2.Error error) {
+                                  DataController.Success<TResponse> success,
+                                  DataController.Error error) {
         if (response.isSuccessful()) {
             success.onSuccess(new DataControllerResponse<>(
                     responseConverter.convert(call, response), getSourceType()

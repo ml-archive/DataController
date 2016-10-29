@@ -1,9 +1,10 @@
 package com.fuzz.datacontroller.test;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSourceStorage.DataSourceParams;
+import com.fuzz.datacontroller.source.DataSource2;
+import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
 import com.fuzz.datacontroller.source.MemoryDataSource;
 
 import org.junit.Before;
@@ -20,11 +21,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Description: Tests populating a {@link DataController2} and asserts it is correct.
+ * Description: Tests populating a {@link DataController} and asserts it is correct.
  */
 public class DataControllerTest {
 
-    private DataController2<String> dataController;
+    private DataController<String> dataController;
     public DataSource<String> mockDataSource;
 
     @Before
@@ -33,14 +34,14 @@ public class DataControllerTest {
         mockDataSource = mock(DataSource.class);
         when(mockDataSource.getSourceType()).thenReturn(DataSource.SourceType.NETWORK);
 
-        when(mockDataSource.getRefreshStrategy()).thenReturn(new DataSource.RefreshStrategy<String>() {
+        when(mockDataSource.getRefreshStrategy()).thenReturn(new DataSource2.RefreshStrategy<String>() {
             @Override
             public boolean shouldRefresh(DataSource<String> dataSource) {
                 return true;
             }
         });
 
-        dataController = new DataController2.Builder<String>()
+        dataController = new DataController.Builder<String>()
                 .dataSource(mockDataSource)
                 .dataSource(new MemoryDataSource<String>())
                 .build();
@@ -60,10 +61,10 @@ public class DataControllerTest {
     public void test_callSpecific() {
         ArgumentCaptor<DataSource.SourceParams> sourceParamsArgumentCaptor
                 = ArgumentCaptor.forClass(DataSource.SourceParams.class);
-        ArgumentCaptor<DataController2.Success<String>> successArgumentCaptor
-                = ArgumentCaptor.forClass(DataController2.Success.class);
-        ArgumentCaptor<DataController2.Error> errorArgumentCaptor
-                = ArgumentCaptor.forClass(DataController2.Error.class);
+        ArgumentCaptor<DataController.Success<String>> successArgumentCaptor
+                = ArgumentCaptor.forClass(DataController.Success.class);
+        ArgumentCaptor<DataController.Error> errorArgumentCaptor
+                = ArgumentCaptor.forClass(DataController.Error.class);
 
         DataSourceParams networkParams = DataSourceParams.networkParams();
 

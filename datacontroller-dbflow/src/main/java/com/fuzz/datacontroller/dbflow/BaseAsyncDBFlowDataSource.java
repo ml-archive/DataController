@@ -1,8 +1,9 @@
 package com.fuzz.datacontroller.dbflow;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
+import com.fuzz.datacontroller.source.DataSource2;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
 import com.raizlabs.android.dbflow.structure.Model;
@@ -19,7 +20,7 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
     private Transaction currentSaveTransaction;
     private Transaction currentLoadTransaction;
 
-    public BaseAsyncDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
+    public BaseAsyncDBFlowDataSource(DataSource2.RefreshStrategy<TSource> refreshStrategy,
                                      Class<TModel> tModelClass) {
         super(refreshStrategy, tModelClass);
     }
@@ -28,7 +29,7 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
         super(tModelClass);
     }
 
-    public BaseAsyncDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
+    public BaseAsyncDBFlowDataSource(DataSource2.RefreshStrategy<TSource> refreshStrategy,
                                      DBFlowParamsInterface<TModel> defaultParams) {
         super(refreshStrategy, defaultParams);
     }
@@ -59,8 +60,8 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
 
     @Override
     protected void doGet(SourceParams sourceParams,
-                         final DataController2.Success<TSource> success,
-                         final DataController2.Error error) {
+                         final DataController.Success<TSource> success,
+                         final DataController.Error error) {
         DBFlowParamsInterface<TModel> params = getParams(sourceParams);
         ModelQueriable<TModel> modelQueriable = params.getModelQueriable();
         QueryTransaction.Builder<TModel> queryBuilder
@@ -91,7 +92,7 @@ public abstract class BaseAsyncDBFlowDataSource<TModel extends Model, TSource>
     }
 
     protected abstract void prepareQuery(QueryTransaction.Builder<TModel> queryBuilder,
-                                         DataController2.Success<TSource> success);
+                                         DataController.Success<TSource> success);
 
     protected abstract void prepareStore(ProcessModelTransaction.Builder<TModel> processBuilder,
                                          DataControllerResponse<TSource> response);

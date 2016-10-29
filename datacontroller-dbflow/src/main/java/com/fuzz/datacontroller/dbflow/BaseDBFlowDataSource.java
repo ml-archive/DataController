@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller.dbflow;
 
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource2;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.structure.Model;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
@@ -15,7 +16,7 @@ public abstract class BaseDBFlowDataSource<TModel extends Model, TSource>
     private DBFlowParamsInterface<TModel> defaultParams;
     private final Class<TModel> modelClass;
 
-    public BaseDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
+    public BaseDBFlowDataSource(DataSource2.RefreshStrategy<TSource> refreshStrategy,
                                 Class<TModel> modelClass) {
         super(refreshStrategy);
         this.modelClass = modelClass;
@@ -27,7 +28,7 @@ public abstract class BaseDBFlowDataSource<TModel extends Model, TSource>
         this.defaultParams = new DBFlowParams<>(SQLite.select().from(modelClass));
     }
 
-    public BaseDBFlowDataSource(RefreshStrategy<TSource> refreshStrategy,
+    public BaseDBFlowDataSource(DataSource2.RefreshStrategy<TSource> refreshStrategy,
                                 DBFlowParamsInterface<TModel> defaultParams) {
         super(refreshStrategy);
         this.defaultParams = defaultParams;

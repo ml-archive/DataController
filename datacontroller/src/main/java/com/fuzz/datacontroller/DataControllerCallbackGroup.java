@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller;
 
-import com.fuzz.datacontroller.DataController2.DataControllerCallback;
+import com.fuzz.datacontroller.DataController.DataControllerCallback;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;

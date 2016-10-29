@@ -12,7 +12,7 @@ public interface DataSourceChainer<TResponse> {
      * @param lastSource    The previous data source called.
      * @param sourceToChain The next source that we query to determine if we should run this one along the chain.
      * @return True if the sourceToChain should call
-     * {@link DataSource#get(DataSource.SourceParams, DataController2.Success, DataController2.Error)}
+     * {@link DataSource#get(DataSource.SourceParams, DataController.Success, DataController.Error)}
      * otherwise we break the chain.
      */
     boolean shouldQueryNext(DataSource<TResponse> lastSource, DataSource<TResponse> sourceToChain);

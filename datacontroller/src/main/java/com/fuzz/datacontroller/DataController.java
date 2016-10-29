@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSourceStorage;
+import com.fuzz.datacontroller.source.DataSourceContainer;
 import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author Andrew Grosner (Fuzz)
  */
 
-public class DataController2<T> {
+public class DataController<T> {
 
     /**
      * Description: Represents a failed callback response.
@@ -38,7 +38,7 @@ public class DataController2<T> {
 
         /**
          * Called when a response succeeds. This is called once for EVERY {@link DataSource}
-         * registered in this {@link DataController2}.
+         * registered in this {@link DataController}.
          *
          * @param response The response from a successful callback.
          */
@@ -46,7 +46,7 @@ public class DataController2<T> {
     }
 
     /**
-     * The main callback interface for getting callbacks on the the {@link DataController2} class.
+     * The main callback interface for getting callbacks on the the {@link DataController} class.
      *
      * @param <TResponse>
      */
@@ -56,15 +56,15 @@ public class DataController2<T> {
     private final DataControllerCallbackGroup<T> callbackGroup
             = new DataControllerCallbackGroup<>();
 
-    private final DataSourceStorage<T> dataSourceStorage;
+    private final DataSourceContainer<T> dataSourceContainer;
 
     final DataSourceChainer<T> dataSourceChainer;
 
-    DataController2(Builder<T> builder) {
-        if (builder.dataSourceStorage != null) {
-            dataSourceStorage = builder.dataSourceStorage;
+    DataController(Builder<T> builder) {
+        if (builder.dataSourceContainer != null) {
+            dataSourceContainer = builder.dataSourceContainer;
         } else {
-            dataSourceStorage = new TreeMapSingleTypeDataSourceContainer<>();
+            dataSourceContainer = new TreeMapSingleTypeDataSourceContainer<>();
         }
 
         if (builder.dataSources.isEmpty()) {
@@ -72,7 +72,7 @@ public class DataController2<T> {
         }
 
         for (DataSource<T> dataSource : builder.dataSources) {
-            dataSourceStorage.registerDataSource(dataSource);
+            dataSourceContainer.registerDataSource(dataSource);
         }
 
         if (builder.dataSourceChainer != null) {
@@ -89,14 +89,14 @@ public class DataController2<T> {
     }
 
     public void cancel() {
-        Collection<DataSource<T>> sourceCollection = dataSourceStorage.sources();
+        Collection<DataSource<T>> sourceCollection = dataSourceContainer.sources();
         for (DataSource<T> source : sourceCollection) {
             source.cancel();
         }
     }
 
-    public void cancel(DataSourceStorage.DataSourceParams dataSourceParams) {
-        DataSource<T> dataSource = dataSourceStorage.getDataSource(dataSourceParams);
+    public void cancel(DataSourceContainer.DataSourceParams dataSourceParams) {
+        DataSource<T> dataSource = dataSourceContainer.getDataSource(dataSourceParams);
         dataSource.cancel();
     }
 
@@ -120,8 +120,8 @@ public class DataController2<T> {
         return new DataControllerRequest.Builder<>(this);
     }
 
-    public DataControllerRequest.Builder<T> request(DataSourceStorage.DataSourceParams params) {
-        DataSource<T> dataSource = dataSourceStorage.getDataSource(params);
+    public DataControllerRequest.Builder<T> request(DataSourceContainer.DataSourceParams params) {
+        DataSource<T> dataSource = dataSourceContainer.getDataSource(params);
         List<DataSource<T>> list = new ArrayList<>();
         list.add(dataSource);
         return new DataControllerRequest.Builder<>(this)
@@ -129,11 +129,11 @@ public class DataController2<T> {
     }
 
     public Collection<DataSource<T>> dataSources() {
-        return dataSourceStorage.sources();
+        return dataSourceContainer.sources();
     }
 
-    public DataSource<T> getDataSource(DataSourceStorage.DataSourceParams dataSourceParams) {
-        return dataSourceStorage.getDataSource(dataSourceParams);
+    public DataSource<T> getDataSource(DataSourceContainer.DataSourceParams dataSourceParams) {
+        return dataSourceContainer.getDataSource(dataSourceParams);
     }
 
     void onSuccess(DataControllerResponse<T> response) {
@@ -148,7 +148,7 @@ public class DataController2<T> {
 
         private List<DataSource<T>> dataSources = new ArrayList<>();
 
-        private DataSourceStorage<T> dataSourceStorage;
+        private DataSourceContainer<T> dataSourceContainer;
 
         private DataSourceChainer<T> dataSourceChainer;
 
@@ -157,8 +157,8 @@ public class DataController2<T> {
             return this;
         }
 
-        public Builder<T> dataSourceStorage(DataSourceStorage<T> dataSourceStorage) {
-            this.dataSourceStorage = dataSourceStorage;
+        public Builder<T> dataSourceStorage(DataSourceContainer<T> dataSourceContainer) {
+            this.dataSourceContainer = dataSourceContainer;
             return this;
         }
 
@@ -167,8 +167,8 @@ public class DataController2<T> {
             return this;
         }
 
-        public DataController2<T> build() {
-            return new DataController2<>(this);
+        public DataController<T> build() {
+            return new DataController<>(this);
         }
     }
 }

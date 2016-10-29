@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSourceStorage.DataSourceParams;
+import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
 import com.fuzz.datacontroller.source.ListBasedDataSourceContainer;
 import com.fuzz.datacontroller.source.MemoryDataSource;
 import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;

@@ -2,8 +2,9 @@ package com.fuzz.datacontroller.dbflow;
 
 import android.support.annotation.Nullable;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.source.DataSource2;
 import com.raizlabs.android.dbflow.structure.Model;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
@@ -15,7 +16,7 @@ import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransacti
 public class AsyncDBFlowSingleDataSource<TModel extends Model>
         extends BaseAsyncDBFlowDataSource<TModel, TModel> {
 
-    public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
+    public AsyncDBFlowSingleDataSource(DataSource2.RefreshStrategy<TModel> refreshStrategy,
                                        Class<TModel> tModelClass) {
         super(refreshStrategy, tModelClass);
     }
@@ -24,7 +25,7 @@ public class AsyncDBFlowSingleDataSource<TModel extends Model>
         super(tModelClass);
     }
 
-    public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
+    public AsyncDBFlowSingleDataSource(DataSource2.RefreshStrategy<TModel> refreshStrategy,
                                        DBFlowParamsInterface<TModel> defaultParams) {
         super(refreshStrategy, defaultParams);
     }
@@ -40,7 +41,7 @@ public class AsyncDBFlowSingleDataSource<TModel extends Model>
 
     @Override
     protected void prepareQuery(QueryTransaction.Builder<TModel> queryBuilder,
-                                final DataController2.Success<TModel> success) {
+                                final DataController.Success<TModel> success) {
         queryBuilder.querySingleResult(new QueryTransaction.QueryResultSingleCallback<TModel>() {
             @Override
             public void onSingleQueryResult(QueryTransaction transaction,

@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 
 /**
@@ -12,7 +12,7 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
 
     private TResponse storage;
 
-    public MemoryDataSource(RefreshStrategy<TResponse> refreshStrategy) {
+    public MemoryDataSource(DataSource2.RefreshStrategy<TResponse> refreshStrategy) {
         super(refreshStrategy);
     }
 
@@ -26,8 +26,8 @@ public class MemoryDataSource<TResponse> extends DataSource<TResponse> {
 
     @Override
     public void doGet(SourceParams sourceParams,
-                      DataController2.Success<TResponse> success,
-                      DataController2.Error error) {
+                      DataController.Success<TResponse> success,
+                      DataController.Error error) {
         success.onSuccess(new DataControllerResponse<>(storage, getSourceType()));
     }
 

@@ -1,6 +1,6 @@
 package com.fuzz.datacontroller.source;
 
-import com.fuzz.datacontroller.DataController2;
+import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerRequest;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
@@ -9,7 +9,6 @@ import com.fuzz.datacontroller.DataResponseError;
  * Description: Provides a source of where information comes from.
  */
 public abstract class DataSource<TResponse> {
-
 
     /**
      * Describes where this {@link DataSource} information came from. This is especially useful
@@ -42,6 +41,8 @@ public abstract class DataSource<TResponse> {
      */
     public static class SourceParams {
 
+        public static final SourceParams defaultParams = new SourceParams();
+
         /**
          * an optional index to use. -1 is default, meaning we should retrieve all information.
          */
@@ -53,33 +54,18 @@ public abstract class DataSource<TResponse> {
         public Object data;
     }
 
-    /**
-     * Description: A simple interface for determining when data should get refreshed. If the call
-     * returns a false, a call to {@link #get(SourceParams, DataController2.Success, DataController2.Error)}
-     * does not do anything.
-     */
-    public interface RefreshStrategy<TResponse> {
-
-        /**
-         * @param dataSource The data source that we're calling.
-         * @return True if we should refresh by calling {@link #get(SourceParams, DataController2.Success, DataController2.Error)}.
-         * If false, we do not refresh data.
-         */
-        boolean shouldRefresh(DataSource<TResponse> dataSource);
-    }
-
     private final Object syncLock = new Object();
 
     private boolean isBusy = false;
 
-    private final RefreshStrategy<TResponse> refreshStrategy;
+    private final DataSource2.RefreshStrategy<TResponse> refreshStrategy;
 
-    public DataSource(RefreshStrategy<TResponse> refreshStrategy) {
+    public DataSource(DataSource2.RefreshStrategy<TResponse> refreshStrategy) {
         this.refreshStrategy = refreshStrategy;
     }
 
     public DataSource() {
-        this(new RefreshStrategy<TResponse>() {
+        this(new DataSource2.RefreshStrategy<TResponse>() {
             @Override
             public boolean shouldRefresh(DataSource<TResponse> dataSource) {
                 return true;
@@ -87,7 +73,7 @@ public abstract class DataSource<TResponse> {
         });
     }
 
-    public RefreshStrategy<TResponse> getRefreshStrategy() {
+    public DataSource2.RefreshStrategy<TResponse> getRefreshStrategy() {
         return refreshStrategy;
     }
 
@@ -95,7 +81,7 @@ public abstract class DataSource<TResponse> {
      * Queries this {@link DataSource} for data stored. This potentially can be expensive since
      * if this is a {@link SourceType#DISK}, it will perform an IO operation on the calling thread.
      * This method is useful for retrieving data in same thread, but should be avoided unless absolutely
-     * necessary. Prefer using the {@link #get(SourceParams, DataController2.Success, DataController2.Error)} method.
+     * necessary. Prefer using the {@link #get(SourceParams, DataController.Success, DataController.Error)} method.
      *
      * @param sourceParams The set of params to query data from. Its up to this {@link DataSource} to handle the values.
      */
@@ -107,7 +93,7 @@ public abstract class DataSource<TResponse> {
      * Performs {@link #getStoredData(SourceParams)} with default params.
      */
     public final TResponse getStoredData() {
-        return getStoredData(new SourceParams());
+        return getStoredData(SourceParams.defaultParams);
     }
 
     /**
@@ -123,7 +109,7 @@ public abstract class DataSource<TResponse> {
      * or erase something on disk.
      */
     public void clearStoredData() {
-        clearStoredData(new SourceParams());
+        clearStoredData(SourceParams.defaultParams);
     }
 
     /**
@@ -149,7 +135,7 @@ public abstract class DataSource<TResponse> {
 
     /**
      * Requests a call on the underlying data to return on the specified success and error callbacks. This
-     * respects the {@link RefreshStrategy} set in the constructor of this source.
+     * respects the {@link DataSource2.RefreshStrategy} set in the constructor of this source.
      * It is explicitly up to the source on what kinds of parameters it can handle or expect. The expectation
      * is that if no params returned or it is a default instance, all data should be returned.
      *
@@ -157,8 +143,8 @@ public abstract class DataSource<TResponse> {
      * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
      */
-    public final void get(SourceParams sourceParams, DataController2.Success<TResponse> success,
-                          DataController2.Error error) {
+    public final void get(SourceParams sourceParams, DataController.Success<TResponse> success,
+                          DataController.Error error) {
         if (getRefreshStrategy().shouldRefresh(this) && !isBusy()) {
             setBusy(true);
             doGet(sourceParams, wrapBusySuccess(success), wrapBusyError(error));
@@ -184,8 +170,8 @@ public abstract class DataSource<TResponse> {
      * @param error        Called when a request fails.
      */
     protected abstract void doGet(SourceParams sourceParams,
-                                  DataController2.Success<TResponse> success,
-                                  DataController2.Error error);
+                                  DataController.Success<TResponse> success,
+                                  DataController.Error error);
 
     /**
      * Perform the actual information storage here. This might call a network, database, or file-based system.
@@ -215,8 +201,8 @@ public abstract class DataSource<TResponse> {
     /**
      * @return convenience method designed to communicate busy state completion.
      */
-    protected DataController2.Error wrapBusyError(final DataController2.Error error) {
-        return new DataController2.Error() {
+    protected DataController.Error wrapBusyError(final DataController.Error error) {
+        return new DataController.Error() {
             @Override
             public void onFailure(DataResponseError dataResponseError) {
                 setBusy(false);
@@ -228,9 +214,9 @@ public abstract class DataSource<TResponse> {
     /**
      * @return convenience method designed to communicate busy state completion.
      */
-    protected DataController2.Success<TResponse> wrapBusySuccess(
-            final DataController2.Success<TResponse> success) {
-        return new DataController2.Success<TResponse>() {
+    protected DataController.Success<TResponse> wrapBusySuccess(
+            final DataController.Success<TResponse> success) {
+        return new DataController.Success<TResponse>() {
             @Override
             public void onSuccess(DataControllerResponse<TResponse> response) {
                 setBusy(false);
