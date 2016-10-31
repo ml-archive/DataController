@@ -121,11 +121,8 @@ public class DataController<T> {
     }
 
     public DataControllerRequest.Builder<T> request(DataSourceContainer.DataSourceParams params) {
-        DataSource<T> dataSource = dataSourceContainer.getDataSource(params);
-        List<DataSource<T>> list = new ArrayList<>();
-        list.add(dataSource);
         return new DataControllerRequest.Builder<>(this)
-                .addSourceTargets(list);
+                .addSourceTarget(params);
     }
 
     public Collection<DataSource<T>> dataSources() {
