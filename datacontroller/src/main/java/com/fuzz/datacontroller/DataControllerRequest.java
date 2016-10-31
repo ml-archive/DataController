@@ -19,6 +19,17 @@ import java.util.Set;
  */
 public class DataControllerRequest<T> {
 
+
+    public interface ErrorFilter {
+
+        DataResponseError filter(DataResponseError dataResponseError);
+    }
+
+    public interface SuccessFilter<T> {
+
+        DataControllerResponse<T> filter(DataControllerResponse<T> response);
+    }
+
     private final DataController<T> dataController;
     private final DataSource.SourceParams sourceParams;
 
@@ -31,13 +42,15 @@ public class DataControllerRequest<T> {
     private final DataControllerCallbackGroup<T> callbackGroup
             = new DataControllerCallbackGroup<>();
 
-    private final DataResponseError.ErrorFilter errorFilter;
+    private final ErrorFilter errorFilter;
+    private final SuccessFilter<T> successFilter;
 
     DataControllerRequest(Builder<T> builder) {
         this.targetedSources = builder.targetedSources;
         this.dataController = builder.dataController;
         this.sourceParams = builder.sourceParams;
         this.targetParamsMap = builder.targetParamsMap;
+        this.successFilter = builder.successFilter;
         for (DataController.DataControllerCallback<T> callback : builder.callbackGroup) {
             callbackGroup.registerForCallbacks(callback);
         }
@@ -97,13 +110,16 @@ public class DataControllerRequest<T> {
     private final DataController.Success<T> internalSuccessCallback = new DataController.Success<T>() {
         @Override
         public void onSuccess(DataControllerResponse<T> response) {
+            DataControllerResponse<T> dataControllerResponse = successFilter != null ?
+                    successFilter.filter(response) : response;
+
             Collection<DataSource<T>> sources = sources();
             for (DataSource<T> dataSource : sources) {
-                dataSource.store(response);
+                dataSource.store(dataControllerResponse);
             }
 
-            callbackGroup.onSuccess(response);
-            dataController.onSuccess(response);
+            callbackGroup.onSuccess(dataControllerResponse);
+            dataController.onSuccess(dataControllerResponse);
         }
     };
 
@@ -132,7 +148,8 @@ public class DataControllerRequest<T> {
         private final Map<DataSourceContainer.DataSourceParams, DataSource.SourceParams> targetParamsMap
                 = new HashMap<>();
 
-        private DataResponseError.ErrorFilter errorFilter;
+        private ErrorFilter errorFilter;
+        private SuccessFilter<T> successFilter;
 
         Builder(DataController<T> dataController) {
             this.dataController = dataController;
@@ -156,10 +173,24 @@ public class DataControllerRequest<T> {
             return this;
         }
 
-        public Builder<T> errorFilter(DataResponseError.ErrorFilter errorFilter) {
+        /**
+         * Specifies a way to filter and mutate {@link DataResponseError} when passed
+         * through a {@link DataController.Error} callback.
+         */
+        public Builder<T> errorFilter(ErrorFilter errorFilter) {
             this.errorFilter = errorFilter;
             return this;
         }
+
+        /**
+         * Specifies a way to filter and mutate a {@link DataControllerResponse} when passed
+         * through a {@link DataController.Success} callback.
+         */
+        public Builder<T> successFilter(SuccessFilter<T> successFilter) {
+            this.successFilter = successFilter;
+            return this;
+        }
+
 
         /**
          * Adds a {@link DataSource} that we wish to query from directly. Specifying at least one direct
