@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.test.dbflow;
 
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.fuzz.datacontroller.dbflow.DBFlowListDataSource;
+import com.fuzz.datacontroller.dbflow.DBFlowListSource;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.test.BaseRobolectricUnitTest;
 import com.fuzz.datacontroller.test.DataItem;
@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -20,15 +21,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Description: Tests to ensure {@link DBFlowListDataSource} works as expected.
+ * Description: Tests to ensure {@link DBFlowListSource} works as expected.
  */
 public class DBFlowListDataSourceTest extends BaseRobolectricUnitTest {
 
-    private DBFlowListDataSource<DataItem> dataSource;
+    private DataSource<List<DataItem>> dataSource;
 
     @Before
     public void setup_test() {
-        dataSource = new DBFlowListDataSource<>(DataItem.class);
+        dataSource = DBFlowListSource.builderInstance(DataItem.class).build();
     }
 
     @Test
@@ -36,7 +37,8 @@ public class DBFlowListDataSourceTest extends BaseRobolectricUnitTest {
         DataItem model = new DataItem();
         model.setId("Andrew");
         model.setData("Test");
-        dataSource.store(model);
+        dataSource.store(new DataControllerResponse<>(Collections.singletonList(model),
+                DataSource.SourceType.NETWORK));
 
         ValidateCallback<List<DataItem>> callback = new ValidateCallback<>();
         dataSource.get(null, callback, callback);

@@ -17,7 +17,7 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     @Override
     public void registerDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.put(dataSource.getSourceType(), dataSource);
+            dataSourceMap.put(dataSource.sourceType(), dataSource);
         }
     }
 
@@ -36,7 +36,7 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     @Override
     public void deregisterDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.remove(dataSource.getSourceType());
+            dataSourceMap.remove(dataSource.sourceType());
         }
     }
 

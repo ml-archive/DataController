@@ -1,12 +1,11 @@
 package com.fuzz.datacontroller.strategy;
 
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSource2;
 
 /**
  * Description: Only ever gets called once, but can get reset.
  */
-public class OneShotRefreshStrategy<TResponse> implements DataSource2.RefreshStrategy<TResponse> {
+public class OneShotRefreshStrategy<TResponse> implements DataSource.RefreshStrategy<TResponse> {
 
     private boolean shouldRefresh = true;
 

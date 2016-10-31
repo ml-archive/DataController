@@ -2,19 +2,17 @@ package com.fuzz.datacontroller.dbflow;
 
 import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
-import com.raizlabs.android.dbflow.structure.Model;
 
 /**
- * Description: Represent the default params for {@link DBFlowSingleDataSource}. It specifies the
+ * Description: Represent the default params for {@link DBFlowSingleSource}. It specifies the
  * {@link ModelQueriable} it will use to load from the DB.
  */
-public class DBFlowParams<TModel extends Model>
+public class DBFlowParams<TModel>
         implements DBFlowParamsInterface<TModel> {
 
-    public static <TModel extends Model> DBFlowParamsInterface<TModel>
-    getParams(DBFlowParamsInterface<TModel> defaultParams,
-              DataSource.SourceParams sourceParams) {
-        DBFlowParamsInterface<TModel> params = defaultParams;
+    public static <TModel> DBFlowParamsInterface<TModel>
+    getParams(DataSource.SourceParams sourceParams) {
+        DBFlowParamsInterface<TModel> params = null;
         if (sourceParams instanceof DBFlowParamsInterface) {
             //noinspection unchecked
             params = (DBFlowParamsInterface<TModel>) sourceParams;

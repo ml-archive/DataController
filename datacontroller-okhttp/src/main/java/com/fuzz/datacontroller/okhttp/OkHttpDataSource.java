@@ -4,7 +4,6 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSource2;
 
 import java.io.IOException;
 
@@ -18,7 +17,20 @@ import okhttp3.Response;
  *
  * @param <TResponse> The type of the response we will convert the {@link Response} into.
  */
-public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
+public class OkHttpDataSource<TResponse> implements DataSource.DataSourceCaller<TResponse> {
+
+    public static <TResponse> DataSource.Builder<TResponse> newBuilder(
+            ResponseConverter<TResponse> responseConverter,
+            CallbackHandler<TResponse> handler) {
+        return new DataSource.Builder<>(new OkHttpDataSource<>(responseConverter, handler),
+                DataSource.SourceType.NETWORK);
+    }
+
+    public static <TResponse> DataSource.Builder<TResponse> newBuilder(
+            ResponseConverter<TResponse> responseConverter) {
+        return new DataSource.Builder<>(new OkHttpDataSource<>(responseConverter),
+                DataSource.SourceType.NETWORK);
+    }
 
     /**
      * The interface for {@link OkHttpParams}. This allows other params to provide a {@link Call}.
@@ -40,34 +52,30 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
         TResponse convert(Call call, Response response);
     }
 
+    public interface CallbackHandler<TResponse> {
+
+        void onHandleResponse(Call call, Response response, DataController.Success<TResponse> success,
+                              DataController.Error error);
+
+        void onHandleFailure(Call call, IOException e, DataController.Success<TResponse> success,
+                             DataController.Error error);
+    }
+
     private final ResponseConverter<TResponse> responseConverter;
 
-    private OkHttpParamsInterface defaultParams;
+    private final CallbackHandler<TResponse> callbackHandler;
 
     private Call currentCall;
 
-    public OkHttpDataSource(DataSource2.RefreshStrategy<TResponse> refreshStrategy,
-                            ResponseConverter<TResponse> responseConverter,
-                            OkHttpParamsInterface defaultParams) {
-        super(refreshStrategy);
+    private OkHttpDataSource(ResponseConverter<TResponse> responseConverter,
+                             CallbackHandler<TResponse> callbackHandler) {
         this.responseConverter = responseConverter;
-        this.defaultParams = defaultParams;
+        this.callbackHandler = callbackHandler;
     }
 
-    public OkHttpDataSource(ResponseConverter<TResponse> responseConverter,
-                            OkHttpParamsInterface defaultParams) {
+    private OkHttpDataSource(ResponseConverter<TResponse> responseConverter) {
         this.responseConverter = responseConverter;
-        this.defaultParams = defaultParams;
-    }
-
-    public OkHttpDataSource(DataSource2.RefreshStrategy<TResponse> refreshStrategy,
-                            ResponseConverter<TResponse> responseConverter) {
-        super(refreshStrategy);
-        this.responseConverter = responseConverter;
-    }
-
-    public OkHttpDataSource(ResponseConverter<TResponse> responseConverter) {
-        this.responseConverter = responseConverter;
+        this.callbackHandler = new DefaultCallbackHandler();
     }
 
     @Override
@@ -79,8 +87,8 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
     }
 
     @Override
-    protected void doGet(SourceParams sourceParams, DataController.Success<TResponse> success,
-                         DataController.Error error) {
+    public void get(DataSource.SourceParams sourceParams, DataController.Error error,
+                    DataController.Success<TResponse> success) {
         OkHttpParamsInterface params = getParams(sourceParams);
         currentCall = params.getCall();
         if (responseConverter == null) {
@@ -88,57 +96,21 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
                     "we can convert the response into a type");
         }
 
-        currentCall.enqueue(newCallback(success, error));
-    }
-
-    @Override
-    protected void doStore(DataControllerResponse<TResponse> dataControllerResponse) {
-        // do not store anything by default.
-    }
-
-    @Override
-    public SourceType getSourceType() {
-        return SourceType.NETWORK;
-    }
-
-    protected Callback newCallback(DataController.Success<TResponse> success,
-                                   DataController.Error error) {
-        return new Callback() {
+        currentCall.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                handleFailure(call, e, success, error);
+                callbackHandler.onHandleFailure(call, e, success, error);
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                handleResponse(call, response, success, error);
+                callbackHandler.onHandleResponse(call, response, success, error);
             }
-        };
+        });
     }
 
-    protected void handleFailure(Call call, IOException e,
-                                 DataController.Success<TResponse> success,
-                                 DataController.Error error) {
-        error.onFailure(new DataResponseError.Builder(getSourceType(), e)
-                .build());
-    }
-
-    protected void handleResponse(Call call, Response response,
-                                  DataController.Success<TResponse> success,
-                                  DataController.Error error) {
-        if (response.isSuccessful()) {
-            success.onSuccess(new DataControllerResponse<>(
-                    responseConverter.convert(call, response), getSourceType()
-            ));
-        } else {
-            error.onFailure(new DataResponseError
-                    .Builder(getSourceType(), response.message())
-                    .build());
-        }
-    }
-
-    protected OkHttpParamsInterface getParams(SourceParams sourceParams) {
-        OkHttpParamsInterface params = defaultParams;
+    private OkHttpParamsInterface getParams(DataSource.SourceParams sourceParams) {
+        OkHttpParamsInterface params = null;
         if (sourceParams instanceof OkHttpParamsInterface) {
             params = (OkHttpParamsInterface) sourceParams;
         }
@@ -147,5 +119,31 @@ public class OkHttpDataSource<TResponse> extends DataSource<TResponse> {
                     + OkHttpParamsInterface.class.getSimpleName());
         }
         return params;
+    }
+
+    class DefaultCallbackHandler implements CallbackHandler<TResponse> {
+
+        @Override
+        public void onHandleResponse(Call call, Response response,
+                                     DataController.Success<TResponse> success,
+                                     DataController.Error error) {
+            if (response.isSuccessful()) {
+                success.onSuccess(new DataControllerResponse<>(
+                        responseConverter.convert(call, response), DataSource.SourceType.NETWORK
+                ));
+            } else {
+                error.onFailure(new DataResponseError
+                        .Builder(DataSource.SourceType.NETWORK, response.message())
+                        .build());
+            }
+        }
+
+        @Override
+        public void onHandleFailure(Call call, IOException e,
+                                    DataController.Success<TResponse> success,
+                                    DataController.Error error) {
+            error.onFailure(new DataResponseError.Builder(DataSource.SourceType.NETWORK, e)
+                    .build());
+        }
     }
 }

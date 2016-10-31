@@ -2,7 +2,7 @@ package com.fuzz.datacontroller.test.source;
 
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.MemoryDataSource;
+import com.fuzz.datacontroller.source.MemorySource;
 import com.fuzz.datacontroller.test.DataItem;
 import com.fuzz.datacontroller.test.ValidateCallback;
 
@@ -16,13 +16,13 @@ import static org.junit.Assert.assertTrue;
 /**
  * Description:
  */
-public class MemoryDataSourceTest {
+public class MemorySourceTest {
 
-    private MemoryDataSource<DataItem> dataSource;
+    private MemorySource<DataItem> dataSource;
 
     @Before
     public void setup_test() {
-        dataSource = new MemoryDataSource<>();
+        dataSource = new MemorySource<>();
     }
 
     @Test
@@ -35,20 +35,22 @@ public class MemoryDataSourceTest {
     @Test
     public void test_stored() {
         DataItem item = new DataItem();
-        dataSource.doStore(new DataControllerResponse<>(item, DataSource.SourceType.NETWORK));
+        dataSource.store(new DataControllerResponse<>(item, DataSource.SourceType.NETWORK));
 
-        assertNotNull(dataSource.getStoredData());
+        assertNotNull(dataSource.getStoredData(new DataSource.SourceParams()));
     }
 
     @Test
     public void test_clearData() {
+        DataSource.SourceParams sourceParams = new DataSource.SourceParams();
+
         DataItem item = new DataItem();
         dataSource.store(new DataControllerResponse<>(item, DataSource.SourceType.NETWORK));
 
-        assertNotNull(dataSource.getStoredData());
+        assertNotNull(dataSource.getStoredData(sourceParams));
 
-        dataSource.clearStoredData();
+        dataSource.clearStoredData(sourceParams);
 
-        assertNull(dataSource.getStoredData());
+        assertNull(dataSource.getStoredData(sourceParams));
     }
 }

@@ -3,9 +3,8 @@ package com.fuzz.datacontroller.test;
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSource2;
 import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
-import com.fuzz.datacontroller.source.MemoryDataSource;
+import com.fuzz.datacontroller.source.MemorySource;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,9 +31,9 @@ public class DataControllerTest {
     public void before_test_Init() {
         //noinspection unchecked
         mockDataSource = mock(DataSource.class);
-        when(mockDataSource.getSourceType()).thenReturn(DataSource.SourceType.NETWORK);
+        when(mockDataSource.sourceType()).thenReturn(DataSource.SourceType.NETWORK);
 
-        when(mockDataSource.getRefreshStrategy()).thenReturn(new DataSource2.RefreshStrategy<String>() {
+        when(mockDataSource.refreshStrategy()).thenReturn(new DataSource.RefreshStrategy<String>() {
             @Override
             public boolean shouldRefresh(DataSource<String> dataSource) {
                 return true;
@@ -43,7 +42,7 @@ public class DataControllerTest {
 
         dataController = new DataController.Builder<String>()
                 .dataSource(mockDataSource)
-                .dataSource(new MemoryDataSource<String>())
+                .dataSource(MemorySource.<String>builderInstance().build())
                 .build();
 
     }
@@ -53,8 +52,8 @@ public class DataControllerTest {
         List<DataSource<String>> sources = new ArrayList<>(dataController.dataSources());
         assertEquals(2, sources.size());
 
-        assertEquals(DataSource.SourceType.MEMORY, sources.get(0).getSourceType());
-        assertEquals(DataSource.SourceType.NETWORK, sources.get(1).getSourceType());
+        assertEquals(DataSource.SourceType.MEMORY, sources.get(0).sourceType());
+        assertEquals(DataSource.SourceType.NETWORK, sources.get(1).sourceType());
     }
 
     @Test

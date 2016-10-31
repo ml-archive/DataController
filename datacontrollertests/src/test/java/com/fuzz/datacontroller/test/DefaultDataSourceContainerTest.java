@@ -3,7 +3,7 @@ package com.fuzz.datacontroller.test;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
 import com.fuzz.datacontroller.source.ListBasedDataSourceContainer;
-import com.fuzz.datacontroller.source.MemoryDataSource;
+import com.fuzz.datacontroller.source.MemorySource;
 import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;
 
 import org.junit.Before;
@@ -27,9 +27,9 @@ public class DefaultDataSourceContainerTest {
     @Before
     public void setup_test() {
         mockDiskDataSource = mock(DataSource.class);
-        when(mockDiskDataSource.getSourceType()).thenReturn(DataSource.SourceType.DISK);
+        when(mockDiskDataSource.sourceType()).thenReturn(DataSource.SourceType.DISK);
         mockNetworkDataSource = mock(DataSource.class);
-        when(mockNetworkDataSource.getSourceType()).thenReturn(DataSource.SourceType.NETWORK);
+        when(mockNetworkDataSource.sourceType()).thenReturn(DataSource.SourceType.NETWORK);
     }
 
     @Test
@@ -37,8 +37,8 @@ public class DefaultDataSourceContainerTest {
         TreeMapSingleTypeDataSourceContainer<String> treeMapDataSourceContainer
                 = new TreeMapSingleTypeDataSourceContainer<>();
 
-        MemoryDataSource<String> memoryDataSource = new MemoryDataSource<>();
-        treeMapDataSourceContainer.registerDataSource(memoryDataSource);
+        DataSource<String> memorySource = MemorySource.<String>builderInstance().build();
+        treeMapDataSourceContainer.registerDataSource(memorySource);
         treeMapDataSourceContainer.registerDataSource(mockDiskDataSource);
         treeMapDataSourceContainer.registerDataSource(mockNetworkDataSource);
 
@@ -46,7 +46,7 @@ public class DefaultDataSourceContainerTest {
 
         assertEquals(3, treeMapDataSourceContainer.sources().size());
 
-        treeMapDataSourceContainer.deregisterDataSource(memoryDataSource);
+        treeMapDataSourceContainer.deregisterDataSource(memorySource);
         assertEquals(2, treeMapDataSourceContainer.sources().size());
     }
 

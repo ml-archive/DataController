@@ -1,7 +1,6 @@
 package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSource2;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +38,7 @@ public class DataControllerRequest<T> {
 
     /**
      * Executes the request. Subsequent calls will also execute unless the {@link DataSource}
-     * is busy, its {@link DataSource2.RefreshStrategy} prevents it, or the {@link DataSourceChainer}.
+     * is busy, its {@link DataSource.RefreshStrategy} prevents it, or the {@link DataSourceChainer}.
      */
     public void execute() {
         List<DataSource<T>> dataSources = new ArrayList<>(sources());
