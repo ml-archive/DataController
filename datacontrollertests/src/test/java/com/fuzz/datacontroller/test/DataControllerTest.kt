@@ -44,7 +44,7 @@ class DataControllerTest {
 
     @Test
     fun test_Sources() {
-        val sources = ArrayList(dataController!!.dataSources())
+        val sources = ArrayList(dataController.dataSources())
         assertEquals(2, sources.size.toLong())
 
         assertEquals(DataSource.SourceType.MEMORY, sources[0].sourceType())

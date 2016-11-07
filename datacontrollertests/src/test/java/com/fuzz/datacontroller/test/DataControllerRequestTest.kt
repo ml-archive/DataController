@@ -275,4 +275,33 @@ class DataControllerRequestTest {
                 errorCaptor.capture(), successCaptor.capture())
         assertEquals(targetNetworkParams, paramsCaptor.value)
     }
+
+    @Test
+    fun test_canTargetStorage() {
+        val responseCaptor = ArgumentCaptor.forClass(DataControllerResponse::class.java)
+                as ArgumentCaptor<DataControllerResponse<String>>
+
+        val mockCaller = mock(DataSource.DataSourceCaller::class.java) as DataSource.DataSourceCaller<String>
+        val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
+                as ArgumentCaptor<DataController.Success<String>>
+        val errorCaptor = ArgumentCaptor.forClass(DataController.Error::class.java)
+        val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
+        `when`(mockCaller.get(paramsCaptor.capture(), errorCaptor.capture(), successCaptor.capture()))
+                .then {
+                    successCaptor.value.onSuccess(DataControllerResponse("", NETWORK))
+                }
+
+        val mockStorage = mock(DataSource.DataSourceStorage::class.java) as DataSource.DataSourceStorage<String>
+        val dataController = DataController.newBuilder<String>()
+                .dataSource(MemorySource.builderInstance<String>().storage(mockStorage).build())
+                .dataSource(DataSource.Builder(mockCaller, NETWORK).build())
+                .build()
+
+        dataController.request(networkParams())
+                .addStorageSourceTarget(memoryParams())
+                .build()
+                .execute()
+
+        verify(mockStorage).store(responseCaptor.capture())
+    }
 }
