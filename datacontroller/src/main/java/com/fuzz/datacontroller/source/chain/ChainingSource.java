@@ -4,7 +4,6 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerRequest;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.ListBasedDataSourceContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +18,12 @@ import java.util.List;
  */
 public class ChainingSource<T> implements DataSource.Source<T> {
 
-    private final ListBasedDataSourceContainer<T> sourceContainer
-            = new ListBasedDataSourceContainer<>();
+    private final List<DataSourceChain<?, T>> dataSourceChains
+            = new ArrayList<>();
 
     private ChainingSource(Builder<T> builder) {
-        for (DataSource<T> dataSource : builder.builderContainer.sources()) {
-            sourceContainer.registerDataSource(dataSource);
+        for (DataSourceChain<?, T> dataSource : builder.dataSourceChains) {
+            dataSourceChains.add(dataSource);
         }
     }
 
@@ -36,8 +35,7 @@ public class ChainingSource<T> implements DataSource.Source<T> {
     public void get(DataSource.SourceParams sourceParams,
                     DataController.Error error,
                     DataController.Success<T> success) {
-        recursiveGet(0, new ArrayList<>(sourceContainer.sources()),
-                sourceParams, error, success);
+        recursiveGet(0, dataSourceChains, sourceParams, error, success);
     }
 
     @Override
@@ -65,18 +63,15 @@ public class ChainingSource<T> implements DataSource.Source<T> {
         return false;
     }
 
-    private void recursiveGet(final int position,
-                              final List<DataSource<T>> dataSources,
-                              DataSource.SourceParams sourceParams,
-                              DataController.Error error, final DataController.Success<T> success) {
-        final DataSource<T> dataSource = dataSources.get(position);
+    void recursiveGet(final int position,
+                      final List<DataSourceChain<?, T>> dataSources,
+                      DataSource.SourceParams sourceParams,
+                      DataController.Error error, final DataController.Success<T> success) {
+        final DataSourceChain dataSource = dataSources.get(position);
         dataSource.get(sourceParams, new DataController.Success<T>() {
             @Override
             public void onSuccess(DataControllerResponse<T> response) {
-                // not last
-                if (position < dataSources.size() - 1) {
-
-                } else {
+                if (position == dataSources.size() - 1) {
                     success.onSuccess(response);
                 }
             }
@@ -86,14 +81,16 @@ public class ChainingSource<T> implements DataSource.Source<T> {
     @SuppressWarnings("unchecked")
     public static class Builder<T> {
 
-        private final List<DataSourceChain> dataSourceChains = new ArrayList<>();
+        private final List<DataSourceChain<?, T>> dataSourceChains = new ArrayList<>();
 
-        public Builder(DataSourceChain<T> dataSourceChain) {
+        public Builder(DataSourceChain<T, T> dataSourceChain) {
             dataSourceChains.add(dataSourceChain);
         }
 
-        public <V> DataSourceChain.Builder<V> chain(DataSource<V> dataSource) {
-            return new DataSourceChain.Builder<>(dataSource);
+        public <V> DataSourceChain.Builder<V, T> chain(DataSource<V> dataSource,
+                                                       DataSourceChain.ResponseConverter<V, T>
+                                                               responseConverter) {
+            return new DataSourceChain.Builder<>(dataSource, responseConverter);
         }
 
         public ChainingSource<T> build() {
