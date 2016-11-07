@@ -17,6 +17,13 @@ import java.util.List;
 public class DataController<T> {
 
     /**
+     * @return A new {@link Builder} to construct the {@link DataController}
+     */
+    public static <T> Builder<T> newBuilder() {
+        return new Builder<>();
+    }
+
+    /**
      * Description: Represents a failed callback response.
      */
     public interface Error {

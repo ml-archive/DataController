@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 apply plugin: 'com.neenbedankt.android-apt'
 
 android {
@@ -15,6 +16,9 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+    }
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
     }
 }
 
@@ -35,6 +39,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'com.google.code.gson:gson:2.6.2'
     testCompile "org.robolectric:robolectric:3.0"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 task createTestResources << {
@@ -47,4 +52,7 @@ task createTestResources << {
     } else {
         logger.info("Using default MockMaker")
     }
+}
+repositories {
+    mavenCentral()
 }

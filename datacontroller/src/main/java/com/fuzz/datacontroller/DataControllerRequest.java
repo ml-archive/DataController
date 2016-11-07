@@ -75,8 +75,8 @@ public class DataControllerRequest<T> {
             List<DataSourceContainer.DataSourceParams> dataSourceParams = new ArrayList<>(targetedSources);
             for (DataSourceContainer.DataSourceParams params : dataSourceParams) {
                 DataSource<T> source = dataController.getDataSource(params);
-                DataSource<T> previousSource = dataController.getDataSource(dataSourceParams.get(index - 1));
-                if (index == 0 || dataController.dataSourceChainer.shouldQueryNext(previousSource, source)) {
+                if (index == 0 || dataController.dataSourceChainer.shouldQueryNext(
+                        dataController.getDataSource(dataSourceParams.get(index - 1)), source)) {
                     source.get(targetParamsMap.get(params), internalSuccessCallback, internalErrorCallback);
                 }
                 index++;
@@ -93,6 +93,21 @@ public class DataControllerRequest<T> {
 
     public void clearCallbacks() {
         callbackGroup.clearCallbacks();
+    }
+
+    /**
+     * @return true if we have attached any specific request callbacks here.
+     */
+    public boolean hasRequestCallbacks() {
+        return callbackGroup.hasCallbacks();
+    }
+
+    /**
+     * @return true if we have {@link #hasRequestCallbacks()} or the corresponding {@link DataController}
+     * has callbacks.
+     */
+    public boolean hasCallbacks() {
+        return callbackGroup.hasCallbacks() || dataController.hasCallbacks();
     }
 
     private Collection<DataSource<T>> sources() {

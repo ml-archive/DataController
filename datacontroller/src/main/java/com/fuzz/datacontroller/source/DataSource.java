@@ -89,7 +89,11 @@ public class DataSource<T> {
         this.caller = builder.caller;
         this.sourceType = builder.sourceType;
         this.storage = builder.storage;
-        this.refreshStrategy = builder.refreshStrategy;
+        if (builder.refreshStrategy != null) {
+            this.refreshStrategy = builder.refreshStrategy;
+        } else {
+            this.refreshStrategy = new DefaultRefreshStrategy();
+        }
         this.defaultParams = builder.defaultParams;
     }
 
@@ -259,5 +263,13 @@ public class DataSource<T> {
          * Data in this class.
          */
         public Object data;
+    }
+
+    private final class DefaultRefreshStrategy implements RefreshStrategy<T> {
+
+        @Override
+        public boolean shouldRefresh(DataSource<T> dataSource) {
+            return true;
+        }
     }
 }
