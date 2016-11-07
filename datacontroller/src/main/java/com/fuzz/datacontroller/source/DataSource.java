@@ -259,11 +259,6 @@ public class DataSource<T> {
         public static final SourceParams defaultParams = new SourceParams();
 
         /**
-         * an optional index to use. -1 is default, meaning we should retrieve all information.
-         */
-        public int index = -1;
-
-        /**
          * Data in this class.
          */
         public Object data;
