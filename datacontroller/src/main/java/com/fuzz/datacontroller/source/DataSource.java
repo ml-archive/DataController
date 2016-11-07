@@ -10,7 +10,6 @@ import com.fuzz.datacontroller.DataResponseError;
  *
  * @author Andrew Grosner (fuzz)
  */
-
 public class DataSource<T> {
 
     /**
@@ -73,7 +72,7 @@ public class DataSource<T> {
         boolean shouldRefresh(DataSource<TResponse> dataSource);
     }
 
-    private final Object syncLock = new Object();
+    private Object syncLock;
 
     private boolean isBusy = false;
 
@@ -157,14 +156,17 @@ public class DataSource<T> {
      */
     public final void get(SourceParams sourceParams, DataController.Success<T> success,
                           DataController.Error error) {
-        if (refreshStrategy.shouldRefresh(this) && !isBusy()
-                || sourceParams.force) {
+        if (refreshStrategy().shouldRefresh(this) && !isBusy()
+                || sourceParams != null && sourceParams.force) {
             setBusy(true);
             SourceParams params = sourceParams;
             if (params == null || SourceParams.defaultParams.equals(params)) {
                 params = defaultParams;
             }
-            caller.get(params, wrapBusyError(error), wrapBusySuccess(success));
+
+            if (caller != null) {
+                caller.get(params, wrapBusyError(error), wrapBusySuccess(success));
+            }
         }
     }
 
@@ -173,15 +175,22 @@ public class DataSource<T> {
     }
 
     private void setBusy(boolean isBusy) {
-        synchronized (syncLock) {
+        synchronized (syncLock()) {
             this.isBusy = isBusy;
         }
     }
 
     public boolean isBusy() {
-        synchronized (syncLock) {
+        synchronized (syncLock()) {
             return isBusy;
         }
+    }
+
+    private Object syncLock() {
+        if (syncLock == null) {
+            syncLock = new Object();
+        }
+        return syncLock;
     }
 
     /**

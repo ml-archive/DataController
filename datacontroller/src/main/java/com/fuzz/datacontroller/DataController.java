@@ -129,7 +129,7 @@ public class DataController<T> {
 
     public DataControllerRequest.Builder<T> request(DataSourceContainer.DataSourceParams params) {
         return new DataControllerRequest.Builder<>(this)
-                .addSourceTarget(params);
+                .addRequestSourceTarget(params);
     }
 
     public Collection<DataSource<T>> dataSources() {
