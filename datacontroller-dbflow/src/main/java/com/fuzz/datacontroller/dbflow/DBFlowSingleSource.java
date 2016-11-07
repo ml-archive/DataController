@@ -12,8 +12,7 @@ public class DBFlowSingleSource<TModel> extends BaseDBFlowSource<TModel, TModel>
 
     public static <TModel> DataSource.Builder<TModel> builderInstance(Class<TModel> modelClass) {
         DBFlowSingleSource<TModel> source = new DBFlowSingleSource<>(modelClass);
-        return new DataSource.Builder<>(source, DataSource.SourceType.DISK)
-                .storage(source);
+        return new DataSource.Builder<>(source, DataSource.SourceType.DISK);
     }
 
     private DBFlowSingleSource(Class<TModel> tModelClass) {

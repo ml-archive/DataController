@@ -18,8 +18,7 @@ public class DBFlowListSource<TModel>
 
     public static <TModel> DataSource.Builder<List<TModel>> builderInstance(Class<TModel> modelClass) {
         DBFlowListSource<TModel> source = new DBFlowListSource<>(modelClass);
-        return new DataSource.Builder<>(source, DataSource.SourceType.DISK)
-                .storage(source);
+        return new DataSource.Builder<>(source, DataSource.SourceType.DISK);
     }
 
     private DBFlowListSource(Class<TModel> tModelClass) {

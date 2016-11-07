@@ -236,6 +236,13 @@ public class DataSource<T> {
             this.sourceType = sourceType;
         }
 
+        public Builder(Source<T> source,
+                       SourceType sourceType) {
+            this.caller = source;
+            this.storage = source;
+            this.sourceType = sourceType;
+        }
+
         /**
          * Define how this {@link DataSource} stores its data. Most implementations of custom sources
          * will provide this already. see {@link MemorySource}
