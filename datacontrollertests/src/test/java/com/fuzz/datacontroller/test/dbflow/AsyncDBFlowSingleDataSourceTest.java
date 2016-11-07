@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.test.dbflow;
 
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.fuzz.datacontroller.dbflow.AsyncDBFlowSingleDataSource;
+import com.fuzz.datacontroller.dbflow.AsyncDBFlowSingleSource;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.test.BaseRobolectricUnitTest;
 import com.fuzz.datacontroller.test.DataItem;
@@ -20,11 +20,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class AsyncDBFlowSingleDataSourceTest extends BaseRobolectricUnitTest {
 
-    private AsyncDBFlowSingleDataSource<DataItem> dataSource;
+    private DataSource<DataItem> dataSource;
 
     @Before
     public void setup_test() {
-        dataSource = new AsyncDBFlowSingleDataSource<>(DataItem.class);
+        dataSource = AsyncDBFlowSingleSource.builderInstance(DataItem.class).build();
     }
 
     @Test
@@ -32,7 +32,7 @@ public class AsyncDBFlowSingleDataSourceTest extends BaseRobolectricUnitTest {
         DataItem model = new DataItem();
         model.setId("Andrew");
         model.setData("Test");
-        dataSource.store(model);
+        dataSource.store(new DataControllerResponse<>(model, DataSource.SourceType.NETWORK));
 
         ValidateCallback<DataItem> callback = new ValidateCallback<>();
         dataSource.get(null, callback, callback);

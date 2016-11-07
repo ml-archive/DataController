@@ -7,7 +7,16 @@ import com.fuzz.datacontroller.DataControllerResponse;
 /**
  * Description: Maps the callbacks of one source with another type.
  */
-public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TResponse> {
+public class MappingSource<TFromResponse, TResponse>
+        implements DataSource.Source<TResponse> {
+
+    public static <TResponse, TFromResponse> DataSource.Builder<TResponse> builderInstance(
+            DataSource<TFromResponse> datasource,
+            Mapper<TFromResponse, TResponse> mapper) {
+        MappingSource<TFromResponse, TResponse> mapping = new MappingSource<>(datasource, mapper);
+        return new DataSource.Builder<>(mapping, datasource.sourceType())
+                .storage(mapping);
+    }
 
     /**
      * Defines how we map from one type of response to another.
@@ -43,8 +52,8 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
         return mapper;
     }
 
-    public MappingDataSource(DataSource<TFromResponse> fromDataSource,
-                             Mapper<TFromResponse, TResponse> mapper) {
+    public MappingSource(DataSource<TFromResponse> fromDataSource,
+                         Mapper<TFromResponse, TResponse> mapper) {
         this.fromDataSource = fromDataSource;
         this.mapper = mapper;
     }
@@ -55,13 +64,9 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
     }
 
     @Override
-    public SourceType getSourceType() {
-        return fromDataSource.getSourceType();
-    }
-
-    @Override
-    protected void doGet(SourceParams sourceParams, final DataController.Success<TResponse> success, DataController.Error error) {
-        fromDataSource.doGet(sourceParams, new DataController.Success<TFromResponse>() {
+    public void get(DataSource.SourceParams sourceParams,
+                    DataController.Error error, final DataController.Success<TResponse> success) {
+        fromDataSource.get(sourceParams, new DataController.Success<TFromResponse>() {
             @Override
             public void onSuccess(DataControllerResponse<TFromResponse> response) {
                 TResponse transformedResponse = mapper.mapFrom(response.getResponse());
@@ -72,10 +77,24 @@ public class MappingDataSource<TFromResponse, TResponse> extends DataSource<TRes
     }
 
     @Override
-    protected void doStore(DataControllerResponse<TResponse> response) {
+    public void store(DataControllerResponse<TResponse> response) {
         TFromResponse transformedResponse = mapper.mapTo(response.getResponse());
-        fromDataSource.doStore(new DataControllerResponse<>(transformedResponse,
+        fromDataSource.store(new DataControllerResponse<>(transformedResponse,
                 response.getSourceType(), response.getOriginalUrl()));
     }
 
+    @Override
+    public TResponse getStoredData(DataSource.SourceParams params) {
+        return mapper.mapFrom(fromDataSource.getStoredData(params));
+    }
+
+    @Override
+    public void clearStoredData(DataSource.SourceParams params) {
+        fromDataSource.clearStoredData(params);
+    }
+
+    @Override
+    public boolean hasStoredData(DataSource.SourceParams params) {
+        return fromDataSource.hasStoredData(params);
+    }
 }

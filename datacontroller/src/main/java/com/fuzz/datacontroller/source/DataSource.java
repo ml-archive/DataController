@@ -1,13 +1,17 @@
 package com.fuzz.datacontroller.source;
 
 import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerRequest;
 import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
 
 /**
- * Description: Provides a source of where information comes from.
+ * Description:
+ *
+ * @author Andrew Grosner (fuzz)
  */
-public abstract class DataSource<TResponse> {
 
+public class DataSource<T> {
 
     /**
      * Describes where this {@link DataSource} information came from. This is especially useful
@@ -31,24 +35,26 @@ public abstract class DataSource<TResponse> {
         NETWORK
     }
 
-    /**
-     * SourceParams provide the base class for all information passing between
-     * caller {@link DataController#requestData(SourceParams)} and receiver {@link DataSource}.
-     * <p></p>
-     * Some {@link DataSource} require more information that this base class cannot represent. It
-     * is up to them to provide the kind of params they expect.
-     */
-    public static class SourceParams {
+    public interface DataSourceStorage<T> {
 
-        /**
-         * an optional index to use. -1 is default, meaning we should retrieve all information.
-         */
-        public int index = -1;
+        void store(DataControllerResponse<T> response);
 
-        /**
-         * Data in this class.
-         */
-        public Object data;
+        T getStoredData(SourceParams params);
+
+        void clearStoredData(SourceParams params);
+
+        boolean hasStoredData(SourceParams params);
+    }
+
+
+    public interface DataSourceCaller<T> {
+        void get(SourceParams sourceParams,
+                 DataController.Error error, DataController.Success<T> success);
+
+        void cancel();
+    }
+
+    public interface Source<T> extends DataSourceStorage<T>, DataSourceCaller<T> {
     }
 
     /**
@@ -60,75 +66,82 @@ public abstract class DataSource<TResponse> {
 
         /**
          * @param dataSource The data source that we're calling.
-         * @return True if we should refresh by calling {@link #get(SourceParams, DataController.Success, DataController.Error)}.
+         * @return True if we should refresh by calling {@link #get(SourceParams,
+         * DataController.Success, DataController.Error)}.
          * If false, we do not refresh data.
          */
         boolean shouldRefresh(DataSource<TResponse> dataSource);
     }
 
-    private final RefreshStrategy<TResponse> refreshStrategy;
+    private final Object syncLock = new Object();
 
-    public DataSource(RefreshStrategy<TResponse> refreshStrategy) {
-        this.refreshStrategy = refreshStrategy;
+    private boolean isBusy = false;
+
+    private final DataSourceCaller<T> caller;
+    private final SourceType sourceType;
+
+    private final DataSourceStorage<T> storage;
+    private final RefreshStrategy<T> refreshStrategy;
+    private final SourceParams defaultParams;
+
+
+    DataSource(Builder<T> builder) {
+        this.caller = builder.caller;
+        this.sourceType = builder.sourceType;
+        this.storage = builder.storage;
+        if (builder.refreshStrategy != null) {
+            this.refreshStrategy = builder.refreshStrategy;
+        } else {
+            this.refreshStrategy = new DefaultRefreshStrategy();
+        }
+        this.defaultParams = builder.defaultParams;
     }
 
-    public DataSource() {
-        this(new RefreshStrategy<TResponse>() {
-            @Override
-            public boolean shouldRefresh(DataSource<TResponse> dataSource) {
-                return true;
-            }
-        });
-    }
-
-    public final RefreshStrategy<TResponse> getRefreshStrategy() {
+    public RefreshStrategy<T> refreshStrategy() {
         return refreshStrategy;
     }
 
-    /**
-     * Queries this {@link DataSource} for data stored. This potentially can be expensive since
-     * if this is a {@link SourceType#DISK}, it will perform an IO operation on the calling thread.
-     * This method is useful for retrieving data in same thread, but should be avoided unless absolutely
-     * necessary. Prefer using the {@link #get(SourceParams, DataController.Success, DataController.Error)} method.
-     *
-     * @param sourceParams The set of params to query data from. Its up to this {@link DataSource} to handle the values.
-     */
-    public TResponse getStoredData(SourceParams sourceParams) {
-        return null;
+    public SourceType sourceType() {
+        return sourceType;
     }
 
-    /**
-     * Performs {@link #getStoredData(SourceParams)} with default params.
-     */
-    public final TResponse getStoredData() {
-        return getStoredData(new SourceParams());
+    public T getStoredData() {
+        return storage != null ? storage.getStoredData(defaultParams) : null;
     }
 
-    /**
-     * @return true if stored data exists. this is determined by nullability. Override for other kinds
-     * of checks.
-     */
+    public T getStoredData(SourceParams sourceParams) {
+        return storage != null ? storage.getStoredData(sourceParams) : null;
+    }
+
     public boolean hasStoredData() {
-        return getStoredData() != null;
+        return storage.hasStoredData(defaultParams);
     }
 
-    /**
-     * Clears out stored data. Will either delete its db instance, clear out memory, or erase something on disk.
-     */
+    public boolean hasStoredData(SourceParams params) {
+        return storage.hasStoredData(params);
+    }
+
+    public void clearStoredData() {
+        storage.clearStoredData(defaultParams);
+    }
+
     public void clearStoredData(SourceParams sourceParams) {
-
+        if (storage != null) {
+            storage.clearStoredData(sourceParams);
+        }
     }
 
     /**
-     * Calls {@link #doStore(DataControllerResponse)}
+     * Calls {@link DataSourceStorage#store(DataControllerResponse)}
      * only if the {@link DataControllerResponse#getSourceType()} is different.
      * i.e comes from a different source.
      *
      * @param tResponse The response returned here.
      */
-    public final void store(DataControllerResponse<TResponse> tResponse) {
-        if (!tResponse.getSourceType().equals(getSourceType())) {
-            doStore(tResponse);
+    public final void store(DataControllerResponse<T> tResponse) {
+        if (!tResponse.getSourceType().equals(sourceType)
+                && storage != null) {
+            storage.store(tResponse);
         }
     }
 
@@ -142,44 +155,130 @@ public abstract class DataSource<TResponse> {
      * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
      */
-    public final void get(SourceParams sourceParams, DataController.Success<TResponse> success,
+    public final void get(SourceParams sourceParams, DataController.Success<T> success,
                           DataController.Error error) {
-        if (getRefreshStrategy().shouldRefresh(this)) {
-            doGet(sourceParams, success, error);
+        if (refreshStrategy.shouldRefresh(this) && !isBusy()
+                || sourceParams.force) {
+            setBusy(true);
+            SourceParams params = sourceParams;
+            if (params == null || SourceParams.defaultParams.equals(params)) {
+                params = defaultParams;
+            }
+            caller.get(params, wrapBusyError(error), wrapBusySuccess(success));
+        }
+    }
+
+    public void cancel() {
+        caller.cancel();
+    }
+
+    private void setBusy(boolean isBusy) {
+        synchronized (syncLock) {
+            this.isBusy = isBusy;
+        }
+    }
+
+    public boolean isBusy() {
+        synchronized (syncLock) {
+            return isBusy;
         }
     }
 
     /**
-     * Attempts to cancel any pending asynchronous operation on this {@link DataSource}.
+     * @return convenience method designed to communicate busy state completion.
      */
-    public abstract void cancel();
+    private DataController.Error wrapBusyError(final DataController.Error error) {
+        return new DataController.Error() {
+            @Override
+            public void onFailure(DataResponseError dataResponseError) {
+                setBusy(false);
+                error.onFailure(dataResponseError);
+            }
+        };
+    }
 
     /**
-     * Perform the actual information retrieval here. This might call a network, database, or file-based system.
-     * Anything that is IO should be done on a separate thread. It is also up to the {@link DataSource}
-     * to ensure that both success and error are properly called.
+     * @return convenience method designed to communicate busy state completion.
+     */
+    private DataController.Success<T> wrapBusySuccess(
+            final DataController.Success<T> success) {
+        return new DataController.Success<T>() {
+            @Override
+            public void onSuccess(DataControllerResponse<T> response) {
+                setBusy(false);
+                success.onSuccess(response);
+            }
+        };
+    }
+
+    public static final class Builder<T> {
+
+        private final DataSourceCaller<T> caller;
+        private final SourceType sourceType;
+
+        private DataSourceStorage<T> storage;
+        private RefreshStrategy<T> refreshStrategy;
+
+        private SourceParams defaultParams = SourceParams.defaultParams;
+
+        public Builder(DataSourceCaller<T> caller,
+                       SourceType sourceType) {
+            this.caller = caller;
+            this.sourceType = sourceType;
+        }
+
+        public Builder<T> storage(DataSourceStorage<T> storage) {
+            this.storage = storage;
+            return this;
+        }
+
+        public Builder<T> refreshStrategy(RefreshStrategy<T> strategy) {
+            this.refreshStrategy = strategy;
+            return this;
+        }
+
+        public Builder<T> defaultParams(SourceParams defaultParams) {
+            this.defaultParams = defaultParams;
+            return this;
+        }
+
+        public DataSource<T> build() {
+            return new DataSource<>(this);
+        }
+    }
+
+    /**
+     * SourceParams provide the base class for all information passing between
+     * caller {@link DataControllerRequest} and receiver {@link DataSource}.
      * <p></p>
-     * Also, it is up to the implementation of this method to provide a custom set
-     * of {@link SourceParams} if needed, so it can retrieve the specific information it might
-     * need to get.
-     *
-     * @param sourceParams The params used to retrieve information from the {@link DataSource}.
-     * @param success      Called when a successful request returns.
-     * @param error        Called when a request fails.
+     * Some {@link DataSource} require more information that this base class cannot represent. It
+     * is up to them to provide the kind of params they expect.
      */
-    protected abstract void doGet(SourceParams sourceParams, DataController.Success<TResponse> success, DataController.Error error);
+    public static class SourceParams {
 
-    /**
-     * Perform the actual information storage here. This might call a network, database, or file-based system.
-     * Anything that is IO should be done on a separate thread to prevent blocking.
-     *
-     * @param dataControllerResponse The response to store.
-     */
-    protected abstract void doStore(DataControllerResponse<TResponse> dataControllerResponse);
+        public static final SourceParams defaultParams = new SourceParams();
 
-    /**
-     * @return The kind of source, i.e. where it comes from. Must be defined.
-     */
-    public abstract SourceType getSourceType();
+        /**
+         * an optional index to use. -1 is default, meaning we should retrieve all information.
+         */
+        public int index = -1;
 
+        /**
+         * Data in this class.
+         */
+        public Object data;
+
+        /**
+         * If true, we force a refresh to happen.
+         */
+        public boolean force;
+    }
+
+    private final class DefaultRefreshStrategy implements RefreshStrategy<T> {
+
+        @Override
+        public boolean shouldRefresh(DataSource<T> dataSource) {
+            return true;
+        }
+    }
 }

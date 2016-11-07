@@ -5,10 +5,10 @@ import java.util.Collection;
 /**
  * Description: Defines how {@link DataSource} are stored and retrieved.
  */
-public interface DataSourceStorage<TResponse> {
+public interface DataSourceContainer<TResponse> {
 
     /**
-     * Used to distinctly acquire a {@link DataSource} from a {@link DataSourceStorage}. This
+     * Used to distinctly acquire a {@link DataSource} from a {@link DataSourceContainer}. This
      * flexibility enables multiple of the same {@link DataSource} via
      * the {@link ListBasedDataSourceContainer}.
      */

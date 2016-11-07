@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller.test.dbflow;
 
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.fuzz.datacontroller.dbflow.AsyncDBFlowListDataSource;
+import com.fuzz.datacontroller.dbflow.AsyncDBFlowListSource;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.test.BaseRobolectricUnitTest;
 import com.fuzz.datacontroller.test.DataItem;
@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -21,11 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 public class AsyncDBFlowListDataSourceTest extends BaseRobolectricUnitTest {
 
-    private AsyncDBFlowListDataSource<DataItem> dataSource;
+    private DataSource<List<DataItem>> dataSource;
 
     @Before
     public void setup_test() {
-        dataSource = new AsyncDBFlowListDataSource<>(DataItem.class);
+        dataSource = AsyncDBFlowListSource.builderInstance(DataItem.class).build();
     }
 
     @Test
@@ -33,7 +34,8 @@ public class AsyncDBFlowListDataSourceTest extends BaseRobolectricUnitTest {
         DataItem model = new DataItem();
         model.setId("Andrew");
         model.setData("Test");
-        dataSource.store(model);
+        dataSource.store(new DataControllerResponse<>(Collections.singletonList(model),
+                DataSource.SourceType.NETWORK));
 
         ValidateCallback<List<DataItem>> callback = new ValidateCallback<>();
         dataSource.get(null, callback, callback);

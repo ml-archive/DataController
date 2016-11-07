@@ -4,7 +4,7 @@ import android.support.annotation.Nullable;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.raizlabs.android.dbflow.structure.Model;
+import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
 
@@ -14,30 +14,22 @@ import java.util.List;
  * Description: Loads and saves a {@link List} of {@link TModel} to/from the database.
  * Provides data from the DB when used.
  */
-public class AsyncDBFlowListDataSource<TModel extends Model>
-        extends BaseAsyncDBFlowDataSource<TModel, List<TModel>>
+public class AsyncDBFlowListSource<TModel>
+        extends BaseAsyncDBFlowSource<TModel, List<TModel>>
         implements ProcessModelTransaction.ProcessModel<TModel> {
 
-    public AsyncDBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
-                                     Class<TModel> tModelClass) {
-        super(refreshStrategy, tModelClass);
+    public static <TModel> DataSource.Builder<List<TModel>> builderInstance(Class<TModel> modelClass) {
+        AsyncDBFlowListSource<TModel> source = new AsyncDBFlowListSource<>(modelClass);
+        return new DataSource.Builder<>(source, DataSource.SourceType.DISK)
+                .storage(source);
     }
 
-    public AsyncDBFlowListDataSource(Class<TModel> tModelClass) {
+    public AsyncDBFlowListSource(Class<TModel> tModelClass) {
         super(tModelClass);
     }
 
-    public AsyncDBFlowListDataSource(RefreshStrategy<List<TModel>> refreshStrategy,
-                                     DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy, defaultParams);
-    }
-
-    public AsyncDBFlowListDataSource(DBFlowParamsInterface<TModel> defaultParams) {
-        super(defaultParams);
-    }
-
     @Override
-    public List<TModel> getStoredData(SourceParams sourceParams) {
+    public List<TModel> getStoredData(DataSource.SourceParams sourceParams) {
         return getParams(sourceParams).getModelQueriable().queryList();
     }
 
@@ -48,7 +40,7 @@ public class AsyncDBFlowListDataSource<TModel extends Model>
             @Override
             public void onListQueryResult(QueryTransaction transaction,
                                           @Nullable List<TModel> tResult) {
-                success.onSuccess(new DataControllerResponse<>(tResult, getSourceType()));
+                success.onSuccess(new DataControllerResponse<>(tResult, DataSource.SourceType.DISK));
             }
         });
     }

@@ -1,17 +1,23 @@
 package com.fuzz.datacontroller.test;
 
 import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSourceStorage.DataSourceParams;
-import com.fuzz.datacontroller.source.MemoryDataSource;
+import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
+import com.fuzz.datacontroller.source.MemorySource;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Description: Tests populating a {@link DataController} and asserts it is correct.
@@ -19,53 +25,75 @@ import static org.junit.Assert.assertTrue;
 public class DataControllerTest {
 
     private DataController<String> dataController;
+    public DataSource<String> mockDataSource;
 
     @Before
     public void before_test_Init() {
-        dataController = new DataController<>();
-        dataController.registerDataSource(new MockDataSource<String>() {
-            @Override
-            public void cancel() {
-            }
+        //noinspection unchecked
+        mockDataSource = mock(DataSource.class);
+        when(mockDataSource.sourceType()).thenReturn(DataSource.SourceType.NETWORK);
 
+        when(mockDataSource.refreshStrategy()).thenReturn(new DataSource.RefreshStrategy<String>() {
             @Override
-            public SourceType getSourceType() {
-                return SourceType.NETWORK;
+            public boolean shouldRefresh(DataSource<String> dataSource) {
+                return true;
             }
         });
-        dataController.registerDataSource(new MemoryDataSource<String>());
+
+        dataController = new DataController.Builder<String>()
+                .dataSource(mockDataSource)
+                .dataSource(MemorySource.<String>builderInstance().build())
+                .build();
+
     }
 
     @Test
     public void test_Sources() {
-        List<DataSource<String>> sources = dataController.getSources();
+        List<DataSource<String>> sources = new ArrayList<>(dataController.dataSources());
         assertEquals(2, sources.size());
 
-        assertEquals(DataSource.SourceType.MEMORY, sources.get(0).getSourceType());
-        assertEquals(DataSource.SourceType.NETWORK, sources.get(1).getSourceType());
+        assertEquals(DataSource.SourceType.MEMORY, sources.get(0).sourceType());
+        assertEquals(DataSource.SourceType.NETWORK, sources.get(1).sourceType());
     }
 
     @Test
     public void test_callSpecific() {
-        DataSourceParams networkParams = new DataSourceParams(DataSource.SourceType.NETWORK);
-        MockDataSource<String> source = (MockDataSource<String>) dataController
-                .getSource(networkParams);
-        dataController.requestSpecific(networkParams, new DataSource.SourceParams());
-        assertTrue(source.isGetCalled());
+        ArgumentCaptor<DataSource.SourceParams> sourceParamsArgumentCaptor
+                = ArgumentCaptor.forClass(DataSource.SourceParams.class);
+        ArgumentCaptor<DataController.Success<String>> successArgumentCaptor
+                = ArgumentCaptor.forClass(DataController.Success.class);
+        ArgumentCaptor<DataController.Error> errorArgumentCaptor
+                = ArgumentCaptor.forClass(DataController.Error.class);
 
-        dataController.requestSpecific(new DataSourceParams(DataSource.SourceType.MEMORY),
-                new DataSource.SourceParams());
-        assertTrue(source.isStoreCalled());
+        DataSourceParams networkParams = DataSourceParams.networkParams();
 
-        dataController.getSource(networkParams).getStoredData(null);
-        assertTrue(source.isGetStoredCalled());
+        dataController.request(networkParams)
+                .build()
+                .execute();
+
+
+        verify(mockDataSource).get(sourceParamsArgumentCaptor.capture(), successArgumentCaptor.capture(),
+                errorArgumentCaptor.capture());
+
+        dataController.request(DataSourceParams.memoryParams())
+                .build()
+                .execute();
+
+        ArgumentCaptor<DataControllerResponse<String>> captor
+                = ArgumentCaptor.forClass(DataControllerResponse.class);
+        verify(mockDataSource).store(captor.capture());
+
+        dataController.getDataSource(networkParams).getStoredData(null);
+        verify(mockDataSource).getStoredData(null);
     }
 
     @Test
     public void test_requestInvalidSource() {
         boolean failed = false;
         try {
-            dataController.requestSpecific(new DataSourceParams(DataSource.SourceType.DISK), null);
+            dataController.request(DataSourceParams.diskParams())
+                    .sourceParams(null)
+                    .build().execute();
         } catch (RuntimeException r) {
             failed = true;
         }

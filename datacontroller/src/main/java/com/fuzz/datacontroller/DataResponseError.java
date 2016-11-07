@@ -13,6 +13,7 @@ public class DataResponseError {
     private final Throwable exception;
     private final String userFacingMessage;
     private final DataSource.SourceType failedSource;
+    private final Object metaData;
 
     private DataResponseError(Builder builder) {
         message = builder.message;
@@ -20,6 +21,7 @@ public class DataResponseError {
         exception = builder.exception;
         userFacingMessage = builder.userFacingMessage;
         failedSource = builder.failedSource;
+        metaData = builder.metaData;
     }
 
     @Override
@@ -32,6 +34,9 @@ public class DataResponseError {
 
         if (exception != null) {
             value += ", exception = " + exception;
+        }
+        if (metaData != null) {
+            value += ", metaData = " + metaData;
         }
         return value;
     }
@@ -56,6 +61,10 @@ public class DataResponseError {
         return failedSource;
     }
 
+    public Object metaData() {
+        return metaData;
+    }
+
     /**
      * @return A new instance of a {@link Builder} for modification.
      */
@@ -68,16 +77,18 @@ public class DataResponseError {
         }
         return builder
                 .userFacingMessage(userFacingMessage)
+                .metaData(metaData)
                 .status(status);
     }
 
-    public static class Builder {
+    public final static class Builder {
 
         private String message;
         private Throwable exception;
         private long statusCode;
         private String userFacingMessage;
         private DataSource.SourceType failedSource;
+        private Object metaData;
 
         public Builder(DataSource.SourceType failedSource, Throwable exception) {
             this.failedSource = failedSource;
@@ -94,6 +105,11 @@ public class DataResponseError {
 
         public Builder status(long statusCode) {
             this.statusCode = statusCode;
+            return this;
+        }
+
+        public Builder metaData(Object metaData) {
+            this.metaData = metaData;
             return this;
         }
 

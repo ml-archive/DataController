@@ -4,7 +4,7 @@ import android.support.annotation.Nullable;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.raizlabs.android.dbflow.structure.Model;
+import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
 
@@ -12,29 +12,22 @@ import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransacti
  * Description: Loads and saves a single {@link TModel} to/from the database.
  * Provides data from the DB when used.
  */
-public class AsyncDBFlowSingleDataSource<TModel extends Model>
-        extends BaseAsyncDBFlowDataSource<TModel, TModel> {
+public class AsyncDBFlowSingleSource<TModel>
+        extends BaseAsyncDBFlowSource<TModel, TModel> {
 
-    public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
-                                       Class<TModel> tModelClass) {
-        super(refreshStrategy, tModelClass);
+    public static <TModel> DataSource.Builder<TModel> builderInstance(Class<TModel> modelClass) {
+        AsyncDBFlowSingleSource<TModel> source = new AsyncDBFlowSingleSource<>(modelClass);
+        return new DataSource.Builder<>(source, DataSource.SourceType.DISK)
+                .storage(source);
     }
 
-    public AsyncDBFlowSingleDataSource(Class<TModel> tModelClass) {
+    public AsyncDBFlowSingleSource(Class<TModel> tModelClass) {
         super(tModelClass);
     }
 
-    public AsyncDBFlowSingleDataSource(RefreshStrategy<TModel> refreshStrategy,
-                                       DBFlowParamsInterface<TModel> defaultParams) {
-        super(refreshStrategy, defaultParams);
-    }
-
-    public AsyncDBFlowSingleDataSource(DBFlowParamsInterface<TModel> defaultParams) {
-        super(defaultParams);
-    }
 
     @Override
-    public TModel getStoredData(SourceParams sourceParams) {
+    public TModel getStoredData(DataSource.SourceParams sourceParams) {
         return getParams(sourceParams).getModelQueriable().querySingle();
     }
 
@@ -45,7 +38,7 @@ public class AsyncDBFlowSingleDataSource<TModel extends Model>
             @Override
             public void onSingleQueryResult(QueryTransaction transaction,
                                             @Nullable TModel model) {
-                success.onSuccess(new DataControllerResponse<>(model, getSourceType()));
+                success.onSuccess(new DataControllerResponse<>(model, DataSource.SourceType.DISK));
             }
         });
     }

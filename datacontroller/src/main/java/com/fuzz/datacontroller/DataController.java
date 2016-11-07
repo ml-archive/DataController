@@ -1,9 +1,7 @@
 package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSource.SourceParams;
-import com.fuzz.datacontroller.source.DataSource.SourceType;
-import com.fuzz.datacontroller.source.DataSourceStorage;
+import com.fuzz.datacontroller.source.DataSourceContainer;
 import com.fuzz.datacontroller.source.TreeMapSingleTypeDataSourceContainer;
 
 import java.util.ArrayList;
@@ -11,12 +9,19 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Description: Provides basic implementation of a data controller. DataControllers are managers
- * for how data is retrieved and stored. Generally, best practice is to use one {@link DataController}
- * per type of request. Such as a list loading one kind of information in a specific way should
- * not be group with loading another kind of information.
+ * Description:
+ *
+ * @author Andrew Grosner (Fuzz)
  */
-public class DataController<TResponse> {
+
+public class DataController<T> {
+
+    /**
+     * @return A new {@link Builder} to construct the {@link DataController}
+     */
+    public static <T> Builder<T> newBuilder() {
+        return new Builder<>();
+    }
 
     /**
      * Description: Represents a failed callback response.
@@ -55,140 +60,119 @@ public class DataController<TResponse> {
     public interface DataControllerCallback<TResponse> extends Error, Success<TResponse> {
     }
 
-    private final DataSourceStorage<TResponse> dataSourceStorage;
-
-    private final DataControllerCallbackGroup<TResponse> callbackGroup
+    private final DataControllerCallbackGroup<T> callbackGroup
             = new DataControllerCallbackGroup<>();
 
-    private final DataSourceChainer<TResponse> dataSourceChainer;
+    private final DataSourceContainer<T> dataSourceContainer;
 
-    public DataController(DataSourceStorage<TResponse> dataSourceStorage,
-                          DataSourceChainer<TResponse> dataSourceChainer) {
-        this.dataSourceStorage = dataSourceStorage;
-        this.dataSourceChainer = dataSourceChainer;
-    }
+    final DataSourceChainer<T> dataSourceChainer;
 
-    public DataController() {
-        this(new TreeMapSingleTypeDataSourceContainer<TResponse>(),
-                new DataSourceChainer<TResponse>() {
-                    @Override
-                    public boolean shouldQueryNext(DataSource<TResponse> lastSource, DataSource<TResponse> sourceToChain) {
-                        return true;
-                    }
-                });
-    }
+    DataController(Builder<T> builder) {
+        if (builder.dataSourceContainer != null) {
+            dataSourceContainer = builder.dataSourceContainer;
+        } else {
+            dataSourceContainer = new TreeMapSingleTypeDataSourceContainer<>();
+        }
 
-    /**
-     * Registers a {@link DataSource} to provide data to this {@link DataController}.
-     */
-    public void registerDataSource(DataSource<TResponse> dataSource) {
-        dataSourceStorage.registerDataSource(dataSource);
-    }
+        if (builder.dataSources.isEmpty()) {
+            throw new IllegalStateException("You need to register at least one DataSource for this DataController");
+        }
 
-    /**
-     * Removes a {@link DataSource} from this {@link DataController}, meaning info is no longer
-     * passed into the other sources within this {@link DataController}.
-     */
-    public void deregisterDataSource(DataSource<TResponse> dataSource) {
-        dataSourceStorage.deregisterDataSource(dataSource);
-    }
+        for (DataSource<T> dataSource : builder.dataSources) {
+            dataSourceContainer.registerDataSource(dataSource);
+        }
 
-    public void registerForCallbacks(DataControllerCallback<TResponse> dataControllerCallback) {
-        callbackGroup.registerForCallbacks(dataControllerCallback);
-    }
-
-    public void deregisterForCallbacks(DataControllerCallback<TResponse> dataControllerCallback) {
-        callbackGroup.deregisterForCallbacks(dataControllerCallback);
-    }
-
-    /**
-     * Removes all {@link DataControllerCallback} listening to this {@link DataController}.
-     */
-    public void clearCallbacks() {
-        callbackGroup.clearCallbacks();
-    }
-
-    /**
-     * Requests data with default parameters {@link SourceParams}
-     */
-    public void requestData() {
-        requestData(new SourceParams());
-    }
-
-    /**
-     * Requests data from each of the {@link DataSource} here, passing in a sourceParams object.
-     * It will iterate through all sources and call each one.
-     *
-     * @param sourceParams The params to use for a query. Some {@link DataSource} require different
-     *                     parameters.
-     * @see SourceParams
-     */
-    public void requestData(SourceParams sourceParams) {
-        List<DataSource<TResponse>> sourceCollection = getSources();
-        for (int i = 0; i < sourceCollection.size(); i++) {
-            DataSource<TResponse> source = sourceCollection.get(i);
-            if (i == 0 || dataSourceChainer.shouldQueryNext(sourceCollection.get(i - 1), source)) {
-                source.get(sourceParams, internalSuccessCallback, internalErrorCallback);
-            }
+        if (builder.dataSourceChainer != null) {
+            dataSourceChainer = builder.dataSourceChainer;
+        } else {
+            dataSourceChainer = new DataSourceChainer<T>() {
+                @Override
+                public boolean shouldQueryNext(DataSource<T> lastSource,
+                                               DataSource<T> sourceToChain) {
+                    return true;
+                }
+            };
         }
     }
 
-    /**
-     * Requests a specific source with specified params.
-     *
-     * @param dataSourceParams The type of source to request via {@link SourceType}
-     * @param sourceParams     The params used in the request.
-     */
-    public void requestSpecific(DataSourceStorage.DataSourceParams dataSourceParams,
-                                SourceParams sourceParams) {
-        DataSource<TResponse> dataSource = dataSourceStorage.getDataSource(dataSourceParams);
-        dataSource.get(sourceParams, internalSuccessCallback, internalErrorCallback);
-    }
-
-    /**
-     * Cancels all attached {@link DataSource}.
-     */
     public void cancel() {
-        Collection<DataSource<TResponse>> sourceCollection = dataSourceStorage.sources();
-        for (DataSource<TResponse> source : sourceCollection) {
+        Collection<DataSource<T>> sourceCollection = dataSourceContainer.sources();
+        for (DataSource<T> source : sourceCollection) {
             source.cancel();
         }
     }
 
-    /**
-     * @return True if we have associated callbacks on this DC.
-     */
+    public void cancel(DataSourceContainer.DataSourceParams dataSourceParams) {
+        DataSource<T> dataSource = dataSourceContainer.getDataSource(dataSourceParams);
+        dataSource.cancel();
+    }
+
+    public void registerForCallbacks(DataControllerCallback<T> callback) {
+        callbackGroup.registerForCallbacks(callback);
+    }
+
+    public void deregisterForCallbacks(DataControllerCallback<T> callback) {
+        callbackGroup.deregisterForCallbacks(callback);
+    }
+
+    public void clearCallbacks() {
+        callbackGroup.clearCallbacks();
+    }
+
     public boolean hasCallbacks() {
         return callbackGroup.hasCallbacks();
     }
 
-    public List<DataSource<TResponse>> getSources() {
-        return new ArrayList<>(dataSourceStorage.sources());
+    public DataControllerRequest.Builder<T> request() {
+        return new DataControllerRequest.Builder<>(this);
     }
 
-    public DataSource<TResponse> getSource(DataSourceStorage.DataSourceParams sourceParams) {
-        return dataSourceStorage.getDataSource(sourceParams);
+    public DataControllerRequest.Builder<T> request(DataSourceContainer.DataSourceParams params) {
+        return new DataControllerRequest.Builder<>(this)
+                .addSourceTarget(params);
     }
 
+    public Collection<DataSource<T>> dataSources() {
+        return dataSourceContainer.sources();
+    }
 
-    private final Success<TResponse> internalSuccessCallback = new Success<TResponse>() {
-        @Override
-        public void onSuccess(DataControllerResponse<TResponse> response) {
-            Collection<DataSource<TResponse>> dataSources = dataSourceStorage.sources();
-            for (DataSource<TResponse> dataSource : dataSources) {
-                dataSource.store(response);
-            }
+    public DataSource<T> getDataSource(DataSourceContainer.DataSourceParams dataSourceParams) {
+        return dataSourceContainer.getDataSource(dataSourceParams);
+    }
 
-            callbackGroup.onSuccess(response);
+    void onSuccess(DataControllerResponse<T> response) {
+        callbackGroup.onSuccess(response);
+    }
+
+    void onFailure(DataResponseError dataResponseError) {
+        callbackGroup.onFailure(dataResponseError);
+    }
+
+    public static final class Builder<T> {
+
+        private List<DataSource<T>> dataSources = new ArrayList<>();
+
+        private DataSourceContainer<T> dataSourceContainer;
+
+        private DataSourceChainer<T> dataSourceChainer;
+
+        public Builder<T> dataSource(DataSource<T> dataSource) {
+            dataSources.add(dataSource);
+            return this;
         }
-    };
 
-    private final Error internalErrorCallback = new Error() {
-        @Override
-        public void onFailure(DataResponseError dataResponseError) {
-            callbackGroup.onFailure(dataResponseError);
+        public Builder<T> dataSourceStorage(DataSourceContainer<T> dataSourceContainer) {
+            this.dataSourceContainer = dataSourceContainer;
+            return this;
         }
-    };
 
+        public Builder<T> dataSourceChainer(DataSourceChainer<T> dataSourceChainer) {
+            this.dataSourceChainer = dataSourceChainer;
+            return this;
+        }
 
+        public DataController<T> build() {
+            return new DataController<>(this);
+        }
+    }
 }

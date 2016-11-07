@@ -8,7 +8,7 @@ import java.util.List;
  * Description: Allows adding any amount of {@link DataSource} into a {@link java.util.List} that
  * we use together.
  */
-public class ListBasedDataSourceContainer<TResponse> implements DataSourceStorage<TResponse> {
+public class ListBasedDataSourceContainer<TResponse> implements DataSourceContainer<TResponse> {
 
     private final List<DataSource<TResponse>> dataSources;
 

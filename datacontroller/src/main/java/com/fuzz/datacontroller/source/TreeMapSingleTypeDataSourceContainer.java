@@ -9,7 +9,7 @@ import java.util.TreeMap;
 /**
  * Description: Stores {@link DataSource} in a {@link TreeMap} based on its {@link SourceType} ordering.
  */
-public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSourceStorage<TResponse> {
+public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSourceContainer<TResponse> {
 
     private final Map<SourceType, DataSource<TResponse>>
             dataSourceMap = new TreeMap<>();
@@ -17,7 +17,7 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     @Override
     public void registerDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.put(dataSource.getSourceType(), dataSource);
+            dataSourceMap.put(dataSource.sourceType(), dataSource);
         }
     }
 
@@ -36,7 +36,7 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     @Override
     public void deregisterDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.remove(dataSource.getSourceType());
+            dataSourceMap.remove(dataSource.sourceType());
         }
     }
 
