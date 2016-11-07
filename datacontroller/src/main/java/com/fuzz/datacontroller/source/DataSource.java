@@ -236,16 +236,28 @@ public class DataSource<T> {
             this.sourceType = sourceType;
         }
 
+        /**
+         * Define how this {@link DataSource} stores its data. Most implementations of custom sources
+         * will provide this already. see {@link MemorySource}
+         */
         public Builder<T> storage(DataSourceStorage<T> storage) {
             this.storage = storage;
             return this;
         }
 
+        /**
+         * Specify a {@link RefreshStrategy} that controls this {@link DataSource} and how it refreshes
+         * content.
+         */
         public Builder<T> refreshStrategy(RefreshStrategy<T> strategy) {
             this.refreshStrategy = strategy;
             return this;
         }
 
+        /**
+         * Specify a set of default {@link SourceParams} that we use when no {@link SourceParams}
+         * are passed in {@link #get(SourceParams, DataController.Success, DataController.Error)}
+         */
         public Builder<T> defaultParams(SourceParams defaultParams) {
             this.defaultParams = defaultParams;
             return this;

@@ -26,9 +26,9 @@ public interface DataSourceContainer<TResponse> {
             return new DataSourceParams(DataSource.SourceType.MEMORY);
         }
 
-        int position = -1;
+        private int position = -1;
 
-        DataSource.SourceType sourceType;
+        private DataSource.SourceType sourceType;
 
         public DataSourceParams(int position, DataSource.SourceType sourceType) {
             this.position = position;
@@ -45,13 +45,34 @@ public interface DataSourceContainer<TResponse> {
         public DataSourceParams(DataSource.SourceType sourceType) {
             this.sourceType = sourceType;
         }
+
+        public int getPosition() {
+            return position;
+        }
+
+        public DataSource.SourceType getSourceType() {
+            return sourceType;
+        }
     }
 
+    /**
+     * Append the {@link DataSource} to the inner container here.
+     */
     void registerDataSource(DataSource<TResponse> dataSource);
 
+    /**
+     * @return a {@link DataSource} from the container.
+     */
     DataSource<TResponse> getDataSource(DataSourceParams sourceParams);
 
+    /**
+     * Removes a {@link DataSource} from this container.
+     */
     void deregisterDataSource(DataSource<TResponse> dataSource);
 
+    /**
+     * @return A {@link Collection} of {@link DataSource} in this container. Should never cache
+     * this result unless you don't expect modification.
+     */
     Collection<DataSource<TResponse>> sources();
 }

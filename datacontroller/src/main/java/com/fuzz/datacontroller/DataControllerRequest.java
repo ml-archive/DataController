@@ -136,7 +136,6 @@ public class DataControllerRequest<T> {
         }
     }
 
-
     private final DataController.Success<T> internalSuccessCallback = new DataController.Success<T>() {
         @Override
         public void onSuccess(DataControllerResponse<T> response) {

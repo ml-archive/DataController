@@ -24,11 +24,11 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     @Override
     public DataSource<TResponse> getDataSource(DataSourceParams sourceParams) {
         DataSource<TResponse> dataSource = null;
-        if (sourceParams.sourceType != null) {
-            dataSource = dataSourceMap.get(sourceParams.sourceType);
+        if (sourceParams.getSourceType() != null) {
+            dataSource = dataSourceMap.get(sourceParams.getSourceType());
         }
         if (dataSource == null) {
-            throw new RuntimeException("No data source found for type: " + sourceParams.sourceType);
+            throw new RuntimeException("No data source found for type: " + sourceParams.getSourceType());
         }
         return dataSource;
     }

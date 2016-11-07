@@ -30,12 +30,12 @@ public class ListBasedDataSourceContainer<TResponse> implements DataSourceContai
     @Override
     public DataSource<TResponse> getDataSource(DataSourceParams sourceParams) {
         DataSource<TResponse> dataSource = null;
-        if (sourceParams.position > -1 && sourceParams.position < dataSources.size()) {
-            dataSource = dataSources.get(sourceParams.position);
+        if (sourceParams.getPosition() > -1 && sourceParams.getPosition() < dataSources.size()) {
+            dataSource = dataSources.get(sourceParams.getPosition());
         }
         if (dataSource == null) {
             throw new ArrayIndexOutOfBoundsException("Invalid index or item not found for source params " +
-                    "at position: " + sourceParams.position);
+                    "at position: " + sourceParams.getPosition());
         }
         return dataSource;
     }

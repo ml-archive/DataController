@@ -2,6 +2,8 @@ package com.fuzz.datacontroller.dbflow;
 
 import com.fuzz.datacontroller.source.DataSource;
 import com.raizlabs.android.dbflow.config.FlowManager;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
+import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
 import com.raizlabs.android.dbflow.structure.Model;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 
@@ -51,8 +53,39 @@ public abstract class BaseDBFlowSource<TModel, TSource>
         return modelClass;
     }
 
-
     DBFlowParamsInterface<TModel> getParams(DataSource.SourceParams sourceParams) {
-        return DBFlowParams.getParams(sourceParams);
+        DBFlowParamsInterface<TModel> params = null;
+        if (sourceParams instanceof DBFlowParamsInterface) {
+            //noinspection unchecked
+            params = (DBFlowParamsInterface<TModel>) sourceParams;
+        } else if (DataSource.SourceParams.defaultParams.equals(sourceParams)) {
+            params = new DBFlowParams<>(SQLite.select().from(getModelClass()));
+        }
+
+        if (params == null) {
+            throw new IllegalArgumentException("The passed dataSource params must implement "
+                    + DBFlowParamsInterface.class.getSimpleName());
+        }
+        return params;
+    }
+
+    /**
+     * Description: Represent the default params for {@link DBFlowSingleSource}. It specifies the
+     * {@link ModelQueriable} it will use to load from the DB.
+     */
+    public static class DBFlowParams<TModel> extends DataSource.SourceParams
+            implements DBFlowParamsInterface<TModel> {
+
+        private final ModelQueriable<TModel> modelQueriable;
+
+        public DBFlowParams(ModelQueriable<TModel> modelQueriable) {
+            this.modelQueriable = modelQueriable;
+        }
+
+        @Override
+        public ModelQueriable<TModel> getModelQueriable() {
+            return modelQueriable;
+        }
+
     }
 }
