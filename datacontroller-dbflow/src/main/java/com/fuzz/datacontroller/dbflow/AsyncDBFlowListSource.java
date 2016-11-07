@@ -24,7 +24,7 @@ public class AsyncDBFlowListSource<TModel>
                 .storage(source);
     }
 
-    public AsyncDBFlowListSource(Class<TModel> tModelClass) {
+    private AsyncDBFlowListSource(Class<TModel> tModelClass) {
         super(tModelClass);
     }
 

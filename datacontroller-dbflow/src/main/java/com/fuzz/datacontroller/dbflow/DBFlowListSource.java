@@ -22,7 +22,7 @@ public class DBFlowListSource<TModel>
                 .storage(source);
     }
 
-    public DBFlowListSource(Class<TModel> tModelClass) {
+    private DBFlowListSource(Class<TModel> tModelClass) {
         super(tModelClass);
     }
 

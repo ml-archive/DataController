@@ -8,8 +8,7 @@ import com.fuzz.datacontroller.source.DataSource;
  * Description: Provides a {@link DataSource} for loading and storing a single {@link TModel}. These
  * operations happen synchronously.
  */
-public class DBFlowSingleSource<TModel>
-        extends BaseDBFlowSource<TModel, TModel> {
+public class DBFlowSingleSource<TModel> extends BaseDBFlowSource<TModel, TModel> {
 
     public static <TModel> DataSource.Builder<TModel> builderInstance(Class<TModel> modelClass) {
         DBFlowSingleSource<TModel> source = new DBFlowSingleSource<>(modelClass);
@@ -17,7 +16,7 @@ public class DBFlowSingleSource<TModel>
                 .storage(source);
     }
 
-    public DBFlowSingleSource(Class<TModel> tModelClass) {
+    private DBFlowSingleSource(Class<TModel> tModelClass) {
         super(tModelClass);
     }
 

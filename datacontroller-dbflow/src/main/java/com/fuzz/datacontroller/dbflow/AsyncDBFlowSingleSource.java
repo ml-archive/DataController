@@ -21,10 +21,9 @@ public class AsyncDBFlowSingleSource<TModel>
                 .storage(source);
     }
 
-    public AsyncDBFlowSingleSource(Class<TModel> tModelClass) {
+    private AsyncDBFlowSingleSource(Class<TModel> tModelClass) {
         super(tModelClass);
     }
-
 
     @Override
     public TModel getStoredData(DataSource.SourceParams sourceParams) {

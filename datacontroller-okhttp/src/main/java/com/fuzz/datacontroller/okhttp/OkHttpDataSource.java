@@ -19,14 +19,14 @@ import okhttp3.Response;
  */
 public class OkHttpDataSource<TResponse> implements DataSource.DataSourceCaller<TResponse> {
 
-    public static <TResponse> DataSource.Builder<TResponse> newBuilder(
+    public static <TResponse> DataSource.Builder<TResponse> builderInstance(
             ResponseConverter<TResponse> responseConverter,
             CallbackHandler<TResponse> handler) {
         return new DataSource.Builder<>(new OkHttpDataSource<>(responseConverter, handler),
                 DataSource.SourceType.NETWORK);
     }
 
-    public static <TResponse> DataSource.Builder<TResponse> newBuilder(
+    public static <TResponse> DataSource.Builder<TResponse> builderInstance(
             ResponseConverter<TResponse> responseConverter) {
         return new DataSource.Builder<>(new OkHttpDataSource<>(responseConverter),
                 DataSource.SourceType.NETWORK);
