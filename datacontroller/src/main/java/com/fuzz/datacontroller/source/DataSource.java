@@ -106,11 +106,11 @@ public class DataSource<T> {
     }
 
     public T getStoredData() {
-        return storage.getStoredData(defaultParams);
+        return storage != null ? storage.getStoredData(defaultParams) : null;
     }
 
     public T getStoredData(SourceParams sourceParams) {
-        return storage.getStoredData(sourceParams);
+        return storage != null ? storage.getStoredData(sourceParams) : null;
     }
 
     public boolean hasStoredData() {
@@ -126,7 +126,9 @@ public class DataSource<T> {
     }
 
     public void clearStoredData(SourceParams sourceParams) {
-        storage.clearStoredData(sourceParams);
+        if (storage != null) {
+            storage.clearStoredData(sourceParams);
+        }
     }
 
     /**
@@ -137,7 +139,8 @@ public class DataSource<T> {
      * @param tResponse The response returned here.
      */
     public final void store(DataControllerResponse<T> tResponse) {
-        if (!tResponse.getSourceType().equals(sourceType)) {
+        if (!tResponse.getSourceType().equals(sourceType)
+                && storage != null) {
             storage.store(tResponse);
         }
     }

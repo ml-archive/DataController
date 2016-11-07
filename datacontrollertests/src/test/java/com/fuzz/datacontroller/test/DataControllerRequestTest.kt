@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller.test
 
 import com.fuzz.datacontroller.DataController
+import com.fuzz.datacontroller.DataControllerRequest
 import com.fuzz.datacontroller.DataControllerResponse
 import com.fuzz.datacontroller.DataResponseError
 import com.fuzz.datacontroller.source.DataSource
@@ -100,5 +101,72 @@ class DataControllerRequestTest {
                 .build().execute()
 
         verify(mockCaller).get(paramsCaptor.capture(), errorCaptor.capture(), successCaptor.capture())
+    }
+
+    @Test
+    fun test_filterCallbackSuccess() {
+
+        val callback: DataController.DataControllerCallback<String> =
+                mock(DataController.DataControllerCallback::class.java) as DataController.DataControllerCallback<String>
+        val mockCaller = mock(DataSource.DataSourceCaller::class.java) as DataSource.DataSourceCaller<String>
+
+        val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
+                as ArgumentCaptor<DataController.Success<String>>
+        val errorCaptor = ArgumentCaptor.forClass(DataController.Error::class.java)
+        val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
+
+        val dataController = DataController.newBuilder<String>()
+                .dataSource(DataSource.Builder<String>(mockCaller, DataSource.SourceType.NETWORK).build())
+                .build()
+
+        val memorySuccess = DataControllerResponse("Filtered", DataSource.SourceType.MEMORY)
+
+        val request = dataController.request()
+                .register(callback)
+                .successFilter(DataControllerRequest.SuccessFilter<String> { memorySuccess })
+                .build()
+
+        `when`(mockCaller.get(paramsCaptor.capture(),
+                errorCaptor.capture(), successCaptor.capture())).then {
+            successCaptor.value.onSuccess(DataControllerResponse("non", DataSource.SourceType.MEMORY))
+        }
+
+        request.execute()
+
+        verify(callback).onSuccess(memorySuccess)
+    }
+
+    @Test
+    fun test_filterCallbackFailure() {
+
+        val callback: DataController.DataControllerCallback<String> =
+                mock(DataController.DataControllerCallback::class.java) as DataController.DataControllerCallback<String>
+        val mockCaller = mock(DataSource.DataSourceCaller::class.java) as DataSource.DataSourceCaller<String>
+
+        val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
+                as ArgumentCaptor<DataController.Success<String>>
+        val errorCaptor = ArgumentCaptor.forClass(DataController.Error::class.java)
+        val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
+
+        val dataController = DataController.newBuilder<String>()
+                .dataSource(DataSource.Builder<String>(mockCaller, DataSource.SourceType.NETWORK).build())
+                .build()
+
+        val memoryError = DataResponseError.Builder(DataSource.SourceType.MEMORY, "").build()
+
+        val request = dataController.request()
+                .register(callback)
+                .errorFilter(DataControllerRequest.ErrorFilter { memoryError })
+                .build()
+
+        `when`(mockCaller.get(paramsCaptor.capture(),
+                errorCaptor.capture(), successCaptor.capture())).then {
+            errorCaptor.value.onFailure(DataResponseError.Builder(DataSource.SourceType.NETWORK, "").build())
+        }
+
+        request.execute()
+
+        verify(callback).onFailure(memoryError)
+
     }
 }
