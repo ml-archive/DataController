@@ -157,7 +157,8 @@ public class DataSource<T> {
      */
     public final void get(SourceParams sourceParams, DataController.Success<T> success,
                           DataController.Error error) {
-        if (refreshStrategy.shouldRefresh(this) && !isBusy()) {
+        if (refreshStrategy.shouldRefresh(this) && !isBusy()
+                || sourceParams.force) {
             setBusy(true);
             SourceParams params = sourceParams;
             if (params == null || SourceParams.defaultParams.equals(params)) {
@@ -266,6 +267,11 @@ public class DataSource<T> {
          * Data in this class.
          */
         public Object data;
+
+        /**
+         * If true, we force a refresh to happen.
+         */
+        public boolean force;
     }
 
     private final class DefaultRefreshStrategy implements RefreshStrategy<T> {
