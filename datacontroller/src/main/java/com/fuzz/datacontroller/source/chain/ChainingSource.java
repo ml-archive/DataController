@@ -22,11 +22,11 @@ public class ChainingSource<T> implements DataSource.Source<T> {
         return new ChainingSource.Builder<>();
     }
 
-    private final List<DataSourceChain<?, T>> dataSourceChains
+    private final List<DataSourceChain> dataSourceChains
             = new ArrayList<>();
 
     private ChainingSource(Builder<T> builder) {
-        for (DataSourceChain<?, T> dataSource : builder.dataSourceChains) {
+        for (DataSourceChain dataSource : builder.dataSourceChains) {
             dataSourceChains.add(dataSource);
         }
     }
@@ -67,16 +67,21 @@ public class ChainingSource<T> implements DataSource.Source<T> {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     void recursiveGet(final int position,
-                      final List<DataSourceChain<?, T>> dataSources,
-                      DataSource.SourceParams sourceParams,
-                      DataController.Error error, final DataController.Success<T> success) {
-        final DataSourceChain<?, T> dataSource = dataSources.get(position);
-        dataSource.get(sourceParams, new DataController.Success<T>() {
+                      final List<DataSourceChain> dataSources,
+                      final DataSource.SourceParams sourceParams,
+                      final DataController.Error error, final DataController.Success<T> finalSuccess) {
+        final DataSourceChain dataSource = dataSources.get(position);
+        dataSource.get(sourceParams, new DataController.Success() {
             @Override
-            public void onSuccess(DataControllerResponse<T> response) {
-                if (position == dataSources.size() - 1) {
-                    success.onSuccess(response);
+            public void onSuccess(DataControllerResponse response) {
+                if (position < dataSources.size() - 1) {
+                    DataSource.SourceParams nextParams = dataSource.responseToNextCallConverter()
+                            .provideNextParams(response.getResponse(), sourceParams);
+                    recursiveGet(position + 1, dataSources, nextParams, error, finalSuccess);
+                } else {
+                    finalSuccess.onSuccess(response);
                 }
             }
         }, error);
@@ -85,7 +90,7 @@ public class ChainingSource<T> implements DataSource.Source<T> {
     @SuppressWarnings("unchecked")
     public static class Builder<T> {
 
-        private final List<DataSourceChain<?, T>> dataSourceChains = new ArrayList<>();
+        private final List<DataSourceChain> dataSourceChains = new ArrayList<>();
 
         public <V> DataSourceChain.Builder<V, T> chain(DataSource<V> dataSource,
                                                        DataSourceChain.ResponseConverter<V, T>
@@ -101,7 +106,7 @@ public class ChainingSource<T> implements DataSource.Source<T> {
             return build().builderInstance(registeredSourceType);
         }
 
-        Builder<T> addChain(DataSourceChain<?, T> chain) {
+        Builder<T> addChain(DataSourceChain chain) {
             dataSourceChains.add(chain);
             return this;
         }

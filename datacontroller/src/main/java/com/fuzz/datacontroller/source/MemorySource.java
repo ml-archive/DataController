@@ -15,7 +15,19 @@ public class MemorySource<TResponse> implements DataSource.Source<TResponse> {
         return new DataSource.Builder<>(source, DataSource.SourceType.MEMORY);
     }
 
+    public static <TResponse> DataSource.Builder<TResponse> builderInstance(TResponse initialValue) {
+        MemorySource<TResponse> source = new MemorySource<>(initialValue);
+        return new DataSource.Builder<>(source, DataSource.SourceType.MEMORY);
+    }
+
     private TResponse storage;
+
+    public MemorySource() {
+    }
+
+    public MemorySource(TResponse storage) {
+        this.storage = storage;
+    }
 
     @Override
     public TResponse getStoredData(DataSource.SourceParams sourceParams) {

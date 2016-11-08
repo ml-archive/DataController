@@ -10,21 +10,21 @@ import com.fuzz.datacontroller.source.DataSource;
  *
  * @author Andrew Grosner (Fuzz)
  */
-public class DataSourceChain<T, V> {
+public class DataSourceChain<TChainType, TConvertedType> {
 
-    public interface ResponseValidator<T> {
+    public interface ResponseValidator<TChainType> {
 
         /**
          * @return True if response is good, false if we want to fail.
          * Then {@link #provideErrorForResponse(DataControllerResponse)} is called.
          */
-        boolean isValid(DataControllerResponse<T> response);
+        boolean isValid(DataControllerResponse<TChainType> response);
 
         /**
          * @return when response {@link #isValid(DataControllerResponse)} fails, provide a {@link DataResponseError}
          * that identifies the problem.
          */
-        DataResponseError provideErrorForResponse(DataControllerResponse<T> response);
+        DataResponseError provideErrorForResponse(DataControllerResponse<TChainType> response);
     }
 
     public interface ResponseToNextCallConverter<T> {
@@ -33,19 +33,19 @@ public class DataSourceChain<T, V> {
                                                   DataSource.SourceParams previousParams);
     }
 
-    public interface ResponseConverter<T, V> {
+    public interface ResponseConverter<TChainType, TConvertedType> {
 
-        V fromResponse(T response);
+        TConvertedType fromResponse(TChainType response);
     }
 
-    private final DataSource<T> dataSource;
-    private final ResponseValidator<T> responseValidator;
-    private final ResponseToNextCallConverter<T> reponseToNextCallConverter;
-    private final ResponseConverter<T, V> responseConverter;
+    private final DataSource<TChainType> dataSource;
+    private final ResponseValidator<TChainType> responseValidator;
+    private final ResponseToNextCallConverter<TChainType> responseToNextCallConverter;
+    private final ResponseConverter<TChainType, TConvertedType> responseConverter;
     private final boolean failChainOnError;
 
 
-    private DataSourceChain(Builder<T, V> builder) {
+    private DataSourceChain(Builder<TChainType, TConvertedType> builder) {
         responseConverter = builder.responseConverter;
         dataSource = builder.dataSource;
         if (builder.responseValidator != null) {
@@ -53,18 +53,22 @@ public class DataSourceChain<T, V> {
         } else {
             responseValidator = new DefaultResponseValidator();
         }
-        reponseToNextCallConverter = builder.reponseToNextCallConverter;
+        if (builder.responseToNextCallConverter != null) {
+            responseToNextCallConverter = builder.responseToNextCallConverter;
+        } else {
+            responseToNextCallConverter = new DefaultResponseToNextCallConverter();
+        }
         failChainOnError = builder.failChainOnError;
     }
 
     void get(DataSource.SourceParams sourceParams,
-             final DataController.Success<V> success,
+             final DataController.Success<TConvertedType> success,
              final DataController.Error error) {
-        dataSource.get(sourceParams, new DataController.Success<T>() {
+        dataSource.get(sourceParams, new DataController.Success<TChainType>() {
             @Override
-            public void onSuccess(DataControllerResponse<T> response) {
+            public void onSuccess(DataControllerResponse<TChainType> response) {
                 if (responseValidator.isValid(response)) {
-                    DataControllerResponse<V> convertedResponse =
+                    DataControllerResponse<TConvertedType> convertedResponse =
                             new DataControllerResponse<>(responseConverter.fromResponse(response.getResponse()),
                                     dataSource.sourceType());
                     success.onSuccess(convertedResponse);
@@ -78,66 +82,82 @@ public class DataSourceChain<T, V> {
                 if (failChainOnError) {
                     error.onFailure(dataResponseError);
                 } else {
-                    success.onSuccess(new DataControllerResponse<V>(null, dataSource.sourceType()));
+                    success.onSuccess(new DataControllerResponse<TConvertedType>(null, dataSource.sourceType()));
                 }
             }
         });
     }
 
-    public static class Builder<T, V> {
+    ResponseToNextCallConverter<TChainType> responseToNextCallConverter() {
+        return responseToNextCallConverter;
+    }
 
-        private final ChainingSource.Builder<V> chainBuilder;
-        private final DataSource<T> dataSource;
-        private final ResponseConverter<T, V> responseConverter;
-        private ResponseValidator<T> responseValidator;
-        private ResponseToNextCallConverter<T> reponseToNextCallConverter;
+    public static class Builder<TChainType, TConvertedType> {
+
+        private final ChainingSource.Builder<TConvertedType> chainBuilder;
+        private final DataSource<TChainType> dataSource;
+        private final ResponseConverter<TChainType, TConvertedType> responseConverter;
+        private ResponseValidator<TChainType> responseValidator;
+        private ResponseToNextCallConverter<TChainType> responseToNextCallConverter;
         private boolean failChainOnError;
 
-        public Builder(ChainingSource.Builder<V> chainBuilder,
-                       DataSource<T> dataSource,
-                       ResponseConverter<T, V> responseConverter) {
+        public Builder(ChainingSource.Builder<TConvertedType> chainBuilder,
+                       DataSource<TChainType> dataSource,
+                       ResponseConverter<TChainType, TConvertedType> responseConverter) {
             this.chainBuilder = chainBuilder;
             this.dataSource = dataSource;
             this.responseConverter = responseConverter;
         }
 
-        public Builder<T, V> responseValidator(ResponseValidator<T> responseValidator) {
+        public Builder<TChainType, TConvertedType> responseValidator(
+                ResponseValidator<TChainType> responseValidator) {
             this.responseValidator = responseValidator;
             return this;
         }
 
-        public Builder<T, V> reponseToNextCallConverter(ResponseToNextCallConverter<T> converter) {
-            this.reponseToNextCallConverter = converter;
+        public Builder<TChainType, TConvertedType> reponseToNextCallConverter(
+                ResponseToNextCallConverter<TChainType> converter) {
+            this.responseToNextCallConverter = converter;
             return this;
         }
 
-        public Builder<T, V> failChainOnError(boolean failChainOnError) {
+        public Builder<TChainType, TConvertedType> failChainOnError(boolean failChainOnError) {
             this.failChainOnError = failChainOnError;
             return this;
         }
 
-        public <Z> DataSourceChain.Builder<Z, V> chain(DataSource<Z> dataSource,
-                                                       ResponseConverter<Z, V> converter) {
-            DataSourceChain<T, V> chain = new DataSourceChain<>(this);
-            chainBuilder.addChain(chain);
-            return chainBuilder.chain(dataSource, converter);
+        public <TNewChainType> DataSourceChain.Builder<TNewChainType, TConvertedType> chain(
+                DataSource<TNewChainType> dataSource,
+                ResponseConverter<TNewChainType, TConvertedType> converter) {
+            return chainBuilder.addChain(new DataSourceChain<>(this))
+                    .chain(dataSource, converter);
         }
 
-        public ChainingSource<V> build() {
-            return chainBuilder.build();
+        public ChainingSource<TConvertedType> build() {
+            return chainBuilder.addChain(new DataSourceChain<>(this)).build();
         }
     }
 
-    private final class DefaultResponseValidator implements ResponseValidator<T> {
+    private final class DefaultResponseValidator implements ResponseValidator<TChainType> {
 
         @Override
-        public boolean isValid(DataControllerResponse<T> response) {
+        public boolean isValid(DataControllerResponse<TChainType> response) {
             return true;
         }
 
         @Override
-        public DataResponseError provideErrorForResponse(DataControllerResponse<T> response) {
+        public DataResponseError provideErrorForResponse(DataControllerResponse<TChainType> response) {
             return null;
+        }
+    }
+
+    private final class DefaultResponseToNextCallConverter
+            implements ResponseToNextCallConverter<TChainType> {
+
+        @Override
+        public DataSource.SourceParams provideNextParams(TChainType previousResponse,
+                                                         DataSource.SourceParams previousParams) {
+            return previousParams;
         }
     }
 }

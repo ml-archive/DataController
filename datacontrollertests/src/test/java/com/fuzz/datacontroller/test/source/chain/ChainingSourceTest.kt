@@ -22,10 +22,10 @@ class ChainingSourceTest {
     fun test_canChainSimpleCalls() {
 
         val chainSource = ChainingSource.builderInstance<String>()
-                .chain<String>(MemorySource.builderInstance<String>().build(),
+                .chain<String>(MemorySource.builderInstance<String>("Storage1 Response").build(),
                         DataSourceChain.ResponseConverter { "Initial response" })
-                .chain<Boolean>(MemorySource.builderInstance<Boolean>().build(),
-                        DataSourceChain.ResponseConverter { "Chained Type" })
+                .chain<Boolean>(MemorySource.builderInstance<Boolean>(true).build(),
+                        DataSourceChain.ResponseConverter { if (it != null && it) "Chained Type" else "Failed Chain Type" })
                 .build()
 
         var success: DataControllerResponse<String>? = null
