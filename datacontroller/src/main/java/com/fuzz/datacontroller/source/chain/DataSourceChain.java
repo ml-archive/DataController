@@ -35,30 +35,39 @@ public class DataSourceChain<T, V> {
 
     public interface ResponseConverter<T, V> {
 
-        DataControllerResponse<V> fromResponse(DataControllerResponse<T> response);
+        V fromResponse(T response);
     }
 
     private final DataSource<T> dataSource;
     private final ResponseValidator<T> responseValidator;
     private final ResponseToNextCallConverter<T> reponseToNextCallConverter;
     private final ResponseConverter<T, V> responseConverter;
+    private final boolean failChainOnError;
+
 
     private DataSourceChain(Builder<T, V> builder) {
         responseConverter = builder.responseConverter;
         dataSource = builder.dataSource;
-        responseValidator = builder.responseValidator;
+        if (builder.responseValidator != null) {
+            responseValidator = builder.responseValidator;
+        } else {
+            responseValidator = new DefaultResponseValidator();
+        }
         reponseToNextCallConverter = builder.reponseToNextCallConverter;
+        failChainOnError = builder.failChainOnError;
     }
 
-    <V> void get(DataSource.SourceParams sourceParams,
-                 DataControllerResponse<V> previousResponse,
-                 final DataController.Success<V> success,
-                 final DataController.Error error) {
+    void get(DataSource.SourceParams sourceParams,
+             final DataController.Success<V> success,
+             final DataController.Error error) {
         dataSource.get(sourceParams, new DataController.Success<T>() {
             @Override
             public void onSuccess(DataControllerResponse<T> response) {
                 if (responseValidator.isValid(response)) {
-                    success.onSuccess(responseConverter.fromResponse(response));
+                    DataControllerResponse<V> convertedResponse =
+                            new DataControllerResponse<>(responseConverter.fromResponse(response.getResponse()),
+                                    dataSource.sourceType());
+                    success.onSuccess(convertedResponse);
                 } else {
                     error.onFailure(responseValidator.provideErrorForResponse(response));
                 }
@@ -66,21 +75,28 @@ public class DataSourceChain<T, V> {
         }, new DataController.Error() {
             @Override
             public void onFailure(DataResponseError dataResponseError) {
-
+                if (failChainOnError) {
+                    error.onFailure(dataResponseError);
+                } else {
+                    success.onSuccess(new DataControllerResponse<V>(null, dataSource.sourceType()));
+                }
             }
         });
     }
 
     public static class Builder<T, V> {
 
+        private final ChainingSource.Builder<V> chainBuilder;
         private final DataSource<T> dataSource;
         private final ResponseConverter<T, V> responseConverter;
         private ResponseValidator<T> responseValidator;
         private ResponseToNextCallConverter<T> reponseToNextCallConverter;
         private boolean failChainOnError;
 
-        Builder(DataSource<T> dataSource,
-                ResponseConverter<T, V> responseConverter) {
+        public Builder(ChainingSource.Builder<V> chainBuilder,
+                       DataSource<T> dataSource,
+                       ResponseConverter<T, V> responseConverter) {
+            this.chainBuilder = chainBuilder;
             this.dataSource = dataSource;
             this.responseConverter = responseConverter;
         }
@@ -100,8 +116,28 @@ public class DataSourceChain<T, V> {
             return this;
         }
 
-        public DataSourceChain<T, V> build() {
-            return new DataSourceChain<>(this);
+        public <Z> DataSourceChain.Builder<Z, V> chain(DataSource<Z> dataSource,
+                                                       ResponseConverter<Z, V> converter) {
+            DataSourceChain<T, V> chain = new DataSourceChain<>(this);
+            chainBuilder.addChain(chain);
+            return chainBuilder.chain(dataSource, converter);
+        }
+
+        public ChainingSource<V> build() {
+            return chainBuilder.build();
+        }
+    }
+
+    private final class DefaultResponseValidator implements ResponseValidator<T> {
+
+        @Override
+        public boolean isValid(DataControllerResponse<T> response) {
+            return true;
+        }
+
+        @Override
+        public DataResponseError provideErrorForResponse(DataControllerResponse<T> response) {
+            return null;
         }
     }
 }

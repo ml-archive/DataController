@@ -18,6 +18,10 @@ import java.util.List;
  */
 public class ChainingSource<T> implements DataSource.Source<T> {
 
+    public static <T> ChainingSource.Builder<T> builderInstance() {
+        return new ChainingSource.Builder<>();
+    }
+
     private final List<DataSourceChain<?, T>> dataSourceChains
             = new ArrayList<>();
 
@@ -67,7 +71,7 @@ public class ChainingSource<T> implements DataSource.Source<T> {
                       final List<DataSourceChain<?, T>> dataSources,
                       DataSource.SourceParams sourceParams,
                       DataController.Error error, final DataController.Success<T> success) {
-        final DataSourceChain dataSource = dataSources.get(position);
+        final DataSourceChain<?, T> dataSource = dataSources.get(position);
         dataSource.get(sourceParams, new DataController.Success<T>() {
             @Override
             public void onSuccess(DataControllerResponse<T> response) {
@@ -83,14 +87,10 @@ public class ChainingSource<T> implements DataSource.Source<T> {
 
         private final List<DataSourceChain<?, T>> dataSourceChains = new ArrayList<>();
 
-        public Builder(DataSourceChain<T, T> dataSourceChain) {
-            dataSourceChains.add(dataSourceChain);
-        }
-
         public <V> DataSourceChain.Builder<V, T> chain(DataSource<V> dataSource,
                                                        DataSourceChain.ResponseConverter<V, T>
                                                                responseConverter) {
-            return new DataSourceChain.Builder<>(dataSource, responseConverter);
+            return new DataSourceChain.Builder<>(this, dataSource, responseConverter);
         }
 
         public ChainingSource<T> build() {
@@ -99,6 +99,11 @@ public class ChainingSource<T> implements DataSource.Source<T> {
 
         public DataSource.Builder<T> builderInstance(DataSource.SourceType registeredSourceType) {
             return build().builderInstance(registeredSourceType);
+        }
+
+        Builder<T> addChain(DataSourceChain<?, T> chain) {
+            dataSourceChains.add(chain);
+            return this;
         }
     }
 }
