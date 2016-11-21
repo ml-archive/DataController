@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller.test;
+package com.fuzz.datacontroller;
 
 import com.raizlabs.android.dbflow.config.DatabaseConfig;
 import com.raizlabs.android.dbflow.config.DatabaseDefinition;

@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller.test;
+package com.fuzz.datacontroller;
 
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;

@@ -1,11 +1,10 @@
-package com.fuzz.datacontroller.test.dbflow;
+package com.fuzz.datacontroller.dbflow;
 
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.fuzz.datacontroller.dbflow.AsyncDBFlowSingleSource;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.test.BaseRobolectricUnitTest;
-import com.fuzz.datacontroller.test.DataItem;
-import com.fuzz.datacontroller.test.ValidateCallback;
+import com.fuzz.datacontroller.BaseRobolectricUnitTest;
+import com.fuzz.datacontroller.DataItem;
+import com.fuzz.datacontroller.ValidateCallback;
 
 import org.junit.Before;
 import org.junit.Test;

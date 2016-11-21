@@ -1,8 +1,7 @@
-package com.fuzz.datacontroller.test.dbflow;
+package com.fuzz.datacontroller.dbflow;
 
-import com.fuzz.datacontroller.dbflow.BaseDBFlowSource;
-import com.fuzz.datacontroller.test.BaseRobolectricUnitTest;
-import com.fuzz.datacontroller.test.DataItem;
+import com.fuzz.datacontroller.BaseRobolectricUnitTest;
+import com.fuzz.datacontroller.DataItem;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import org.junit.Test;

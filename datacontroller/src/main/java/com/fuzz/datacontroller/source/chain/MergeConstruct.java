@@ -17,14 +17,6 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
     public static <TFirst, TSecond, TMerge> MergeConstruct.Builder<TFirst, TSecond, TMerge>
     builderInstance(DataSourceCaller<TFirst> caller,
                     DataSourceCaller<TSecond> secondCaller,
-                    ResponseToNextCallConverter<TFirst> callConverter,
-                    ResponseMerger<TFirst, TSecond, TMerge> responseMerger) {
-        return new Builder<>(caller, secondCaller, callConverter, responseMerger);
-    }
-
-    public static <TFirst, TSecond, TMerge> MergeConstruct.Builder<TFirst, TSecond, TMerge>
-    builderInstance(DataSourceCaller<TFirst> caller,
-                    DataSourceCaller<TSecond> secondCaller,
                     ResponseMerger<TFirst, TSecond, TMerge> responseMerger) {
         return new Builder<>(caller, secondCaller, responseMerger);
     }
@@ -108,20 +100,10 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
 
         private final DataSourceCaller<TFirst> firstDataSource;
         private final DataSourceCaller<TSecond> secondDataSource;
-        private final ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
+        private ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
         private final ResponseMerger<TFirst, TSecond, TMerge> responseMerger;
 
         private ResponseValidator<TFirst> responseValidator;
-
-        private Builder(DataSourceCaller<TFirst> firstDataSource,
-                        DataSourceCaller<TSecond> secondDataSource,
-                        ResponseToNextCallConverter<TFirst> responseToNextCallConverter,
-                        ResponseMerger<TFirst, TSecond, TMerge> responseMerger) {
-            this.firstDataSource = firstDataSource;
-            this.secondDataSource = secondDataSource;
-            this.responseToNextCallConverter = responseToNextCallConverter;
-            this.responseMerger = responseMerger;
-        }
 
         private Builder(DataSourceCaller<TFirst> firstDataSource,
                         DataSourceCaller<TSecond> secondDataSource,
@@ -132,20 +114,16 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
             this.responseMerger = responseMerger;
         }
 
+        public Builder<TFirst, TSecond, TMerge> responseToNextCallConverter(
+                ResponseToNextCallConverter<TFirst> responseToNextCallConverter) {
+            this.responseToNextCallConverter = responseToNextCallConverter;
+            return this;
+        }
+
         public Builder<TFirst, TSecond, TMerge> responseValidator(
                 ResponseValidator<TFirst> responseValidator) {
             this.responseValidator = responseValidator;
             return this;
-        }
-
-        public MergeConstruct<TFirst, TSecond, TMerge> build() {
-            return new MergeConstruct<>(this);
-        }
-
-        public <TNext> ChainConstruct.Builder<TMerge, TNext>
-        chain(DataSourceCaller<TNext> nextDataSourceCaller,
-              ResponseToNextCallConverter<TMerge> responseToNextCallConverter) {
-            return ChainConstruct.builderInstance(build(), nextDataSourceCaller, responseToNextCallConverter);
         }
 
         public <TNext> ChainConstruct.Builder<TMerge, TNext>
@@ -155,16 +133,12 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
 
         public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
         merge(DataSource.DataSourceCaller<TNext> secondDataSource,
-              ResponseToNextCallConverter<TMerge> responseToNextCallConverter,
-              MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
-            return MergeConstruct.builderInstance(build(), secondDataSource,
-                    responseToNextCallConverter, responseMerger);
-        }
-
-        public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
-        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
             return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
+        }
+
+        public MergeConstruct<TFirst, TSecond, TMerge> build() {
+            return new MergeConstruct<>(this);
         }
     }
 

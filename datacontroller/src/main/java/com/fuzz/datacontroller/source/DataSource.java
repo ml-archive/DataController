@@ -172,6 +172,7 @@ public class DataSource<T> {
 
     public void cancel() {
         caller.cancel();
+        setBusy(false);
     }
 
     private void setBusy(boolean isBusy) {

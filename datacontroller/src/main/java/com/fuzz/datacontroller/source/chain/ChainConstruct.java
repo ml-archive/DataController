@@ -15,13 +15,6 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
 
     public static <TFirst, TSecond> ChainConstruct.Builder<TFirst, TSecond> builderInstance(
             DataSource.DataSourceCaller<TFirst> caller,
-            DataSource.DataSourceCaller<TSecond> secondCaller,
-            ResponseToNextCallConverter<TFirst> callConverter) {
-        return new Builder<>(caller, secondCaller, callConverter);
-    }
-
-    public static <TFirst, TSecond> ChainConstruct.Builder<TFirst, TSecond> builderInstance(
-            DataSource.DataSourceCaller<TFirst> caller,
             DataSource.DataSourceCaller<TSecond> secondCaller) {
         return new Builder<>(caller, secondCaller);
     }
@@ -57,12 +50,12 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
         this.firstDataSource = builder.firstDataSource;
         this.secondDataSource = builder.secondDataSource;
         if (builder.responseToNextCallConverter == null) {
-            this.responseToNextCallConverter = new DefaultResponseToNextCallConverter();
+            this.responseToNextCallConverter = new DefaultResponseToNextCallConverter<>();
         } else {
             this.responseToNextCallConverter = builder.responseToNextCallConverter;
         }
         if (builder.responseValidator == null) {
-            this.responseValidator = new DefaultResponseValidator();
+            this.responseValidator = new DefaultResponseValidator<>();
         } else {
             this.responseValidator = builder.responseValidator;
         }
@@ -111,17 +104,9 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
 
         private final DataSource.DataSourceCaller<TFirst> firstDataSource;
         private final DataSource.DataSourceCaller<TSecond> secondDataSource;
-        private final ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
+        private ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
 
         private ResponseValidator<TFirst> responseValidator;
-
-        private Builder(DataSource.DataSourceCaller<TFirst> firstDataSource,
-                        DataSource.DataSourceCaller<TSecond> secondDataSource,
-                        ResponseToNextCallConverter<TFirst> responseToNextCallConverter) {
-            this.firstDataSource = firstDataSource;
-            this.secondDataSource = secondDataSource;
-            this.responseToNextCallConverter = responseToNextCallConverter;
-        }
 
         private Builder(DataSource.DataSourceCaller<TFirst> firstDataSource,
                         DataSource.DataSourceCaller<TSecond> secondDataSource) {
@@ -136,15 +121,14 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
             return this;
         }
 
-        public ChainConstruct<TFirst, TSecond> build() {
-            return new ChainConstruct<>(this);
+        public Builder<TFirst, TSecond> responseToNextCallConverter(
+                ResponseToNextCallConverter<TFirst> responseToNextCallConverter) {
+            this.responseToNextCallConverter = responseToNextCallConverter;
+            return this;
         }
 
-        public <TNext> ChainConstruct.Builder<TSecond, TNext>
-        chain(DataSource.DataSourceCaller<TNext> nextDataSourceCaller,
-              ResponseToNextCallConverter<TSecond> responseToNextCallConverter) {
-            return new ChainConstruct.Builder<>(build(), nextDataSourceCaller,
-                    responseToNextCallConverter);
+        public ChainConstruct<TFirst, TSecond> build() {
+            return new ChainConstruct<>(this);
         }
 
         public <TNext> ChainConstruct.Builder<TSecond, TNext>
@@ -154,20 +138,12 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
 
         public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
         merge(DataSource.DataSourceCaller<TNext> secondDataSource,
-              ResponseToNextCallConverter<TSecond> responseToNextCallConverter,
-              MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
-            return MergeConstruct.builderInstance(build(), secondDataSource,
-                    responseToNextCallConverter, responseMerger);
-        }
-
-        public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
-        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
             return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }
     }
 
-    static final class DefaultResponseValidator<TFirst> implements ResponseValidator<TFirst> {
+    static class DefaultResponseValidator<TFirst> implements ResponseValidator<TFirst> {
 
         @Override
         public boolean isValid(DataControllerResponse<TFirst> response) {

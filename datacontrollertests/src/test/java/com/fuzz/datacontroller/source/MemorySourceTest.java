@@ -1,10 +1,8 @@
-package com.fuzz.datacontroller.test.source;
+package com.fuzz.datacontroller.source;
 
 import com.fuzz.datacontroller.DataControllerResponse;
-import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.MemorySource;
-import com.fuzz.datacontroller.test.DataItem;
-import com.fuzz.datacontroller.test.ValidateCallback;
+import com.fuzz.datacontroller.DataItem;
+import com.fuzz.datacontroller.ValidateCallback;
 
 import org.junit.Before;
 import org.junit.Test;

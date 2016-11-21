@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller.test;
+package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.strategy.OneShotRefreshStrategy;
 import com.fuzz.datacontroller.strategy.TimeBasedRefreshStrategy;

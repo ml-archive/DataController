@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller.test;
+package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
