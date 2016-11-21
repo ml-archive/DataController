@@ -1,10 +1,10 @@
 package com.fuzz.datacontroller.dbflow;
 
-import com.fuzz.datacontroller.DataControllerResponse;
-import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.BaseRobolectricUnitTest;
+import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataItem;
 import com.fuzz.datacontroller.ValidateCallback;
+import com.fuzz.datacontroller.source.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +20,7 @@ public class DBFlowSingleDataSourceTest extends BaseRobolectricUnitTest {
 
     @Before
     public void setup_test() {
-        dataSource = DBFlowSingleSource.builderInstance(DataItem.class).build();
+        dataSource = DBFlowSingleSource.builderInstance(DataItem.class, false).build();
     }
 
     @Test
