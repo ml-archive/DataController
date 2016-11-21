@@ -153,19 +153,17 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
         }
 
         public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
-        merge(DataSource.DataSourceCaller<TSecond> firstDataSource,
-              DataSource.DataSourceCaller<TNext> secondDataSource,
+        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
               ResponseToNextCallConverter<TSecond> responseToNextCallConverter,
               MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
-            return MergeConstruct.builderInstance(firstDataSource, secondDataSource,
+            return MergeConstruct.builderInstance(build(), secondDataSource,
                     responseToNextCallConverter, responseMerger);
         }
 
         public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
-        merge(DataSource.DataSourceCaller<TSecond> firstDataSource,
-              DataSource.DataSourceCaller<TNext> secondDataSource,
+        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
-            return MergeConstruct.builderInstance(firstDataSource, secondDataSource, responseMerger);
+            return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }
     }
 

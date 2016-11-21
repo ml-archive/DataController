@@ -153,20 +153,18 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
             return ChainConstruct.builderInstance(build(), nextDataSourceCaller);
         }
 
-        public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
-        merge(DataSource.DataSourceCaller<TSecond> firstDataSource,
-              DataSource.DataSourceCaller<TNext> secondDataSource,
-              ResponseToNextCallConverter<TSecond> responseToNextCallConverter,
-              MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
-            return MergeConstruct.builderInstance(firstDataSource, secondDataSource,
+        public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
+        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
+              ResponseToNextCallConverter<TMerge> responseToNextCallConverter,
+              MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
+            return MergeConstruct.builderInstance(build(), secondDataSource,
                     responseToNextCallConverter, responseMerger);
         }
 
-        public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
-        merge(DataSource.DataSourceCaller<TSecond> firstDataSource,
-              DataSource.DataSourceCaller<TNext> secondDataSource,
-              MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
-            return MergeConstruct.builderInstance(firstDataSource, secondDataSource, responseMerger);
+        public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
+        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
+              MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
+            return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }
     }
 
