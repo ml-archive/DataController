@@ -96,6 +96,10 @@ public class OkHttpDataSource<TResponse> implements DataSource.DataSourceCaller<
                     "we can convert the response into a type");
         }
 
+        if (currentCall == null) {
+            throw new IllegalArgumentException("The OKHttpParams must provide a non null call to execute");
+        }
+
         currentCall.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -119,6 +123,25 @@ public class OkHttpDataSource<TResponse> implements DataSource.DataSourceCaller<
                     + OkHttpParamsInterface.class.getSimpleName());
         }
         return params;
+    }
+
+    /**
+     * Description: Represent the default params for {@link OkHttpDataSource}. It specifies the specific
+     * {@link Call} to use when it loads from network.
+     */
+    public static class OkHttpParams extends DataSource.SourceParams
+            implements OkHttpParamsInterface {
+
+        private final Call call;
+
+        public OkHttpParams(Call call) {
+            this.call = call;
+        }
+
+        @Override
+        public Call getCall() {
+            return call;
+        }
     }
 
     class DefaultCallbackHandler implements CallbackHandler<TResponse> {
