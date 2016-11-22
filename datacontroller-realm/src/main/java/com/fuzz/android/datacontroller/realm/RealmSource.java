@@ -4,6 +4,8 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.source.DataSource;
 
+import java.util.List;
+
 import io.realm.RealmChangeListener;
 import io.realm.RealmModel;
 import io.realm.RealmQuery;
@@ -15,7 +17,7 @@ import io.realm.RealmResults;
  * @author Andrew Grosner (Fuzz)
  */
 
-public class RealmSource<T extends RealmModel> implements DataSource.Source<RealmResults<T>> {
+public class RealmSource<T extends RealmModel> implements DataSource.Source<List<T>> {
 
     public interface RealmParamsInterface<T extends RealmModel> {
 
@@ -30,8 +32,8 @@ public class RealmSource<T extends RealmModel> implements DataSource.Source<Real
 
     @Override
     public void get(DataSource.SourceParams sourceParams,
-                    DataController.Error error, final DataController.Success<RealmResults<T>> success) {
-        RealmParams<T> params = getParams(sourceParams);
+                    DataController.Error error, final DataController.Success<List<T>> success) {
+        RealmParamsInterface<T> params = getParams(sourceParams);
         RealmQuery<T> query = params.getQuery();
 
         if (async) {
@@ -39,12 +41,12 @@ public class RealmSource<T extends RealmModel> implements DataSource.Source<Real
             realmResults.addChangeListener(new RealmChangeListener<RealmResults<T>>() {
                 @Override
                 public void onChange(RealmResults<T> results) {
-                    success.onSuccess(new DataControllerResponse<>(results, DataSource.SourceType.DISK));
+                    success.onSuccess(new DataControllerResponse<List<T>>(results, DataSource.SourceType.DISK));
                 }
             });
         } else {
             RealmResults<T> results = query.findAll();
-            success.onSuccess(new DataControllerResponse<>(results, DataSource.SourceType.DISK));
+            success.onSuccess(new DataControllerResponse<List<T>>(results, DataSource.SourceType.DISK));
         }
     }
 
@@ -54,8 +56,8 @@ public class RealmSource<T extends RealmModel> implements DataSource.Source<Real
     }
 
     @Override
-    public void store(DataControllerResponse<RealmResults<T>> response) {
-
+    public void store(DataControllerResponse<List<T>> response) {
+        // dont need to store as realm does it for you
     }
 
     @Override
@@ -74,10 +76,10 @@ public class RealmSource<T extends RealmModel> implements DataSource.Source<Real
     }
 
     @SuppressWarnings("unchecked")
-    private RealmParams<T> getParams(DataSource.SourceParams sourceParams) {
-        RealmParams<T> params = null;
-        if (sourceParams instanceof RealmParams) {
-            params = (RealmParams<T>) sourceParams;
+    private RealmParamsInterface<T> getParams(DataSource.SourceParams sourceParams) {
+        RealmParamsInterface<T> params = null;
+        if (sourceParams instanceof RealmSource.RealmParamsInterface) {
+            params = (RealmParamsInterface<T>) sourceParams;
         }
         if (params == null) {
             throw new IllegalArgumentException("The passed dataSource params must implement "
