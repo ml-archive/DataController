@@ -24,7 +24,7 @@ public abstract class BaseDBFlowSource<TModel, TSource>
     private final Class<TModel> modelClass;
     private final boolean async;
 
-    public BaseDBFlowSource(Class<TModel> modelClass, boolean async) {
+    BaseDBFlowSource(Class<TModel> modelClass, boolean async) {
         this.modelClass = modelClass;
         this.async = async;
     }

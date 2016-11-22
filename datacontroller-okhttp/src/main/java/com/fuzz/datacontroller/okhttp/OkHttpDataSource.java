@@ -144,7 +144,7 @@ public class OkHttpDataSource<TResponse> implements DataSource.DataSourceCaller<
         }
     }
 
-    class DefaultCallbackHandler implements CallbackHandler<TResponse> {
+    private class DefaultCallbackHandler implements CallbackHandler<TResponse> {
 
         @Override
         public void onHandleResponse(Call call, Response response,
