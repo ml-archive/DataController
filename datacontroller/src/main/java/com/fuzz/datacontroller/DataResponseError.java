@@ -118,6 +118,11 @@ public class DataResponseError {
             return this;
         }
 
+        public Builder message(String message) {
+            this.message = message;
+            return this;
+        }
+
         public DataResponseError build() {
             return new DataResponseError(this);
         }
