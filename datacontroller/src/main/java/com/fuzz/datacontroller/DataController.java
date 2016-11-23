@@ -123,6 +123,25 @@ public class DataController<T> {
         return callbackGroup.hasCallbacks();
     }
 
+    public void requestData() {
+        request().build().execute();
+    }
+
+    public void requestData(DataSource.SourceParams sourceParams) {
+        request().sourceParams(sourceParams).build().execute();
+    }
+
+    public void requestSpecific(DataSourceContainer.DataSourceParams dataSourceParams) {
+        request(dataSourceParams).build().execute();
+    }
+
+    public void requestSpecific(DataSourceContainer.DataSourceParams dataSourceParams,
+                                DataSource.SourceParams sourceParams) {
+        request(dataSourceParams).sourceParams(sourceParams)
+                .build().execute();
+    }
+
+
     public DataControllerRequest.Builder<T> request() {
         return new DataControllerRequest.Builder<>(this);
     }
