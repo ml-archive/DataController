@@ -81,6 +81,14 @@ public class DataSource<T> implements Source<T> {
         return sourceType;
     }
 
+    public DataSourceCaller<T> dataSourceCaller() {
+        return caller;
+    }
+
+    public DataSourceStorage<T> dataSourceStorage() {
+        return storage;
+    }
+
     public T getStoredData() {
         return storage != null ? storage.getStoredData(defaultParams) : null;
     }
