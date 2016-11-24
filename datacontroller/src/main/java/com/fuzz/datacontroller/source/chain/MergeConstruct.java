@@ -2,8 +2,9 @@ package com.fuzz.datacontroller.source.chain;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSource.DataSourceCaller;
+import com.fuzz.datacontroller.source.DataSourceCaller;
 import com.fuzz.datacontroller.source.chain.ChainConstruct.ResponseToNextCallConverter;
 import com.fuzz.datacontroller.source.chain.ChainConstruct.ResponseValidator;
 
@@ -35,8 +36,10 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
     private final ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
     private final ResponseValidator<TFirst> responseValidator;
     private final ResponseMerger<TFirst, TSecond, TMerge> responseMerger;
+    private final boolean failChainOnError;
 
     MergeConstruct(Builder<TFirst, TSecond, TMerge> builder) {
+        this.failChainOnError = builder.failChainOnError;
         this.firstDataSource = builder.firstDataSource;
         this.secondDataSource = builder.secondDataSource;
         if (builder.responseToNextCallConverter == null) {
@@ -62,12 +65,25 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
                     DataSource.SourceParams nextParams;
                     nextParams = responseToNextCallConverter
                             .provideNextParams(firstResponse.getResponse(), sourceParams);
-                    secondDataSource.get(nextParams, error, new DataController.Success<TSecond>() {
-                        @Override
-                        public void onSuccess(DataControllerResponse<TSecond> secondResponse) {
-                            success.onSuccess(responseMerger.mergeResponses(firstResponse, secondResponse));
-                        }
-                    });
+                    if (nextParams != null) {
+                        secondDataSource.get(nextParams, new DataController.Error() {
+                            @Override
+                            public void onFailure(DataResponseError dataResponseError) {
+                                if (failChainOnError) {
+                                    error.onFailure(dataResponseError);
+                                } else {
+                                    success.onSuccess(responseMerger.mergeResponses(firstResponse, null));
+                                }
+                            }
+                        }, new DataController.Success<TSecond>() {
+                            @Override
+                            public void onSuccess(DataControllerResponse<TSecond> secondResponse) {
+                                success.onSuccess(responseMerger.mergeResponses(firstResponse, secondResponse));
+                            }
+                        });
+                    } else {
+                        success.onSuccess(responseMerger.mergeResponses(firstResponse, null));
+                    }
                 }
             }
         });
@@ -102,7 +118,7 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
         private final DataSourceCaller<TSecond> secondDataSource;
         private ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
         private final ResponseMerger<TFirst, TSecond, TMerge> responseMerger;
-
+        private boolean failChainOnError = true;
         private ResponseValidator<TFirst> responseValidator;
 
         private Builder(DataSourceCaller<TFirst> firstDataSource,
@@ -126,13 +142,18 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
             return this;
         }
 
+        public Builder<TFirst, TSecond, TMerge> failChainOnError(boolean failChainOnError) {
+            this.failChainOnError = failChainOnError;
+            return this;
+        }
+
         public <TNext> ChainConstruct.Builder<TMerge, TNext>
         chain(DataSourceCaller<TNext> nextDataSourceCaller) {
             return ChainConstruct.builderInstance(build(), nextDataSourceCaller);
         }
 
         public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
-        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
+        merge(DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
             return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }

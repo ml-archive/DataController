@@ -4,6 +4,7 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSourceCaller;
 
 /**
  * Description:
@@ -11,11 +12,11 @@ import com.fuzz.datacontroller.source.DataSource;
  * @author Andrew Grosner (Fuzz)
  */
 
-public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCaller<TSecond> {
+public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond> {
 
     public static <TFirst, TSecond> ChainConstruct.Builder<TFirst, TSecond> builderInstance(
-            DataSource.DataSourceCaller<TFirst> caller,
-            DataSource.DataSourceCaller<TSecond> secondCaller) {
+            DataSourceCaller<TFirst> caller,
+            DataSourceCaller<TSecond> secondCaller) {
         return new Builder<>(caller, secondCaller);
     }
 
@@ -40,8 +41,8 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
                                                   DataSource.SourceParams previousParams);
     }
 
-    private final DataSource.DataSourceCaller<TFirst> firstDataSource;
-    private final DataSource.DataSourceCaller<TSecond> secondDataSource;
+    private final DataSourceCaller<TFirst> firstDataSource;
+    private final DataSourceCaller<TSecond> secondDataSource;
     private final ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
     private final ResponseValidator<TFirst> responseValidator;
 
@@ -83,11 +84,11 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
         secondDataSource.cancel();
     }
 
-    public DataSource.DataSourceCaller<TFirst> firstDataSource() {
+    public DataSourceCaller<TFirst> firstDataSource() {
         return firstDataSource;
     }
 
-    public DataSource.DataSourceCaller<TSecond> secondDataSource() {
+    public DataSourceCaller<TSecond> secondDataSource() {
         return secondDataSource;
     }
 
@@ -102,14 +103,14 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
     public static final class Builder<TFirst, TSecond> {
 
 
-        private final DataSource.DataSourceCaller<TFirst> firstDataSource;
-        private final DataSource.DataSourceCaller<TSecond> secondDataSource;
+        private final DataSourceCaller<TFirst> firstDataSource;
+        private final DataSourceCaller<TSecond> secondDataSource;
         private ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
 
         private ResponseValidator<TFirst> responseValidator;
 
-        private Builder(DataSource.DataSourceCaller<TFirst> firstDataSource,
-                        DataSource.DataSourceCaller<TSecond> secondDataSource) {
+        private Builder(DataSourceCaller<TFirst> firstDataSource,
+                        DataSourceCaller<TSecond> secondDataSource) {
             this.firstDataSource = firstDataSource;
             this.secondDataSource = secondDataSource;
             this.responseToNextCallConverter = null;
@@ -132,12 +133,12 @@ public class ChainConstruct<TFirst, TSecond> implements DataSource.DataSourceCal
         }
 
         public <TNext> ChainConstruct.Builder<TSecond, TNext>
-        chain(DataSource.DataSourceCaller<TNext> nextDataSourceCaller) {
+        chain(DataSourceCaller<TNext> nextDataSourceCaller) {
             return new ChainConstruct.Builder<>(build(), nextDataSourceCaller);
         }
 
         public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
-        merge(DataSource.DataSourceCaller<TNext> secondDataSource,
+        merge(DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
             return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }

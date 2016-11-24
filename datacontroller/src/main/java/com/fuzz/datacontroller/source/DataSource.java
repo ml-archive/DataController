@@ -10,7 +10,7 @@ import com.fuzz.datacontroller.DataResponseError;
  *
  * @author Andrew Grosner (fuzz)
  */
-public class DataSource<T> {
+public class DataSource<T> implements Source<T> {
 
     /**
      * Describes where this {@link DataSource} information came from. This is especially useful
@@ -34,39 +34,16 @@ public class DataSource<T> {
         NETWORK
     }
 
-    public interface DataSourceStorage<T> {
-
-        void store(DataControllerResponse<T> response);
-
-        T getStoredData(SourceParams params);
-
-        void clearStoredData(SourceParams params);
-
-        boolean hasStoredData(SourceParams params);
-    }
-
-
-    public interface DataSourceCaller<T> {
-        void get(SourceParams sourceParams,
-                 DataController.Error error, DataController.Success<T> success);
-
-        void cancel();
-    }
-
-    public interface Source<T> extends DataSourceStorage<T>, DataSourceCaller<T> {
-    }
-
     /**
      * Description: A simple interface for determining when data should get refreshed. If the call
-     * returns a false, a call to {@link #get(SourceParams, DataController.Success, DataController.Error)}
+     * returns a false, a call to {@link #get(SourceParams, DataController.Error, DataController.Success)}
      * does not do anything.
      */
     public interface RefreshStrategy<TResponse> {
 
         /**
          * @param dataSource The data source that we're calling.
-         * @return True if we should refresh by calling {@link #get(SourceParams,
-         * DataController.Success, DataController.Error)}.
+         * @return True if we should refresh by calling {@link #get(SourceParams, DataController.Error, DataController.Success)}.
          * If false, we do not refresh data.
          */
         boolean shouldRefresh(DataSource<TResponse> dataSource);
@@ -116,6 +93,7 @@ public class DataSource<T> {
         return storage.hasStoredData(defaultParams);
     }
 
+    @Override
     public boolean hasStoredData(SourceParams params) {
         return storage.hasStoredData(params);
     }
@@ -124,6 +102,7 @@ public class DataSource<T> {
         storage.clearStoredData(defaultParams);
     }
 
+    @Override
     public void clearStoredData(SourceParams sourceParams) {
         if (storage != null) {
             storage.clearStoredData(sourceParams);
@@ -137,6 +116,7 @@ public class DataSource<T> {
      *
      * @param tResponse The response returned here.
      */
+    @Override
     public final void store(DataControllerResponse<T> tResponse) {
         if (!tResponse.getSourceType().equals(sourceType)
                 && storage != null) {
@@ -151,11 +131,12 @@ public class DataSource<T> {
      * is that if no params returned or it is a default instance, all data should be returned.
      *
      * @param sourceParams The params used to retrieve information from the {@link DataSource}.
-     * @param success      Called when a successful request returns.
      * @param error        Called when a request fails.
+     * @param success      Called when a successful request returns.
      */
-    public final void get(SourceParams sourceParams, DataController.Success<T> success,
-                          DataController.Error error) {
+    @Override
+    public final void get(SourceParams sourceParams, DataController.Error error,
+                          DataController.Success<T> success) {
         if (refreshStrategy().shouldRefresh(this) && !isBusy()
                 || sourceParams != null && sourceParams.force) {
             setBusy(true);
@@ -170,6 +151,7 @@ public class DataSource<T> {
         }
     }
 
+    @Override
     public void cancel() {
         caller.cancel();
         setBusy(false);
@@ -264,7 +246,7 @@ public class DataSource<T> {
 
         /**
          * Specify a set of default {@link SourceParams} that we use when no {@link SourceParams}
-         * are passed in {@link #get(SourceParams, DataController.Success, DataController.Error)}
+         * are passed in {@link #get(SourceParams, DataController.Error, DataController.Success)}
          */
         public Builder<T> defaultParams(SourceParams defaultParams) {
             this.defaultParams = defaultParams;

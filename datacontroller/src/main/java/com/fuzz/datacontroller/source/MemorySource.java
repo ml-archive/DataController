@@ -8,7 +8,7 @@ import com.fuzz.datacontroller.DataControllerResponse;
  * the storage may or may not have data in it. It does not rely on a network call or database lookup.
  * It stores only information coming from other sources.
  */
-public class MemorySource<TResponse> implements DataSource.Source<TResponse> {
+public class MemorySource<TResponse> implements Source<TResponse> {
 
     public static <TResponse> DataSource.Builder<TResponse> builderInstance() {
         MemorySource<TResponse> source = new MemorySource<>();

@@ -69,7 +69,7 @@ public class DataControllerRequest<T> {
             for (int i = 0; i < dataSources.size(); i++) {
                 DataSource<T> source = dataSources.get(i);
                 if (i == 0 || dataController.dataSourceChainer.shouldQueryNext(dataSources.get(i - 1), source)) {
-                    source.get(sourceParams, internalSuccessCallback, internalErrorCallback);
+                    source.get(sourceParams, internalErrorCallback, internalSuccessCallback);
                 }
             }
         } else {
@@ -79,7 +79,7 @@ public class DataControllerRequest<T> {
                 DataSource<T> source = dataController.getDataSource(params);
                 if (index == 0 || dataController.dataSourceChainer.shouldQueryNext(
                         dataController.getDataSource(dataSourceParams.get(index - 1)), source)) {
-                    source.get(targetParamsMap.get(params), internalSuccessCallback, internalErrorCallback);
+                    source.get(targetParamsMap.get(params), internalErrorCallback, internalSuccessCallback);
                 }
                 index++;
             }

@@ -8,7 +8,7 @@ import com.fuzz.datacontroller.DataControllerResponse;
  * Description: Maps the callbacks of one source with another type.
  */
 public class MappingSource<TFromResponse, TResponse>
-        implements DataSource.Source<TResponse> {
+        implements Source<TResponse> {
 
     public static <TResponse, TFromResponse> DataSource.Builder<TResponse> builderInstance(
             DataSource<TFromResponse> datasource,
@@ -65,14 +65,14 @@ public class MappingSource<TFromResponse, TResponse>
     @Override
     public void get(DataSource.SourceParams sourceParams,
                     DataController.Error error, final DataController.Success<TResponse> success) {
-        fromDataSource.get(sourceParams, new DataController.Success<TFromResponse>() {
+        fromDataSource.get(sourceParams, error, new DataController.Success<TFromResponse>() {
             @Override
             public void onSuccess(DataControllerResponse<TFromResponse> response) {
                 TResponse transformedResponse = mapper.mapFrom(response.getResponse());
                 success.onSuccess(new DataControllerResponse<>(transformedResponse,
                         response.getSourceType(), response.getOriginalUrl()));
             }
-        }, error);
+        });
     }
 
     @Override
