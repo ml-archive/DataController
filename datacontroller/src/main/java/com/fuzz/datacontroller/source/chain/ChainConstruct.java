@@ -132,6 +132,10 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
             return new ChainConstruct<>(this);
         }
 
+        public DataSource.Builder<TSecond> toSourceBuilder(DataSource.SourceType sourceType) {
+            return new DataSource.Builder<>(build(), sourceType);
+        }
+
         public <TNext> ChainConstruct.Builder<TSecond, TNext>
         chain(DataSourceCaller<TNext> nextDataSourceCaller) {
             return new ChainConstruct.Builder<>(build(), nextDataSourceCaller);

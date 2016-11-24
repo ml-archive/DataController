@@ -161,6 +161,10 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
         public MergeConstruct<TFirst, TSecond, TMerge> build() {
             return new MergeConstruct<>(this);
         }
+
+        public DataSource.Builder<TMerge> toSourceBuilder(DataSource.SourceType sourceType) {
+            return new DataSource.Builder<>(build(), sourceType);
+        }
     }
 
 }
