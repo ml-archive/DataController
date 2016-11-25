@@ -62,6 +62,25 @@ public interface DataSourceContainer<TResponse> {
                 return Integer.valueOf(position).compareTo(o.position);
             }
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            DataSourceParams that = (DataSourceParams) o;
+
+            if (position != that.position) return false;
+            return sourceType == that.sourceType;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = position;
+            result = 31 * result + (sourceType != null ? sourceType.hashCode() : 0);
+            return result;
+        }
     }
 
     /**
