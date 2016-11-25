@@ -12,7 +12,7 @@ public interface DataSourceContainer<TResponse> {
      * flexibility enables multiple of the same {@link DataSource} via
      * the {@link ListBasedDataSourceContainer}.
      */
-    class DataSourceParams {
+    class DataSourceParams implements Comparable<DataSourceParams> {
 
         public static DataSourceParams networkParams() {
             return new DataSourceParams(DataSource.SourceType.NETWORK);
@@ -52,6 +52,15 @@ public interface DataSourceContainer<TResponse> {
 
         public DataSource.SourceType getSourceType() {
             return sourceType;
+        }
+
+        @Override
+        public int compareTo(DataSourceParams o) {
+            if (sourceType != null && o.getSourceType() != null) {
+                return sourceType.compareTo(o.sourceType);
+            } else {
+                return Integer.valueOf(position).compareTo(o.position);
+            }
         }
     }
 
