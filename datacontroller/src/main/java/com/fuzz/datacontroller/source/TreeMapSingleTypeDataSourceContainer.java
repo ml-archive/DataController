@@ -11,13 +11,13 @@ import java.util.TreeMap;
  */
 public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSourceContainer<TResponse> {
 
-    private final Map<SourceType, DataSource<TResponse>>
+    private final Map<DataSourceParams, DataSource<TResponse>>
             dataSourceMap = new TreeMap<>();
 
     @Override
     public void registerDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.put(dataSource.sourceType(), dataSource);
+            dataSourceMap.put(new DataSourceParams(dataSource.sourceType()), dataSource);
         }
     }
 
@@ -25,7 +25,12 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     public DataSource<TResponse> getDataSource(DataSourceParams sourceParams) {
         DataSource<TResponse> dataSource = null;
         if (sourceParams.getSourceType() != null) {
-            dataSource = dataSourceMap.get(sourceParams.getSourceType());
+            for (Map.Entry<DataSourceParams, DataSource<TResponse>> entry : dataSourceMap.entrySet()) {
+                if (entry.getKey().getSourceType().equals(sourceParams.getSourceType())) {
+                    dataSource = entry.getValue();
+                    break;
+                }
+            }
         }
         if (dataSource == null) {
             throw new RuntimeException("No data source found for type: " + sourceParams.getSourceType());
@@ -34,9 +39,24 @@ public class TreeMapSingleTypeDataSourceContainer<TResponse> implements DataSour
     }
 
     @Override
+    public DataSourceParams paramsForDataSource(DataSource<TResponse> dataSource) {
+        DataSourceParams params = null;
+        for (Map.Entry<DataSourceParams, DataSource<TResponse>> entry : dataSourceMap.entrySet()) {
+            if (entry.getValue().equals(dataSource)) {
+                params = entry.getKey();
+                break;
+            }
+        }
+        return params;
+    }
+
+    @Override
     public void deregisterDataSource(DataSource<TResponse> dataSource) {
         synchronized (dataSourceMap) {
-            dataSourceMap.remove(dataSource.sourceType());
+            DataSourceParams paramsToRemove = paramsForDataSource(dataSource);
+            if (paramsToRemove != null) {
+                dataSourceMap.remove(paramsToRemove);
+            }
         }
     }
 

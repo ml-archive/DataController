@@ -8,6 +8,15 @@ import com.fuzz.datacontroller.source.DataSource;
  */
 public class DataResponseError {
 
+    public static Builder networkErrorOf(Throwable t) {
+        return new Builder(DataSource.SourceType.NETWORK, t);
+    }
+
+    public static Builder networkErrorOf(String message, int statusCode) {
+        return new Builder(DataSource.SourceType.NETWORK, message)
+                .status(statusCode);
+    }
+
     private final String message;
     private final long status;
     private final Throwable exception;
@@ -93,8 +102,10 @@ public class DataResponseError {
         public Builder(DataSource.SourceType failedSource, Throwable exception) {
             this.failedSource = failedSource;
             this.exception = exception;
-            this.message = exception.getMessage();
-            this.userFacingMessage = exception.getMessage();
+            if (exception != null) {
+                this.message = exception.getMessage();
+                this.userFacingMessage = exception.getMessage();
+            }
         }
 
         public Builder(DataSource.SourceType failedSource, String message) {

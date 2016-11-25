@@ -1,7 +1,7 @@
 package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.source.DataSource;
-import com.fuzz.datacontroller.source.DataSourceContainer;
+import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,10 +33,10 @@ public class DataControllerRequest<T> {
     private final DataController<T> dataController;
     private final DataSource.SourceParams sourceParams;
 
-    private final Set<DataSourceContainer.DataSourceParams> targetedRequestSources;
-    private final Set<DataSourceContainer.DataSourceParams> targetedStorageSources;
+    private final Set<DataSourceParams> targetedRequestSources;
+    private final Set<DataSourceParams> targetedStorageSources;
 
-    private final Map<DataSourceContainer.DataSourceParams, DataSource.SourceParams>
+    private final Map<DataSourceParams, DataSource.SourceParams>
             targetParamsMap;
 
 
@@ -69,21 +69,36 @@ public class DataControllerRequest<T> {
             for (int i = 0; i < dataSources.size(); i++) {
                 DataSource<T> source = dataSources.get(i);
                 if (i == 0 || dataController.dataSourceChainer.shouldQueryNext(dataSources.get(i - 1), source)) {
-                    source.get(sourceParams, internalErrorCallback, internalSuccessCallback);
+                    source.get(getTargetedSourceParams(dataController.getParamsForDataSource(source)),
+                            internalErrorCallback, internalSuccessCallback);
                 }
             }
         } else {
             int index = 0;
-            List<DataSourceContainer.DataSourceParams> dataSourceParams = new ArrayList<>(targetedRequestSources);
-            for (DataSourceContainer.DataSourceParams params : dataSourceParams) {
+            List<DataSourceParams> dataSourceParams = new ArrayList<>(targetedRequestSources);
+            for (DataSourceParams params : dataSourceParams) {
                 DataSource<T> source = dataController.getDataSource(params);
                 if (index == 0 || dataController.dataSourceChainer.shouldQueryNext(
                         dataController.getDataSource(dataSourceParams.get(index - 1)), source)) {
-                    source.get(targetParamsMap.get(params), internalErrorCallback, internalSuccessCallback);
+                    source.get(getTargetedSourceParams(params), internalErrorCallback, internalSuccessCallback);
                 }
                 index++;
             }
         }
+    }
+
+    /**
+     * @return A set of {@link DataSource.SourceParams} that correspond to the {@link DataSourceParams}
+     * passed in. We default to the {@link #sourceParams} when none found.
+     */
+    private DataSource.SourceParams getTargetedSourceParams(
+            DataSourceParams paramsForDataSource) {
+        // fallback on default when target added without any params
+        DataSource.SourceParams sourceParams = targetParamsMap.get(paramsForDataSource);
+        if (sourceParams == null) {
+            sourceParams = this.sourceParams;
+        }
+        return sourceParams;
     }
 
     /**
@@ -115,7 +130,7 @@ public class DataControllerRequest<T> {
     private Collection<DataSource<T>> requestSources() {
         if (!targetedRequestSources.isEmpty()) {
             List<DataSource<T>> sources = new ArrayList<>();
-            for (DataSourceContainer.DataSourceParams params : targetedRequestSources) {
+            for (DataSourceParams params : targetedRequestSources) {
                 sources.add(dataController.getDataSource(params));
             }
             return sources;
@@ -127,7 +142,7 @@ public class DataControllerRequest<T> {
     private Collection<DataSource<T>> responseSources() {
         if (!targetedStorageSources.isEmpty()) {
             List<DataSource<T>> sources = new ArrayList<>();
-            for (DataSourceContainer.DataSourceParams params : targetedStorageSources) {
+            for (DataSourceParams params : targetedStorageSources) {
                 sources.add(dataController.getDataSource(params));
             }
             return sources;
@@ -167,17 +182,17 @@ public class DataControllerRequest<T> {
         private final Set<DataController.DataControllerCallback<T>> callbackGroup
                 = new LinkedHashSet<>();
 
-        private final Set<DataSourceContainer.DataSourceParams> targetedRequestSources
+        private final Set<DataSourceParams> targetedRequestSources
                 = new LinkedHashSet<>();
 
-        private final Set<DataSourceContainer.DataSourceParams> targetedStorageSources
+        private final Set<DataSourceParams> targetedStorageSources
                 = new LinkedHashSet<>();
 
         private final DataController<T> dataController;
 
         private DataSource.SourceParams sourceParams = DataSource.SourceParams.defaultParams;
 
-        private final Map<DataSourceContainer.DataSourceParams, DataSource.SourceParams> targetParamsMap
+        private final Map<DataSourceParams, DataSource.SourceParams> targetParamsMap
                 = new HashMap<>();
 
         private ErrorFilter errorFilter;
@@ -189,14 +204,12 @@ public class DataControllerRequest<T> {
 
         /**
          * Appends a specific source param for a {@link DataSource} to call when executing request.
+         * This will override the  default {@link #sourceParams(DataSource.SourceParams)}.
+         * If you wish to only target a specific source in general, call {@link #addRequestSourceTarget(DataSourceParams)}
          */
-        public Builder<T> sourceParamsForTarget(DataSourceContainer.DataSourceParams dataSourceParams,
-                                                DataSource.SourceParams sourceParams) {
+        public Builder<T> targetSource(DataSourceParams dataSourceParams,
+                                       DataSource.SourceParams sourceParams) {
             targetParamsMap.put(dataSourceParams, sourceParams);
-
-            if (!targetedRequestSources.contains(dataSourceParams)) {
-                addRequestSourceTarget(dataSourceParams);
-            }
             return this;
         }
 
@@ -228,7 +241,7 @@ public class DataControllerRequest<T> {
          * Adds a {@link DataSource} that we wish to query from directly. Specifying at least one direct
          * target means that we won't target any of the {@link DataController} sources.
          */
-        public Builder<T> addRequestSourceTarget(DataSourceContainer.DataSourceParams dataSource) {
+        public Builder<T> addRequestSourceTarget(DataSourceParams dataSource) {
             this.targetedRequestSources.add(dataSource);
             return this;
         }
@@ -236,7 +249,7 @@ public class DataControllerRequest<T> {
         /**
          * Adds a group of {@link DataSource} we wish to query from.
          */
-        public Builder<T> addRequestSourceTargets(Collection<DataSourceContainer.DataSourceParams> dataSource) {
+        public Builder<T> addRequestSourceTargets(Collection<DataSourceParams> dataSource) {
             this.targetedRequestSources.addAll(dataSource);
             return this;
         }
@@ -247,16 +260,16 @@ public class DataControllerRequest<T> {
          * Specifying at least one direct target means that we won't target any of the {@link DataController} sources
          * when we receive a response from another {@link DataSource}.
          */
-        public Builder<T> addStorageSourceTarget(DataSourceContainer.DataSourceParams dataSource) {
-            this.targetedRequestSources.add(dataSource);
+        public Builder<T> addStorageSourceTarget(DataSourceParams dataSource) {
+            this.targetedStorageSources.add(dataSource);
             return this;
         }
 
         /**
-         * Adds a group of {@link DataSource} we wish to query from.
+         * Adds a group of {@link DataSource} we wish to only store in passing the results of this request.
          */
-        public Builder<T> addStorageSourceTargets(Collection<DataSourceContainer.DataSourceParams> dataSource) {
-            this.targetedRequestSources.addAll(dataSource);
+        public Builder<T> addStorageSourceTargets(Collection<DataSourceParams> dataSource) {
+            this.targetedStorageSources.addAll(dataSource);
             return this;
         }
 

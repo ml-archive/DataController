@@ -65,6 +65,8 @@ public interface DataSourceContainer<TResponse> {
      */
     DataSource<TResponse> getDataSource(DataSourceParams sourceParams);
 
+    DataSourceParams paramsForDataSource(DataSource<TResponse> dataSource);
+
     /**
      * Removes a {@link DataSource} from this container.
      */

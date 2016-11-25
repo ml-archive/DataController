@@ -110,6 +110,10 @@ public class DataSource<T> implements Source<T> {
         storage.clearStoredData(defaultParams);
     }
 
+    public SourceParams defaultParams() {
+        return defaultParams;
+    }
+
     @Override
     public void clearStoredData(SourceParams sourceParams) {
         if (storage != null) {

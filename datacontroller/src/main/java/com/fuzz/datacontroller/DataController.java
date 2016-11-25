@@ -159,6 +159,10 @@ public class DataController<T> {
         return dataSourceContainer.getDataSource(dataSourceParams);
     }
 
+    public DataSourceContainer.DataSourceParams getParamsForDataSource(DataSource<T> source) {
+        return dataSourceContainer.paramsForDataSource(source);
+    }
+
     void onSuccess(DataControllerResponse<T> response) {
         callbackGroup.onSuccess(response);
     }
