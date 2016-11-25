@@ -73,6 +73,8 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
                     nextParams = responseToNextCallConverter
                             .provideNextParams(response.getResponse(), sourceParams);
                     secondDataSource.get(nextParams, error, success);
+                } else {
+                    error.onFailure(responseValidator.provideErrorForResponse(response));
                 }
             }
         });

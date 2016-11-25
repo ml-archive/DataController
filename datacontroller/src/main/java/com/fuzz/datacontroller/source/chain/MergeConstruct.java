@@ -84,6 +84,8 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
                     } else {
                         success.onSuccess(responseMerger.mergeResponses(firstResponse, null));
                     }
+                } else {
+                    error.onFailure(responseValidator.provideErrorForResponse(firstResponse));
                 }
             }
         });
