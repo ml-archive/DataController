@@ -98,7 +98,7 @@ public class DataSource<T> implements Source<T> {
     }
 
     public boolean hasStoredData() {
-        return storage.hasStoredData(defaultParams);
+        return storage != null && storage.hasStoredData(defaultParams);
     }
 
     @Override
