@@ -47,6 +47,17 @@ public class DataSource<T> implements Source<T> {
          * If false, we do not refresh data.
          */
         boolean shouldRefresh(DataSource<TResponse> dataSource);
+
+
+        /**
+         * Called whenever the corresponding {@link #get(SourceParams, DataController.Error, DataController.Success)}
+         * returned an {@link Error}. Reset the strategy here, etc.
+         */
+        void onRefreshFailed(DataSource<TResponse> dataSource,
+                             DataResponseError responseError);
+
+        void onRefreshSucceeded(DataSource<TResponse> dataSource,
+                                DataControllerResponse<TResponse> response);
     }
 
     private Object syncLock;
@@ -147,8 +158,8 @@ public class DataSource<T> implements Source<T> {
      * @param success      Called when a successful request returns.
      */
     @Override
-    public final void get(SourceParams sourceParams, DataController.Error error,
-                          DataController.Success<T> success) {
+    public final void get(SourceParams sourceParams, final DataController.Error error,
+                          final DataController.Success<T> success) {
         if (refreshStrategy().shouldRefresh(this) && !isBusy()
                 || sourceParams != null && sourceParams.force) {
             setBusy(true);
@@ -158,7 +169,19 @@ public class DataSource<T> implements Source<T> {
             }
 
             if (caller != null) {
-                caller.get(params, wrapBusyError(error), wrapBusySuccess(success));
+                caller.get(params, new DataController.Error() {
+                    @Override
+                    public void onFailure(DataResponseError dataResponseError) {
+                        wrapBusyError(error).onFailure(dataResponseError);
+                        refreshStrategy().onRefreshFailed(DataSource.this, dataResponseError);
+                    }
+                }, new DataController.Success<T>() {
+                    @Override
+                    public void onSuccess(DataControllerResponse<T> response) {
+                        wrapBusySuccess(success).onSuccess(response);
+                        refreshStrategy().onRefreshSucceeded(DataSource.this, response);
+                    }
+                });
             }
         }
     }
@@ -297,6 +320,14 @@ public class DataSource<T> implements Source<T> {
         @Override
         public boolean shouldRefresh(DataSource<T> dataSource) {
             return true;
+        }
+
+        @Override
+        public void onRefreshFailed(DataSource<T> dataSource, DataResponseError responseError) {
+        }
+
+        @Override
+        public void onRefreshSucceeded(DataSource<T> dataSource, DataControllerResponse<T> response) {
         }
     }
 }

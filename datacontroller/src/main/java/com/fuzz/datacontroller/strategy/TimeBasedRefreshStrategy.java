@@ -1,5 +1,7 @@
 package com.fuzz.datacontroller.strategy;
 
+import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
 
 /**
@@ -45,5 +47,19 @@ public class TimeBasedRefreshStrategy<TResponse> implements DataSource.RefreshSt
             lastUpdateTime = System.currentTimeMillis();
         }
         return shouldRefresh;
+    }
+
+
+    @Override
+    public void onRefreshFailed(DataSource<TResponse> dataSource,
+                                DataResponseError responseError) {
+        // reset for next refresh
+        forceRefresh();
+    }
+
+    @Override
+    public void onRefreshSucceeded(DataSource<TResponse> dataSource,
+                                   DataControllerResponse<TResponse> response) {
+        // do nothing here.
     }
 }
