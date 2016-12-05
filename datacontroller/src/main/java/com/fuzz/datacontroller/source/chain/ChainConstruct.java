@@ -148,6 +148,13 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
               MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
             return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }
+
+        public <TNext, TMerge> ParallelConstruct.Builder<TSecond, TNext, TMerge>
+        parallel(DataSourceCaller<TNext> nextDataSourceCaller,
+                 MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
+            return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
+                    responseMerger);
+        }
     }
 
     static class DefaultResponseValidator<TFirst> implements ResponseValidator<TFirst> {

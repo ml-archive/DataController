@@ -39,7 +39,7 @@ class OkHttpDataSourceTest {
                     callback?.onResponse(null, mockResponse)
                 }
 
-        source.get(OkHttpDataSource.OkHttpParams(mockedCall), { response = it }, { })
+        source.get(OkHttpDataSource.OkHttpParams(mockedCall), { }, { response = it })
 
         assertNotNull(response)
         assertEquals("got response", response?.response)
@@ -58,7 +58,7 @@ class OkHttpDataSourceTest {
                     callback?.onFailure(null, exception)
                 }
 
-        source.get(OkHttpDataSource.OkHttpParams(mockedCall), { }, { error = it })
+        source.get(OkHttpDataSource.OkHttpParams(mockedCall), { error = it }, { })
 
         assertNotNull(error)
         error?.apply {

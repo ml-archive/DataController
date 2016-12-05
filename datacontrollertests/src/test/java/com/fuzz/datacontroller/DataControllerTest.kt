@@ -1,9 +1,9 @@
 package com.fuzz.datacontroller
 
-import com.fuzz.datacontroller.DataController
-import com.fuzz.datacontroller.DataControllerResponse
 import com.fuzz.datacontroller.source.DataSource
+import com.fuzz.datacontroller.source.DataSourceCaller
 import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams
+import com.fuzz.datacontroller.source.DataSourceStorage
 import com.fuzz.datacontroller.source.MemorySource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -12,7 +12,7 @@ import org.junit.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import java.util.*
+import java.util.ArrayList
 
 /**
  * Description: Tests populating a [DataController] and asserts it is correct.
@@ -22,15 +22,15 @@ class DataControllerTest {
 
     private lateinit var dataController: DataController<String>
     private lateinit var mockDataSource: DataSource<String>
-    private lateinit var mockCaller: DataSource.DataSourceCaller<String>
-    private lateinit var mockStorage: DataSource.DataSourceStorage<String>
+    private lateinit var mockCaller: DataSourceCaller<String>
+    private lateinit var mockStorage: DataSourceStorage<String>
 
     @Before
     fun before_test_Init() {
-        mockCaller = mock<DataSource.DataSourceCaller<*>>(DataSource.DataSourceCaller::class.java)
-                as DataSource.DataSourceCaller<String>
-        mockStorage = mock<DataSource.DataSourceStorage<*>>(DataSource.DataSourceStorage::class.java)
-                as DataSource.DataSourceStorage<String>
+        mockCaller = mock<DataSourceCaller<*>>(DataSourceCaller::class.java)
+                as DataSourceCaller<String>
+        mockStorage = mock<DataSourceStorage<*>>(DataSourceStorage::class.java)
+                as DataSourceStorage<String>
         mockDataSource = DataSource.Builder(mockCaller, DataSource.SourceType.NETWORK)
                 .storage(mockStorage).build()
 
@@ -63,7 +63,7 @@ class DataControllerTest {
         dataController.request(networkParams).build().execute()
 
 
-        verify<DataSource.DataSourceCaller<String>>(mockCaller)
+        verify<DataSourceCaller<String>>(mockCaller)
                 .get(sourceParamsArgumentCaptor.capture(), errorArgumentCaptor.capture(),
                         successArgumentCaptor.capture())
 
@@ -90,6 +90,6 @@ class DataControllerTest {
             failed = true
         }
 
-        assertTrue("Expected a failure for requesting invalid sourcetype: " + DataSource.SourceType.DISK, failed)
+        assertTrue("Expected a failure for requesting invalid sourcetype: ${DataSource.SourceType.DISK}", failed)
     }
 }

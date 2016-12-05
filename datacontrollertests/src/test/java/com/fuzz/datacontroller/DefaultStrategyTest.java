@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.strategy.MemoryTimeBasedRefreshStrategy;
 import com.fuzz.datacontroller.strategy.OneShotRefreshStrategy;
 import com.fuzz.datacontroller.strategy.TimeBasedRefreshStrategy;
 
@@ -28,7 +29,8 @@ public class DefaultStrategyTest {
 
     @Test
     public void test_TimeBasedRefresh() {
-        TimeBasedRefreshStrategy<List<DataItem>> timeBasedRefreshStrategy = new TimeBasedRefreshStrategy<>(1000L);
+        TimeBasedRefreshStrategy<List<DataItem>> timeBasedRefreshStrategy
+                = new MemoryTimeBasedRefreshStrategy<>(1000L);
         assertTrue(timeBasedRefreshStrategy.shouldRefresh(null));
         assertFalse(timeBasedRefreshStrategy.shouldRefresh(null));
 

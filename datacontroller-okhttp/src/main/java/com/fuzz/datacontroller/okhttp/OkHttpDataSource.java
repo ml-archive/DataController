@@ -4,6 +4,7 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSourceCaller;
 
 import java.io.IOException;
 
@@ -17,7 +18,7 @@ import okhttp3.Response;
  *
  * @param <TResponse> The type of the response we will convert the {@link Response} into.
  */
-public class OkHttpDataSource<TResponse> implements DataSource.DataSourceCaller<TResponse> {
+public class OkHttpDataSource<TResponse> implements DataSourceCaller<TResponse> {
 
     public static <TResponse> DataSource.Builder<TResponse> builderInstance(
             ResponseConverter<TResponse> responseConverter,

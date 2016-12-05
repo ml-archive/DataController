@@ -4,6 +4,7 @@ import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
 import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.Source;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
@@ -16,7 +17,7 @@ import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
  * Description:
  */
 public abstract class BaseDBFlowSource<TModel, TSource>
-        implements DataSource.Source<TSource>, ProcessModelTransaction.ProcessModel<TModel> {
+        implements Source<TSource>, ProcessModelTransaction.ProcessModel<TModel> {
 
     private Transaction currentSaveTransaction;
     private Transaction currentLoadTransaction;

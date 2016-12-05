@@ -160,6 +160,13 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
             return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
         }
 
+        public <TNext, TMerge2> ParallelConstruct.Builder<TMerge, TNext, TMerge2>
+        parallel(DataSourceCaller<TNext> nextDataSourceCaller,
+                 MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
+            return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
+                    responseMerger);
+        }
+
         public MergeConstruct<TFirst, TSecond, TMerge> build() {
             return new MergeConstruct<>(this);
         }
