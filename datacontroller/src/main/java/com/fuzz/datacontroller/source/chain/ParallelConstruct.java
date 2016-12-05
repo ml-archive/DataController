@@ -35,6 +35,26 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
                                                 ParallelResponse<TSecond> secondParallelResponse);
     }
 
+    public static class ParallelParams extends DataSource.SourceParams {
+
+        private final DataSource.SourceParams firstParams;
+        private final DataSource.SourceParams secondParams;
+
+        public ParallelParams(DataSource.SourceParams firstParams,
+                              DataSource.SourceParams secondParams) {
+            this.firstParams = firstParams;
+            this.secondParams = secondParams;
+        }
+
+        DataSource.SourceParams getFirstParams() {
+            return firstParams;
+        }
+
+        DataSource.SourceParams getSecondParams() {
+            return secondParams;
+        }
+    }
+
     private final DataSourceCaller<TFirst> firstDataSource;
     private final DataSourceCaller<TSecond> secondDataSource;
     private final ParallelMerger<TFirst, TSecond, TMerge> parallelMerger;
@@ -50,11 +70,12 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
     public void get(DataSource.SourceParams sourceParams,
                     final DataController.Error error,
                     final DataController.Success<TMerge> success) {
+        ParallelParams params = getParams(sourceParams);
         final Object syncLock = new Object();
         final ParallelResponse<TFirst> firstResponse = new ParallelResponse<>();
         final ParallelResponse<TSecond> secondResponse = new ParallelResponse<>();
 
-        firstDataSource.get(sourceParams, new DataController.Error() {
+        firstDataSource.get(params.firstParams, new DataController.Error() {
             @Override
             public void onFailure(DataResponseError dataResponseError) {
                 synchronized (syncLock) {
@@ -74,7 +95,7 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
             }
         });
 
-        secondDataSource.get(sourceParams, new DataController.Error() {
+        secondDataSource.get(params.secondParams, new DataController.Error() {
             @Override
             public void onFailure(DataResponseError dataResponseError) {
                 synchronized (syncLock) {
@@ -95,6 +116,13 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
         });
     }
 
+
+    @Override
+    public void cancel() {
+        firstDataSource.cancel();
+        secondDataSource.cancel();
+    }
+
     private synchronized void checkCompletion(ParallelResponse<TFirst> firstParallelResponse,
                                               ParallelResponse<TSecond> secondParallelResponse,
                                               DataController.Error error,
@@ -111,10 +139,16 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
         }
     }
 
-    @Override
-    public void cancel() {
-        firstDataSource.cancel();
-        secondDataSource.cancel();
+    private ParallelParams getParams(DataSource.SourceParams sourceParams) {
+        ParallelParams parallelParams = null;
+        if (sourceParams instanceof ParallelParams) {
+            parallelParams = (ParallelParams) sourceParams;
+        }
+        if (parallelParams == null) {
+            throw new IllegalArgumentException("You must pass a set of ParallelParams to the " +
+                    "parallel data source so it knows how to call its sources.");
+        }
+        return parallelParams;
     }
 
     public static class ParallelResponse<T> {
