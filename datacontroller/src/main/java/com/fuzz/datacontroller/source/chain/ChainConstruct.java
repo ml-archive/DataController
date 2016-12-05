@@ -151,9 +151,9 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
 
         public <TNext, TMerge> ParallelConstruct.Builder<TSecond, TNext, TMerge>
         parallel(DataSourceCaller<TNext> nextDataSourceCaller,
-                 MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
+                 ParallelConstruct.ParallelMerger<TSecond, TNext, TMerge> parallelMerger) {
             return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
-                    responseMerger);
+                    parallelMerger);
         }
     }
 

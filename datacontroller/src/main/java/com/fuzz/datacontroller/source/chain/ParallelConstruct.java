@@ -1,6 +1,8 @@
 package com.fuzz.datacontroller.source.chain;
 
 import com.fuzz.datacontroller.DataController;
+import com.fuzz.datacontroller.DataControllerResponse;
+import com.fuzz.datacontroller.DataResponseError;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.source.DataSourceCaller;
 
@@ -15,37 +17,158 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
     public static <TFirst, TSecond, TMerge> ParallelConstruct.Builder<TFirst, TSecond, TMerge>
     builderInstance(DataSourceCaller<TFirst> caller,
                     DataSourceCaller<TSecond> secondCaller,
-                    MergeConstruct.ResponseMerger<TFirst, TSecond, TMerge> responseMerger) {
-        return new ParallelConstruct.Builder<>(caller, secondCaller, responseMerger);
+                    ParallelMerger<TFirst, TSecond, TMerge> parallelMerger) {
+        return new ParallelConstruct.Builder<>(caller, secondCaller, parallelMerger);
     }
+
+    /**
+     * Returns the parallel object that we will use to populate as we get responses. The
+     * corresponding {@link #mergeResponses(ParallelResponse, ParallelResponse)} is called after completion.
+     * <p>
+     * The two responses may either have an error or success. Handle accordingly.
+     *
+     * @param <TMerge>
+     */
+    public interface ParallelMerger<TFirst, TSecond, TMerge> {
+
+        ParallelResponse<TMerge> mergeResponses(ParallelResponse<TFirst> firstParallelResponse,
+                                                ParallelResponse<TSecond> secondParallelResponse);
+    }
+
+    private final DataSourceCaller<TFirst> firstDataSource;
+    private final DataSourceCaller<TSecond> secondDataSource;
+    private final ParallelMerger<TFirst, TSecond, TMerge> parallelMerger;
 
 
     ParallelConstruct(Builder<TFirst, TSecond, TMerge> builder) {
-
+        firstDataSource = builder.firstDataSource;
+        secondDataSource = builder.secondDataSource;
+        parallelMerger = builder.parallelMerger;
     }
 
     @Override
-    public void get(DataSource.SourceParams sourceParams, DataController.Error error, DataController.Success<TMerge> success) {
+    public void get(DataSource.SourceParams sourceParams,
+                    final DataController.Error error,
+                    final DataController.Success<TMerge> success) {
+        final Object syncLock = new Object();
+        final ParallelResponse<TFirst> firstResponse = new ParallelResponse<>();
+        final ParallelResponse<TSecond> secondResponse = new ParallelResponse<>();
 
+        firstDataSource.get(sourceParams, new DataController.Error() {
+            @Override
+            public void onFailure(DataResponseError dataResponseError) {
+                synchronized (syncLock) {
+                    firstResponse.dataResponseError = dataResponseError;
+                    checkCompletion(firstResponse, secondResponse,
+                            error, success);
+                }
+            }
+        }, new DataController.Success<TFirst>() {
+            @Override
+            public void onSuccess(DataControllerResponse<TFirst> response) {
+                synchronized (syncLock) {
+                    firstResponse.response = response;
+                    checkCompletion(firstResponse, secondResponse,
+                            error, success);
+                }
+            }
+        });
+
+        secondDataSource.get(sourceParams, new DataController.Error() {
+            @Override
+            public void onFailure(DataResponseError dataResponseError) {
+                synchronized (syncLock) {
+                    secondResponse.dataResponseError = dataResponseError;
+                    checkCompletion(firstResponse, secondResponse,
+                            error, success);
+                }
+            }
+        }, new DataController.Success<TSecond>() {
+            @Override
+            public void onSuccess(DataControllerResponse<TSecond> response) {
+                synchronized (syncLock) {
+                    secondResponse.response = response;
+                    checkCompletion(firstResponse, secondResponse,
+                            error, success);
+                }
+            }
+        });
+    }
+
+    private synchronized void checkCompletion(ParallelResponse<TFirst> firstParallelResponse,
+                                              ParallelResponse<TSecond> secondParallelResponse,
+                                              DataController.Error error,
+                                              DataController.Success<TMerge> success) {
+        if (firstParallelResponse.hasResponse() && secondParallelResponse.hasResponse()) {
+            ParallelResponse<TMerge> response = parallelMerger
+                    .mergeResponses(firstParallelResponse, secondParallelResponse);
+            if (response.dataResponseError != null) {
+                // signals failure
+                error.onFailure(response.dataResponseError);
+            } else {
+                success.onSuccess(response.getResponse());
+            }
+        }
     }
 
     @Override
     public void cancel() {
+        firstDataSource.cancel();
+        secondDataSource.cancel();
+    }
 
+    public static class ParallelResponse<T> {
+
+        private DataResponseError dataResponseError;
+
+        private DataControllerResponse<T> response;
+
+        ParallelResponse() {
+        }
+
+        public ParallelResponse(ParallelError parallelError,
+                                DataControllerResponse<T> response) {
+            if (parallelError != null) {
+                this.dataResponseError = ParallelError.setParallelError(
+                        new DataResponseError.Builder(DataSource.SourceType.MULTIPLE, "")
+                                .build(), parallelError);
+            }
+            this.response = response;
+        }
+
+        void setDataResponseError(DataResponseError dataResponseError) {
+            this.dataResponseError = dataResponseError;
+        }
+
+        void setResponse(DataControllerResponse<T> response) {
+            this.response = response;
+        }
+
+        public DataResponseError getDataResponseError() {
+            return dataResponseError;
+        }
+
+        public DataControllerResponse<T> getResponse() {
+            return response;
+        }
+
+        boolean hasResponse() {
+            return dataResponseError != null || response != null;
+        }
     }
 
     public static final class Builder<TFirst, TSecond, TMerge> {
 
         private final DataSourceCaller<TFirst> firstDataSource;
         private final DataSourceCaller<TSecond> secondDataSource;
-        private final MergeConstruct.ResponseMerger<TFirst, TSecond, TMerge> responseMerger;
+        private final ParallelMerger<TFirst, TSecond, TMerge> parallelMerger;
 
         public Builder(DataSourceCaller<TFirst> firstDataSource,
                        DataSourceCaller<TSecond> secondDataSource,
-                       MergeConstruct.ResponseMerger<TFirst, TSecond, TMerge> responseMerger) {
+                       ParallelMerger<TFirst, TSecond, TMerge> parallelMerger) {
             this.firstDataSource = firstDataSource;
             this.secondDataSource = secondDataSource;
-            this.responseMerger = responseMerger;
+            this.parallelMerger = parallelMerger;
         }
 
         public <TNext> ChainConstruct.Builder<TMerge, TNext>
@@ -61,9 +184,9 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
 
         public <TNext, TMerge2> ParallelConstruct.Builder<TMerge, TNext, TMerge2>
         parallel(DataSourceCaller<TNext> nextDataSourceCaller,
-                 MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
+                 ParallelMerger<TMerge, TNext, TMerge2> parallelMerger) {
             return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
-                    responseMerger);
+                    parallelMerger);
         }
 
         public ParallelConstruct<TFirst, TSecond, TMerge> build() {
@@ -72,6 +195,54 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
 
         public DataSource.Builder<TMerge> toSourceBuilder(DataSource.SourceType sourceType) {
             return new DataSource.Builder<>(build(), sourceType);
+        }
+    }
+
+    public static class ParallelError {
+
+        public static boolean isParallelError(DataResponseError dataResponseError) {
+            return dataResponseError != null && dataResponseError.metaData()
+                    instanceof ParallelError;
+        }
+
+        public static ParallelError getParallelError(DataResponseError dataResponseError) {
+            return isParallelError(dataResponseError)
+                    ? (ParallelError) dataResponseError.metaData() : null;
+        }
+
+        static DataResponseError setParallelError(DataResponseError dataResponseError,
+                                                  ParallelError parallelError) {
+            return dataResponseError.newBuilder().metaData(parallelError).build();
+        }
+
+
+        private final DataResponseError firstError;
+
+        private final DataResponseError secondError;
+
+        public ParallelError(DataResponseError firstError, DataResponseError secondError) {
+            this.firstError = firstError;
+            this.secondError = secondError;
+        }
+
+        public DataResponseError getFirstError() {
+            return firstError;
+        }
+
+        public DataResponseError getSecondError() {
+            return secondError;
+        }
+
+        public boolean isFullFailure() {
+            return firstError != null && secondError != null;
+        }
+
+        public boolean isFirstFailure() {
+            return firstError != null;
+        }
+
+        public boolean isSecondFailure() {
+            return secondError != null;
         }
     }
 }

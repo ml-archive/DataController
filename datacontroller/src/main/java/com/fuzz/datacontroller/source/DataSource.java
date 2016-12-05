@@ -31,7 +31,12 @@ public class DataSource<T> implements Source<T> {
         /**
          * Retrieved from network.
          */
-        NETWORK
+        NETWORK,
+
+        /**
+         * Multiple source types
+         */
+        MULTIPLE
     }
 
     /**
