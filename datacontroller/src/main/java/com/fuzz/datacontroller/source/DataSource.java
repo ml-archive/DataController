@@ -253,17 +253,15 @@ public class DataSource<T> implements Source<T> {
 
         private SourceParams defaultParams = SourceParams.defaultParams;
 
-        public Builder(DataSourceCaller<T> caller,
-                       SourceType sourceType) {
+        public Builder(DataSourceCaller<T> caller) {
             this.caller = caller;
-            this.sourceType = sourceType;
+            this.sourceType = caller.sourceType();
         }
 
-        public Builder(Source<T> source,
-                       SourceType sourceType) {
+        public Builder(Source<T> source) {
             this.caller = source;
             this.storage = source;
-            this.sourceType = sourceType;
+            this.sourceType = source.sourceType();
         }
 
         /**

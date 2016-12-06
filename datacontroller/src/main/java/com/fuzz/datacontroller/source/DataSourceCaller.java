@@ -12,4 +12,6 @@ public interface DataSourceCaller<T> {
              DataController.Error error, DataController.Success<T> success);
 
     void cancel();
+
+    DataSource.SourceType sourceType();
 }

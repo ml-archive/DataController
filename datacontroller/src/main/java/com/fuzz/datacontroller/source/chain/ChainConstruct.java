@@ -43,13 +43,15 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
 
     private final DataSourceCaller<TFirst> firstDataSource;
     private final DataSourceCaller<TSecond> secondDataSource;
+    private final DataSource.SourceType sourceType;
     private final ResponseToNextCallConverter<TFirst> responseToNextCallConverter;
     private final ResponseValidator<TFirst> responseValidator;
 
 
-    ChainConstruct(Builder<TFirst, TSecond> builder) {
+    ChainConstruct(Builder<TFirst, TSecond> builder, DataSource.SourceType sourceType) {
         this.firstDataSource = builder.firstDataSource;
         this.secondDataSource = builder.secondDataSource;
+        this.sourceType = sourceType;
         if (builder.responseToNextCallConverter == null) {
             this.responseToNextCallConverter = new DefaultResponseToNextCallConverter<>();
         } else {
@@ -84,6 +86,11 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
     public void cancel() {
         firstDataSource.cancel();
         secondDataSource.cancel();
+    }
+
+    @Override
+    public DataSource.SourceType sourceType() {
+        return sourceType;
     }
 
     public DataSourceCaller<TFirst> firstDataSource() {
@@ -130,30 +137,31 @@ public class ChainConstruct<TFirst, TSecond> implements DataSourceCaller<TSecond
             return this;
         }
 
-        public ChainConstruct<TFirst, TSecond> build() {
-            return new ChainConstruct<>(this);
+        public ChainConstruct<TFirst, TSecond> build(DataSource.SourceType sourceType) {
+            return new ChainConstruct<>(this, sourceType);
         }
 
         public DataSource.Builder<TSecond> toSourceBuilder(DataSource.SourceType sourceType) {
-            return new DataSource.Builder<>(build(), sourceType);
+            return new DataSource.Builder<>(build(sourceType));
         }
 
         public <TNext> ChainConstruct.Builder<TSecond, TNext>
         chain(DataSourceCaller<TNext> nextDataSourceCaller) {
-            return new ChainConstruct.Builder<>(build(), nextDataSourceCaller);
+            return new ChainConstruct.Builder<>(build(nextDataSourceCaller.sourceType()), nextDataSourceCaller);
         }
 
         public <TNext, TMerge> MergeConstruct.Builder<TSecond, TNext, TMerge>
         merge(DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TSecond, TNext, TMerge> responseMerger) {
-            return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
+            return MergeConstruct.builderInstance(build(secondDataSource.sourceType()),
+                    secondDataSource, responseMerger);
         }
 
         public <TNext, TMerge> ParallelConstruct.Builder<TSecond, TNext, TMerge>
         parallel(DataSourceCaller<TNext> nextDataSourceCaller,
                  ParallelConstruct.ParallelMerger<TSecond, TNext, TMerge> parallelMerger) {
-            return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
-                    parallelMerger);
+            return ParallelConstruct.builderInstance(build(nextDataSourceCaller.sourceType()),
+                    nextDataSourceCaller, parallelMerger);
         }
     }
 

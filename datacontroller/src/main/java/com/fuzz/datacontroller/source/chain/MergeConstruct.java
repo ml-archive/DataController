@@ -37,11 +37,14 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
     private final ResponseValidator<TFirst> responseValidator;
     private final ResponseMerger<TFirst, TSecond, TMerge> responseMerger;
     private final boolean failChainOnError;
+    private final DataSource.SourceType sourceType;
 
-    MergeConstruct(Builder<TFirst, TSecond, TMerge> builder) {
+    MergeConstruct(Builder<TFirst, TSecond, TMerge> builder,
+                   DataSource.SourceType sourceType) {
         this.failChainOnError = builder.failChainOnError;
         this.firstDataSource = builder.firstDataSource;
         this.secondDataSource = builder.secondDataSource;
+        this.sourceType = sourceType;
         if (builder.responseToNextCallConverter == null) {
             this.responseToNextCallConverter = new ChainConstruct.DefaultResponseToNextCallConverter<>();
         } else {
@@ -95,6 +98,11 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
     public void cancel() {
         firstDataSource.cancel();
         secondDataSource.cancel();
+    }
+
+    @Override
+    public DataSource.SourceType sourceType() {
+        return sourceType;
     }
 
     public DataSourceCaller<TFirst> firstDataSource() {
@@ -151,28 +159,30 @@ public class MergeConstruct<TFirst, TSecond, TMerge> implements DataSourceCaller
 
         public <TNext> ChainConstruct.Builder<TMerge, TNext>
         chain(DataSourceCaller<TNext> nextDataSourceCaller) {
-            return ChainConstruct.builderInstance(build(), nextDataSourceCaller);
+            return ChainConstruct.builderInstance(build(nextDataSourceCaller.sourceType()),
+                    nextDataSourceCaller);
         }
 
         public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
         merge(DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
-            return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
+            return MergeConstruct.builderInstance(build(secondDataSource.sourceType()),
+                    secondDataSource, responseMerger);
         }
 
         public <TNext, TMerge2> ParallelConstruct.Builder<TMerge, TNext, TMerge2>
         parallel(DataSourceCaller<TNext> nextDataSourceCaller,
                  ParallelConstruct.ParallelMerger<TMerge, TNext, TMerge2> parallelMerger) {
-            return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
-                    parallelMerger);
+            return ParallelConstruct.builderInstance(build(nextDataSourceCaller.sourceType()),
+                    nextDataSourceCaller, parallelMerger);
         }
 
-        public MergeConstruct<TFirst, TSecond, TMerge> build() {
-            return new MergeConstruct<>(this);
+        public MergeConstruct<TFirst, TSecond, TMerge> build(DataSource.SourceType sourceType) {
+            return new MergeConstruct<>(this, sourceType);
         }
 
         public DataSource.Builder<TMerge> toSourceBuilder(DataSource.SourceType sourceType) {
-            return new DataSource.Builder<>(build(), sourceType);
+            return new DataSource.Builder<>(build(sourceType));
         }
     }
 

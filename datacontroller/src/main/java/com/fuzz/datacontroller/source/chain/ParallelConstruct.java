@@ -58,12 +58,13 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
     private final DataSourceCaller<TFirst> firstDataSource;
     private final DataSourceCaller<TSecond> secondDataSource;
     private final ParallelMerger<TFirst, TSecond, TMerge> parallelMerger;
+    private final DataSource.SourceType sourceType;
 
-
-    ParallelConstruct(Builder<TFirst, TSecond, TMerge> builder) {
+    ParallelConstruct(Builder<TFirst, TSecond, TMerge> builder, DataSource.SourceType sourceType) {
         firstDataSource = builder.firstDataSource;
         secondDataSource = builder.secondDataSource;
         parallelMerger = builder.parallelMerger;
+        this.sourceType = sourceType;
     }
 
     @Override
@@ -75,52 +76,74 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
         final ParallelResponse<TFirst> firstResponse = new ParallelResponse<>();
         final ParallelResponse<TSecond> secondResponse = new ParallelResponse<>();
 
-        firstDataSource.get(params.firstParams, new DataController.Error() {
-            @Override
-            public void onFailure(DataResponseError dataResponseError) {
-                synchronized (syncLock) {
-                    firstResponse.dataResponseError = dataResponseError;
-                    checkCompletion(firstResponse, secondResponse,
-                            error, success);
+        if (params.firstParams != null) {
+            firstDataSource.get(params.firstParams, new DataController.Error() {
+                @Override
+                public void onFailure(DataResponseError dataResponseError) {
+                    synchronized (syncLock) {
+                        firstResponse.dataResponseError = dataResponseError;
+                        checkCompletion(firstResponse, secondResponse,
+                                error, success);
+                    }
                 }
-            }
-        }, new DataController.Success<TFirst>() {
-            @Override
-            public void onSuccess(DataControllerResponse<TFirst> response) {
-                synchronized (syncLock) {
-                    firstResponse.response = response;
-                    checkCompletion(firstResponse, secondResponse,
-                            error, success);
+            }, new DataController.Success<TFirst>() {
+                @Override
+                public void onSuccess(DataControllerResponse<TFirst> response) {
+                    synchronized (syncLock) {
+                        firstResponse.response = response;
+                        checkCompletion(firstResponse, secondResponse,
+                                error, success);
+                    }
                 }
+            });
+        } else {
+            synchronized (syncLock) {
+                firstResponse.dataResponseError = EmptyParamsParallelError
+                        .newError(firstDataSource.sourceType());
+                checkCompletion(firstResponse, secondResponse,
+                        error, success);
             }
-        });
+        }
 
-        secondDataSource.get(params.secondParams, new DataController.Error() {
-            @Override
-            public void onFailure(DataResponseError dataResponseError) {
-                synchronized (syncLock) {
-                    secondResponse.dataResponseError = dataResponseError;
-                    checkCompletion(firstResponse, secondResponse,
-                            error, success);
+        if (params.secondParams != null) {
+            secondDataSource.get(params.secondParams, new DataController.Error() {
+                @Override
+                public void onFailure(DataResponseError dataResponseError) {
+                    synchronized (syncLock) {
+                        secondResponse.dataResponseError = dataResponseError;
+                        checkCompletion(firstResponse, secondResponse,
+                                error, success);
+                    }
                 }
-            }
-        }, new DataController.Success<TSecond>() {
-            @Override
-            public void onSuccess(DataControllerResponse<TSecond> response) {
-                synchronized (syncLock) {
-                    secondResponse.response = response;
-                    checkCompletion(firstResponse, secondResponse,
-                            error, success);
+            }, new DataController.Success<TSecond>() {
+                @Override
+                public void onSuccess(DataControllerResponse<TSecond> response) {
+                    synchronized (syncLock) {
+                        secondResponse.response = response;
+                        checkCompletion(firstResponse, secondResponse,
+                                error, success);
+                    }
                 }
+            });
+        } else {
+            synchronized (syncLock) {
+                secondResponse.dataResponseError = EmptyParamsParallelError
+                        .newError(secondDataSource.sourceType());
+                checkCompletion(firstResponse, secondResponse,
+                        error, success);
             }
-        });
+        }
     }
-
 
     @Override
     public void cancel() {
         firstDataSource.cancel();
         secondDataSource.cancel();
+    }
+
+    @Override
+    public DataSource.SourceType sourceType() {
+        return sourceType;
     }
 
     private synchronized void checkCompletion(ParallelResponse<TFirst> firstParallelResponse,
@@ -207,28 +230,30 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
 
         public <TNext> ChainConstruct.Builder<TMerge, TNext>
         chain(DataSourceCaller<TNext> nextDataSourceCaller) {
-            return ChainConstruct.builderInstance(build(), nextDataSourceCaller);
+            return ChainConstruct.builderInstance(build(nextDataSourceCaller.sourceType()),
+                    nextDataSourceCaller);
         }
 
         public <TNext, TMerge2> MergeConstruct.Builder<TMerge, TNext, TMerge2>
         merge(DataSourceCaller<TNext> secondDataSource,
               MergeConstruct.ResponseMerger<TMerge, TNext, TMerge2> responseMerger) {
-            return MergeConstruct.builderInstance(build(), secondDataSource, responseMerger);
+            return MergeConstruct.builderInstance(build(secondDataSource.sourceType()),
+                    secondDataSource, responseMerger);
         }
 
         public <TNext, TMerge2> ParallelConstruct.Builder<TMerge, TNext, TMerge2>
         parallel(DataSourceCaller<TNext> nextDataSourceCaller,
                  ParallelMerger<TMerge, TNext, TMerge2> parallelMerger) {
-            return ParallelConstruct.builderInstance(build(), nextDataSourceCaller,
-                    parallelMerger);
+            return ParallelConstruct.builderInstance(build(nextDataSourceCaller.sourceType()),
+                    nextDataSourceCaller, parallelMerger);
         }
 
-        public ParallelConstruct<TFirst, TSecond, TMerge> build() {
-            return new ParallelConstruct<>(this);
+        public ParallelConstruct<TFirst, TSecond, TMerge> build(DataSource.SourceType sourceType) {
+            return new ParallelConstruct<>(this, sourceType);
         }
 
         public DataSource.Builder<TMerge> toSourceBuilder(DataSource.SourceType sourceType) {
-            return new DataSource.Builder<>(build(), sourceType);
+            return new DataSource.Builder<>(build(sourceType));
         }
     }
 
@@ -277,6 +302,19 @@ public class ParallelConstruct<TFirst, TSecond, TMerge> implements DataSourceCal
 
         public boolean isSecondFailure() {
             return secondError != null;
+        }
+    }
+
+    /**
+     * Returned when a provided params in {@link ParallelMerger} is null.
+     */
+    public static class EmptyParamsParallelError {
+
+        public static DataResponseError newError(DataSource.SourceType failedSource) {
+            return new DataResponseError.Builder(failedSource,
+                    "Empty params found in: " + failedSource)
+                    .metaData(new EmptyParamsParallelError())
+                    .build();
         }
     }
 }

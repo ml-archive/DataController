@@ -12,12 +12,12 @@ public class MemorySource<TResponse> implements Source<TResponse> {
 
     public static <TResponse> DataSource.Builder<TResponse> builderInstance() {
         MemorySource<TResponse> source = new MemorySource<>();
-        return new DataSource.Builder<>(source, DataSource.SourceType.MEMORY);
+        return new DataSource.Builder<>(source);
     }
 
     public static <TResponse> DataSource.Builder<TResponse> builderInstance(TResponse initialValue) {
         MemorySource<TResponse> source = new MemorySource<>(initialValue);
-        return new DataSource.Builder<>(source, DataSource.SourceType.MEMORY);
+        return new DataSource.Builder<>(source);
     }
 
     private TResponse storage;
@@ -57,5 +57,10 @@ public class MemorySource<TResponse> implements Source<TResponse> {
     @Override
     public boolean hasStoredData(DataSource.SourceParams params) {
         return getStoredData(params) != null;
+    }
+
+    @Override
+    public DataSource.SourceType sourceType() {
+        return DataSource.SourceType.MEMORY;
     }
 }

@@ -14,7 +14,7 @@ public class MappingSource<TFromResponse, TResponse>
             DataSource<TFromResponse> datasource,
             Mapper<TFromResponse, TResponse> mapper) {
         MappingSource<TFromResponse, TResponse> mapping = new MappingSource<>(datasource, mapper);
-        return new DataSource.Builder<>(mapping, datasource.sourceType());
+        return new DataSource.Builder<>(mapping);
     }
 
     /**
@@ -55,6 +55,11 @@ public class MappingSource<TFromResponse, TResponse>
                          Mapper<TFromResponse, TResponse> mapper) {
         this.fromDataSource = fromDataSource;
         this.mapper = mapper;
+    }
+
+    @Override
+    public DataSource.SourceType sourceType() {
+        return fromDataSource.sourceType();
     }
 
     @Override
