@@ -77,6 +77,11 @@ public abstract class BaseDBFlowSource<TModel, TSource>
     }
 
     @Override
+    public DataSource.SourceType sourceType() {
+        return DataSource.SourceType.DISK;
+    }
+
+    @Override
     public void store(DataControllerResponse<TSource> response) {
         if (async) {
             ProcessModelTransaction.Builder<TModel> processBuilder = new ProcessModelTransaction

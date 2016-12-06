@@ -3,6 +3,7 @@ package com.fuzz.datacontroller.source.chain
 import com.fuzz.datacontroller.DataController
 import com.fuzz.datacontroller.DataControllerResponse
 import com.fuzz.datacontroller.source.DataSource
+import com.fuzz.datacontroller.source.DataSource.SourceType.MEMORY
 import com.fuzz.datacontroller.source.MemorySource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -27,7 +28,7 @@ class ChainingSourceTest {
         val chainSource = ChainConstruct.builderInstance(MemorySource<Boolean>(true),
                 MemorySource<String>("Chained Type"))
                 .chain<String>(MemorySource<String>("Final Chain Type"))
-                .build()
+                .build(MEMORY)
 
         var success: DataControllerResponse<String>? = null
         chainSource[DataSource.SourceParams.defaultParams, {}, { success = it }]
@@ -36,7 +37,7 @@ class ChainingSourceTest {
 
         success?.let {
             assertEquals("Final Chain Type", it.response)
-            assertEquals(DataSource.SourceType.MEMORY, it.sourceType)
+            assertEquals(MEMORY, it.sourceType)
         }
     }
 
@@ -47,8 +48,8 @@ class ChainingSourceTest {
                 .merge<Int, String>(MemorySource<Int>(),
                         MergeConstruct.ResponseMerger<String, Int, String> {
                             firstResponse, secondResponse ->
-                            DataControllerResponse("merged", DataSource.SourceType.MEMORY)
-                        }).build()
+                            DataControllerResponse("merged", MEMORY)
+                        }).build(MEMORY)
 
         var success: DataControllerResponse<String>? = null
         chainSource[DataSource.SourceParams.defaultParams, {}, { success = it }]
@@ -57,7 +58,7 @@ class ChainingSourceTest {
 
         success?.let {
             assertEquals("merged", it.response)
-            assertEquals(DataSource.SourceType.MEMORY, it.sourceType)
+            assertEquals(MEMORY, it.sourceType)
         }
     }
 
@@ -69,11 +70,11 @@ class ChainingSourceTest {
                 .merge<Int, String>(MemorySource<Int>(),
                         MergeConstruct.ResponseMerger<String, Int, String> {
                             firstResponse, secondResponse ->
-                            DataControllerResponse("merged", DataSource.SourceType.MEMORY)
+                            DataControllerResponse("merged", MEMORY)
                         })
                 .responseToNextCallConverter(
                         ChainConstruct.ResponseToNextCallConverter<String> { first, sourceParams -> sourceParams })
-                .build()
+                .build(MEMORY)
 
         var success: DataControllerResponse<String>? = null
         chainSource[DataSource.SourceParams.defaultParams, {}, { success = it }]
@@ -82,7 +83,7 @@ class ChainingSourceTest {
 
         success?.let {
             assertEquals("merged", it.response)
-            assertEquals(DataSource.SourceType.MEMORY, it.sourceType)
+            assertEquals(MEMORY, it.sourceType)
         }
     }
 
@@ -106,7 +107,7 @@ class ChainingSourceTest {
         val chainSource = ChainConstruct.builderInstance(spiedBooleanSource, spiedStringSource)
                 .responseValidator(spyResponseValidator)
                 .responseToNextCallConverter(responseToNextCallConverter)
-                .build()
+                .build(MEMORY)
 
         assertEquals(chainSource.firstDataSource(), spiedBooleanSource)
         assertEquals(chainSource.secondDataSource(), spiedStringSource)

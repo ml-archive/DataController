@@ -10,6 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import java.util.ArrayList
@@ -29,9 +30,11 @@ class DataControllerTest {
     fun before_test_Init() {
         mockCaller = mock<DataSourceCaller<*>>(DataSourceCaller::class.java)
                 as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(DataSource.SourceType.NETWORK)
+
         mockStorage = mock<DataSourceStorage<*>>(DataSourceStorage::class.java)
                 as DataSourceStorage<String>
-        mockDataSource = DataSource.Builder(mockCaller, DataSource.SourceType.NETWORK)
+        mockDataSource = DataSource.Builder(mockCaller)
                 .storage(mockStorage).build()
 
         dataController = DataController.Builder<String>()

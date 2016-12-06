@@ -30,8 +30,9 @@ class DataControllerRequestTest {
     fun test_simpleRequest() {
 
         val mockCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(MEMORY)
         val dataController = DataController.newBuilder<String>()
-                .dataSource(DataSource.Builder(mockCaller, MEMORY).build())
+                .dataSource(DataSource.Builder(mockCaller).build())
                 .build()
 
         val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
@@ -61,8 +62,9 @@ class DataControllerRequestTest {
     fun test_simpleRequestFailure() {
 
         val mockCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(MEMORY)
         val dataController = DataController.newBuilder<String>()
-                .dataSource(DataSource.Builder(mockCaller, MEMORY).build())
+                .dataSource(DataSource.Builder(mockCaller).build())
                 .build()
 
         val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
@@ -97,9 +99,11 @@ class DataControllerRequestTest {
         val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
 
         val mockCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(NETWORK)
+
         val dataController = DataController.newBuilder<String>()
                 .dataSource(MemorySource.builderInstance<String>().build())
-                .dataSource(DataSource.Builder(mockCaller, NETWORK).build())
+                .dataSource(DataSource.Builder(mockCaller).build())
                 .build()
 
         dataController.request(networkParams())
@@ -114,6 +118,7 @@ class DataControllerRequestTest {
         val callback: DataController.DataControllerCallback<String> =
                 mock(DataController.DataControllerCallback::class.java) as DataController.DataControllerCallback<String>
         val mockCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(NETWORK)
 
         val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
                 as ArgumentCaptor<DataController.Success<String>>
@@ -121,7 +126,7 @@ class DataControllerRequestTest {
         val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
 
         val dataController = DataController.newBuilder<String>()
-                .dataSource(DataSource.Builder<String>(mockCaller, NETWORK).build())
+                .dataSource(DataSource.Builder<String>(mockCaller).build())
                 .build()
 
         val memorySuccess = DataControllerResponse("Filtered", MEMORY)
@@ -147,6 +152,7 @@ class DataControllerRequestTest {
         val callback: DataController.DataControllerCallback<String> =
                 mock(DataController.DataControllerCallback::class.java) as DataController.DataControllerCallback<String>
         val mockCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(NETWORK)
 
         val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
                 as ArgumentCaptor<DataController.Success<String>>
@@ -154,7 +160,7 @@ class DataControllerRequestTest {
         val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
 
         val dataController = DataController.newBuilder<String>()
-                .dataSource(DataSource.Builder<String>(mockCaller, NETWORK).build())
+                .dataSource(DataSource.Builder<String>(mockCaller).build())
                 .build()
 
         val memoryError = DataResponseError.Builder(MEMORY, "").build()
@@ -244,8 +250,12 @@ class DataControllerRequestTest {
 
         val callback: DataController.DataControllerCallback<String> =
                 mock(DataController.DataControllerCallback::class.java) as DataController.DataControllerCallback<String>
+
         val mockNetworkCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockNetworkCaller.sourceType()).thenReturn(NETWORK)
+
         val mockMemoryCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockMemoryCaller.sourceType()).thenReturn(MEMORY)
 
 
         val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
@@ -254,8 +264,8 @@ class DataControllerRequestTest {
         val paramsCaptor = ArgumentCaptor.forClass(DataSource.SourceParams::class.java)
 
         val dataController = DataController.newBuilder<String>()
-                .dataSource(DataSource.Builder<String>(mockNetworkCaller, NETWORK).build())
-                .dataSource(DataSource.Builder<String>(mockMemoryCaller, MEMORY).build())
+                .dataSource(DataSource.Builder<String>(mockNetworkCaller).build())
+                .dataSource(DataSource.Builder<String>(mockMemoryCaller).build())
                 .build()
 
         val targetMemoryParams = DataSource.SourceParams()
@@ -284,6 +294,7 @@ class DataControllerRequestTest {
                 as ArgumentCaptor<DataControllerResponse<String>>
 
         val mockCaller = mock(DataSourceCaller::class.java) as DataSourceCaller<String>
+        `when`(mockCaller.sourceType()).thenReturn(NETWORK)
         val successCaptor = ArgumentCaptor.forClass(DataController.Success::class.java)
                 as ArgumentCaptor<DataController.Success<String>>
         val errorCaptor = ArgumentCaptor.forClass(DataController.Error::class.java)
@@ -296,7 +307,7 @@ class DataControllerRequestTest {
         val mockStorage = mock(DataSourceStorage::class.java) as DataSourceStorage<String>
         val dataController = DataController.newBuilder<String>()
                 .dataSource(MemorySource.builderInstance<String>().storage(mockStorage).build())
-                .dataSource(DataSource.Builder(mockCaller, NETWORK).build())
+                .dataSource(DataSource.Builder(mockCaller).build())
                 .build()
 
         dataController.request(networkParams())

@@ -19,7 +19,7 @@ public class DBFlowSingleSource<TModel>
     public static <TModel> DataSource.Builder<TModel>
     builderInstance(Class<TModel> modelClass, boolean async) {
         DBFlowSingleSource<TModel> source = new DBFlowSingleSource<>(modelClass, async);
-        return new DataSource.Builder<>(source, DataSource.SourceType.DISK);
+        return new DataSource.Builder<>(source);
     }
 
     private DBFlowSingleSource(Class<TModel> tModelClass, boolean async) {

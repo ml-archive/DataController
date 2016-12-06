@@ -23,7 +23,7 @@ public class DBFlowListSource<TModel>
     public static <TModel> DataSource.Builder<List<TModel>>
     builderInstance(Class<TModel> modelClass, boolean async) {
         DBFlowListSource<TModel> source = new DBFlowListSource<>(modelClass, async);
-        return new DataSource.Builder<>(source, DataSource.SourceType.DISK);
+        return new DataSource.Builder<>(source);
     }
 
     private DBFlowListSource(Class<TModel> tModelClass, boolean async) {

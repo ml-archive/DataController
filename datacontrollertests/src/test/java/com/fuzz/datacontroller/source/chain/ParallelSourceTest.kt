@@ -4,6 +4,9 @@ import com.fuzz.datacontroller.DataController
 import com.fuzz.datacontroller.DataControllerResponse
 import com.fuzz.datacontroller.DataResponseError
 import com.fuzz.datacontroller.source.DataSource
+import com.fuzz.datacontroller.source.DataSource.SourceParams.defaultParams
+import com.fuzz.datacontroller.source.DataSource.SourceType.MEMORY
+import com.fuzz.datacontroller.source.DataSource.SourceType.NETWORK
 import com.fuzz.datacontroller.source.DataSourceCaller
 import com.fuzz.datacontroller.source.MemorySource
 import com.fuzz.datacontroller.source.chain.ParallelConstruct.ParallelError
@@ -28,19 +31,20 @@ class ParallelSourceTest {
                 MemorySource<String>("Chained Type"),
                 { parallelResponse, parallelResponse2 ->
                     ParallelConstruct.ParallelResponse(null,
-                            DataControllerResponse("", DataSource.SourceType.MEMORY))
+                            DataControllerResponse("", MEMORY))
                 })
                 .chain<String>(MemorySource<String>("Final Chain Type"))
-                .build()
+                .build(MEMORY)
 
         var success: DataControllerResponse<String>? = null
-        chainSource[DataSource.SourceParams.defaultParams, {}, { success = it }]
+        chainSource[ParallelConstruct.ParallelParams(defaultParams, defaultParams), {},
+                { success = it }]
 
         Assert.assertNotNull(success)
 
         success?.let {
             assertEquals("Final Chain Type", it.response)
-            assertEquals(DataSource.SourceType.MEMORY, it.sourceType)
+            assertEquals(MEMORY, it.sourceType)
         }
     }
 
@@ -51,17 +55,18 @@ class ParallelSourceTest {
                 .parallel<Int, String>(MemorySource<Int>(),
                         ParallelConstruct.ParallelMerger { parallelResponse, parallelResponse2 ->
                             ParallelConstruct.ParallelResponse(null,
-                                    DataControllerResponse("merged", DataSource.SourceType.MEMORY))
-                        }).build()
+                                    DataControllerResponse("merged", MEMORY))
+                        }).build(MEMORY)
 
         var success: DataControllerResponse<String>? = null
-        chainSource[DataSource.SourceParams.defaultParams, {}, { success = it }]
+        chainSource[ParallelConstruct.ParallelParams(defaultParams, defaultParams), {},
+                { success = it }]
 
         Assert.assertNotNull(success)
 
         success?.let {
             assertEquals("merged", it.response)
-            assertEquals(DataSource.SourceType.MEMORY, it.sourceType)
+            assertEquals(MEMORY, it.sourceType)
         }
     }
 
@@ -75,11 +80,14 @@ class ParallelSourceTest {
                     override fun get(sourceParams: DataSource.SourceParams?,
                                      error: DataController.Error?,
                                      success: DataController.Success<String>?) {
-                        error?.onFailure(DataResponseError.Builder(DataSource.SourceType.NETWORK,
-                                "").build())
+                        error?.onFailure(DataResponseError.Builder(NETWORK, "").build())
                     }
 
                     override fun cancel() {
+                    }
+
+                    override fun sourceType(): DataSource.SourceType {
+                        return NETWORK
                     }
 
                 },
@@ -88,11 +96,11 @@ class ParallelSourceTest {
                             ParallelError(parallelResponse.dataResponseError,
                                     parallelResponse2.dataResponseError), null)
                 })
-                .build()
+                .build(NETWORK)
 
         var success: DataControllerResponse<String>? = null
         var failure: DataResponseError? = null
-        chainSource[DataSource.SourceParams.defaultParams, {}, { success = it }]
+        chainSource[ParallelConstruct.ParallelParams(defaultParams, defaultParams), {}, { success = it }]
 
         assertNull(success)
 
