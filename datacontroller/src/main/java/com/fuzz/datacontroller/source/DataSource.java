@@ -197,6 +197,13 @@ public class DataSource<T> implements Source<T> {
         setBusy(false);
     }
 
+    /**
+     * @return Converts this {@link DataSource} to a {@link DataController}.
+     */
+    public DataController<T> toDataController() {
+        return DataController.controllerOf(this);
+    }
+
     private void setBusy(boolean isBusy) {
         synchronized (syncLock()) {
             this.isBusy = isBusy;

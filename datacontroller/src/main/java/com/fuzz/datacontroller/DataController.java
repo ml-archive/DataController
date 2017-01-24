@@ -19,6 +19,7 @@ public class DataController<T> {
     /**
      * @return A new {@link DataController} with specified sources.
      */
+    @SafeVarargs
     public static <T> DataController<T> controllerOf(DataSource<T>... sources) {
         Builder<T> builder = newBuilder();
         for (DataSource<T> source : sources) {
