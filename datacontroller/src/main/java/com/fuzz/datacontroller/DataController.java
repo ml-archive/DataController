@@ -17,6 +17,17 @@ import java.util.List;
 public class DataController<T> {
 
     /**
+     * @return A new {@link DataController} with specified sources.
+     */
+    public static <T> DataController<T> controllerOf(DataSource<T>... sources) {
+        Builder<T> builder = newBuilder();
+        for (DataSource<T> source : sources) {
+            builder.dataSource(source);
+        }
+        return builder.build();
+    }
+
+    /**
      * @return A new {@link Builder} to construct the {@link DataController}
      */
     public static <T> Builder<T> newBuilder() {
