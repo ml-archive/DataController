@@ -1,10 +1,7 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.DataDefinition
-import com.grosner.kpoet.`private final field`
-import com.grosner.kpoet.modifiers
-import com.grosner.kpoet.public
-import com.grosner.kpoet.statement
+import com.grosner.kpoet.*
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.TypeSpec
@@ -39,7 +36,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
     }
 
     override val implementsClasses
-        get() = arrayOf(elementTypeName!!)
+        get() = arrayOf(elementTypeName!!, DATA_DEFINITION)
 
     override fun onWriteDefinition(typeBuilder: TypeSpec.Builder) {
         val constructor = MethodSpec.constructorBuilder().modifiers(public)
@@ -58,6 +55,10 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
 
         }
 
+        reqDefinitions.distinctBy { it.controllerName }.forEach {
+            constructor.addParameter(param(DATASOURCE_PROVIDER, "${it.controllerName}Provider").build())
+        }
+
         val retrofitInterface = TypeSpec.interfaceBuilder(interfaceClass)
 
         reqDefinitions.forEach {
@@ -67,6 +68,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
                 typeBuilder.addToType()
             }
         }
+
         typeBuilder.addMethod(constructor.build())
 
         if (hasNetworkApi) {

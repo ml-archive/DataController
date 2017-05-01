@@ -28,6 +28,7 @@ dependencies {
     compile project(":datacontroller-okhttp")
     compile project(':datacontroller-annotations')
     compile project(':datacontroller-retrofit')
+    compile project(':datacontroller-sharedpreferences')
     kapt project(":datacontroller-processor")
 
     compile 'com.squareup.retrofit2:retrofit:2.2.0'

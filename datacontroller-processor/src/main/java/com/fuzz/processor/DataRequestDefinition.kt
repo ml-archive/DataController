@@ -16,9 +16,14 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     : BaseDefinition(executableElement, dataControllerProcessorManager), TypeAdder {
 
     var memory = false
+
     var db = false
     var singleDb = true
     var async = false
+
+    var sharedPrefs = false
+    var hasSharedPrefsAnnotation = false
+
     var network = false
     var reuse = false
     var reuseMethodName = ""
@@ -54,10 +59,13 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     "Cannot specify both ${Targets::class} and ${DataControllerRef::class}")
         }
 
-        db = executableElement.annotation<DB>() != null
-        if (db) hasDBAnnotation = true
-        memory = executableElement.annotation<Memory>() != null
-        if (memory) hasMemoryAnnotation = true
+        db = executableElement.annotation<DB>()?.let { hasDBAnnotation = true } != null
+        memory = executableElement.annotation<Memory>()?.let { hasMemoryAnnotation = true } != null
+
+        sharedPrefs = executableElement.annotation<SharedPreferences>()?.let {
+            hasSharedPrefsAnnotation = true
+        } != null
+
         executableElement.annotation<Reuse>()?.let {
             reuse = true
             reuseMethodName = it.value
@@ -121,7 +129,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     val hasSourceAnnotations: Boolean
-        get() = hasDBAnnotation || hasMemoryAnnotation || hasNetworkAnnotation
+        get() = hasDBAnnotation || hasMemoryAnnotation || hasNetworkAnnotation || hasSharedPrefsAnnotation
 
     private fun validateReturnType(returnType: TypeName) {
         if (returnType is ParameterizedTypeName &&
@@ -154,8 +162,13 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     singleDb = def.singleDb
                     async = def.async
                     memory = def.memory
+                    sharedPrefs = def.sharedPrefs
                 }
             }
+        }
+
+        if (sharedPrefs && db) {
+            manager.logError(DataRequestDefinition::class, "Cannot mix and match shared preferences and db references. Choose one for storage.")
         }
     }
 
@@ -172,21 +185,21 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         if (!reuse) {
             code {
                 add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
+                val builders = arrayListOf<Pair<String, Array<Any?>>>()
                 if (memory) {
-                    add("\n\$T.<\$T>builderInstance().build()", MEMORY_SOURCE, dataType)
+                    builders.add("\n${controllerName}Provider.<\$T>provideDataSource(\$T.class, \$T.memoryParams())" to arrayOf<Any?>(dataType, dataType, DATA_SOURCE_PARAMS))
                 }
-                if (db) {
-                    if (memory) {
-                        add(",")
-                    }
-                    add("\n\$T.<\$T>builderInstance(\$T.class, ${async.L}).build()",
-                            if (singleDb) DBFLOW_SINGLE_SOURCE else DBFLOW_LIST_SOURCE, dataType, dataType)
+                if (db || sharedPrefs) {
+                    builders.add("\n${controllerName}Provider.<\$T>provideDataSource(\$T.class, \$T.diskParams())" to arrayOf<Any?>(dataType, dataType, DATA_SOURCE_PARAMS))
+
                 }
                 if (network) {
-                    if (db || memory) {
-                        add(",")
-                    }
-                    add("\n\$T.<\$T>builderInstance().build()", RETROFIT_SOURCE, dataType)
+                    builders.add("\n${controllerName}Provider.<\$T>provideDataSource(\$T.class, \$T.networkParams())" to arrayOf<Any?>(dataType, dataType, DATA_SOURCE_PARAMS))
+                }
+
+                builders.forEachIndexed { index, (statement, args) ->
+                    if (index > 0) add(",")
+                    add(CodeBlock.of(statement, *args))
                 }
 
                 add(");\n")

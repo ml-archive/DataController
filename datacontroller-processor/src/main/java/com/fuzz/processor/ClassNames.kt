@@ -4,9 +4,12 @@ import com.squareup.javapoet.ClassName
 
 private val package_name = "com.fuzz.datacontroller"
 private var retrofit_package = "retrofit2"
-private val retrofit_package_http = "${retrofit_package}.http"
+private val retrofit_package_http = "$retrofit_package.http"
 
 val DATACONTROLLER_REQUEST = ClassName.get(package_name, "DataControllerRequest")
+
+val DATA_DEFINITION = ClassName.get("$package_name.manager", "DataDefinition")
+val DATASOURCE_PROVIDER = ClassName.get(package_name, "DataSourceProvider")
 
 val DATACONTROLLER_REQUEST_BUILDER = ClassName.get(package_name, "DataControllerRequest.Builder")
 
@@ -18,16 +21,19 @@ val DATACONTROLLER_CALLBACK = ClassName.get(package_name, "DataController", "Dat
 
 val ERROR_FILTER = ClassName.get(package_name, "DataControllerRequest", "ErrorFilter")
 
-val MEMORY_SOURCE = ClassName.get("${package_name}.source", "MemorySource")
+val MEMORY_SOURCE = ClassName.get("$package_name.source", "MemorySource")
 
-val DBFLOW_SINGLE_SOURCE = ClassName.get("${package_name}.dbflow", "DBFlowSingleSource")
-val DBFLOW_LIST_SOURCE = ClassName.get("${package_name}.dbflow", "DBFlowListSource")
+val DBFLOW_SINGLE_SOURCE = ClassName.get("$package_name.dbflow", "DBFlowSingleSource")
+val DBFLOW_LIST_SOURCE = ClassName.get("$package_name.dbflow", "DBFlowListSource")
 
-val DATA_SOURCE_PARAMS = ClassName.get("${package_name}.source", "DataSourceContainer", "DataSourceParams")
+val SHARED_PREFERENCES_SOURCE = ClassName.get("$package_name.sharedpreferences", "SharedPreferencesSource")
+val SHARED_PREFERENCES = ClassName.get("android.content", "SharedPreferences")
 
-val SOURCE_TYPE = ClassName.get("${package_name}.source", "DataSource", "SourceType")
+val DATA_SOURCE_PARAMS = ClassName.get("$package_name.source", "DataSourceContainer", "DataSourceParams")
 
-val DBFLOW_PARAMS = ClassName.get("${package_name}.dbflow", "BaseDBFlowSource", "DBFlowParams")
+val SOURCE_TYPE = ClassName.get("$package_name.source", "DataSource", "SourceType")
+
+val DBFLOW_PARAMS = ClassName.get("$package_name.dbflow", "BaseDBFlowSource", "DBFlowParams")
 
 val SQLITE = ClassName.get("com.raizlabs.android.dbflow.sql.language", "SQLite")
 

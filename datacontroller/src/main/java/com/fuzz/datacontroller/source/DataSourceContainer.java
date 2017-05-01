@@ -28,7 +28,7 @@ public interface DataSourceContainer<TResponse> {
 
         private int position = -1;
 
-        private DataSource.SourceType sourceType;
+        private final DataSource.SourceType sourceType;
 
         public DataSourceParams(int position, DataSource.SourceType sourceType) {
             this.position = position;
@@ -36,10 +36,12 @@ public interface DataSourceContainer<TResponse> {
         }
 
         public DataSourceParams() {
+            sourceType = null;
         }
 
         public DataSourceParams(int position) {
             this.position = position;
+            this.sourceType = null;
         }
 
         public DataSourceParams(DataSource.SourceType sourceType) {
@@ -65,12 +67,18 @@ public interface DataSourceContainer<TResponse> {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             DataSourceParams that = (DataSourceParams) o;
 
-            if (position != that.position) return false;
+            if (position != that.position) {
+                return false;
+            }
             return sourceType == that.sourceType;
 
         }

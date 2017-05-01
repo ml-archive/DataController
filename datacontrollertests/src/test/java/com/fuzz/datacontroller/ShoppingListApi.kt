@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller
 
 import com.fuzz.datacontroller.annotations.*
+import com.fuzz.datacontroller.sharedpreferences.PreferenceDelegate
 import com.raizlabs.android.dbflow.annotation.PrimaryKey
 import com.raizlabs.android.dbflow.annotation.Table
 import retrofit2.http.GET
@@ -33,5 +34,19 @@ interface ShoppingListApi {
             : DataControllerRequest<ShoppingList>
 
     @Reuse("shoppingListDataController")
-    fun getShoppingListFromStorage(): ShoppingList
+    fun getShoppingListFromStorage(): ShoppingList?
+
+    @SharedPreferences
+    fun getShoppingListSharedPreferences(dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
+            : DataControllerRequest<ShoppingList>
+}
+
+class PrefDelegate : PreferenceDelegate<ShoppingList> {
+    override fun setValue(editor: android.content.SharedPreferences.Editor, value: DataControllerResponse<ShoppingList>) {
+
+    }
+
+    override fun getValue(sharedPreferences: android.content.SharedPreferences): ShoppingList? {
+        return null
+    }
 }
