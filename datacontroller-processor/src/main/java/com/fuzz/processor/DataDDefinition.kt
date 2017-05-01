@@ -34,6 +34,8 @@ class DataDDefinition(typeElement: TypeElement, dataControllerProcessorManager: 
             }
         }
 
+        reqDefinitions.forEach { it.evaluateReuse(reqDefinitions) }
+
         hasNetworkApi = reqDefinitions.find { it.network } != null
     }
 

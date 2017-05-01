@@ -6,7 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Description:
+ * Description: Reuses a data controller from another method. The datasources will be the same, but
+ * the source targets may not always be.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.SOURCE)

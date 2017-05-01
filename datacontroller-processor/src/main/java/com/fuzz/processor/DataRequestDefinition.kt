@@ -3,6 +3,7 @@ package com.fuzz.processor
 import com.fuzz.datacontroller.annotations.DB
 import com.fuzz.datacontroller.annotations.Memory
 import com.fuzz.datacontroller.annotations.Reuse
+import com.fuzz.datacontroller.annotations.Targets
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.dataControllerAnnotation
 import com.fuzz.processor.utils.toClassName
@@ -24,6 +25,11 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var network = false
     var reuse = false
     var reuseMethodName = ""
+    var targets = false
+
+    var hasNetworkAnnotation = false
+    var hasMemoryAnnotation = false
+    var hasDBAnnotation = false
 
     val params: List<DataRequestParamDefinition>
 
@@ -35,8 +41,11 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     init {
 
+        targets = executableElement.annotation<Targets>() != null
         db = executableElement.annotation<DB>() != null
+        if (db) hasDBAnnotation = true
         memory = executableElement.annotation<Memory>() != null
+        if (memory) hasMemoryAnnotation = true
         executableElement.annotation<Reuse>()?.let {
             reuse = true
             reuseMethodName = it.value
@@ -46,6 +55,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             val typeName = it.annotationType.typeName
             if (retrofitMethodSet.contains(typeName)) {
                 network = true
+                hasNetworkAnnotation = true
             }
         }
 
@@ -75,6 +85,26 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         params.filter { it.isCallback }.getOrNull(0)?.let { specialParams.add(it) }
         params.filter { it.isErrorFilter }.getOrNull(0)?.let { specialParams.add(it) }
 
+    }
+
+    fun evaluateReuse(reqDefinitions: MutableList<DataRequestDefinition>) {
+        if (reuse) {
+            val def = reqDefinitions.find { it.controllerName == reuseMethodName }
+            if (def == null) {
+                managerDataController.logError(DataRequestDefinition::class,
+                        "Could not find $reuseMethodName for method $elementName. Ensure you specify the name properly.")
+            } else {
+                if (def.dataType != dataType) {
+                    managerDataController.logError(DataRequestDefinition::class,
+                            "The referenced $reuseMethodName must match data types. found ${def.dataType} for referenced.")
+                } else {
+                    network = def.network
+                    db = def.db
+                    singleDb = def.singleDb
+                    async = def.async
+                }
+            }
+        }
     }
 
     fun MethodSpec.Builder.applyAnnotations() {
@@ -113,16 +143,18 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     fun TypeSpec.Builder.addToRetrofitInterface() {
-        public(ParameterizedTypeName.get(CALL, dataType), elementName) {
-            applyAnnotations()
-            modifiers(abstract)
-            params.filter { it.isQuery }.forEach { it.apply { this@public.addRetrofitParamCode() } }
-            this
+        if (!reuse || hasNetworkAnnotation) {
+            public(ParameterizedTypeName.get(CALL, dataType), elementName) {
+                applyAnnotations()
+                modifiers(abstract)
+                params.filter { it.isQuery }.forEach { it.apply { this@public.addRetrofitParamCode() } }
+                this
+            }
         }
     }
 
     fun addServiceCall(codeBlock: CodeBlock.Builder) {
-        codeBlock.add("$elementName(")
+        codeBlock.add("${if (reuse && !hasNetworkAnnotation) controllerName else elementName}(")
         codeBlock.add(params.filter { it.isQuery }.joinToString { it.paramName })
         codeBlock.add(")")
     }
@@ -140,7 +172,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             statement("\$T request = $controllerName.request()",
                     ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, dataType))
             specialParams.forEach { it.apply { addSpecialCode() } }
-            if (network) {
+            if (network && (hasNetworkAnnotation || !targets)) {
                 code {
                     add("request.targetSource(\$T.networkParams(),", DATA_SOURCE_PARAMS)
                     indent()
@@ -150,7 +182,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     unindent()
                 }
             }
-            if (db) {
+            if (db && (hasDBAnnotation || !targets)) {
                 code {
                     add("request.targetSource(\$T.diskParams(),", DATA_SOURCE_PARAMS)
                     indent()
@@ -167,6 +199,18 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
                     add("));\n")
                     unindent()
+                }
+            }
+
+            if (targets) {
+                if (hasDBAnnotation) {
+                    statement("request.addRequestSourceTarget(\$T.diskParams())", DATA_SOURCE_PARAMS);
+                }
+                if (hasMemoryAnnotation) {
+                    statement("request.addRequestSourceTarget(\$T.memoryParams())", DATA_SOURCE_PARAMS);
+                }
+                if (hasNetworkAnnotation) {
+                    statement("request.addRequestSourceTarget(\$T.networkParams())", DATA_SOURCE_PARAMS);
                 }
             }
             `return`("request.build()")
