@@ -25,7 +25,7 @@ class OkHttpDataSourceTest {
 
     @Test
     fun test_canEnqueueCall() {
-        val source = OkHttpDataSource.builderInstance { call, response -> "got response" }.build()
+        val source = OkHttpDataSource.builderInstance { _, _ -> "got response" }.build()
         var response: DataControllerResponse<String>? = null
         val mockedCall = mock(Call::class.java)
         val mockResponse = Response.Builder()
@@ -47,7 +47,7 @@ class OkHttpDataSourceTest {
 
     @Test
     fun test_canEnqueueFailure() {
-        val source = OkHttpDataSource.builderInstance { call, response -> "got response" }.build()
+        val source = OkHttpDataSource.builderInstance { _, _ -> "got response" }.build()
         var error: DataResponseError? = null
         val mockedCall = mock(Call::class.java)
         val exception = IOException("error")

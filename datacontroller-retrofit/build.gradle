@@ -1,0 +1,9 @@
+apply plugin: 'java'
+
+dependencies {
+    compile project(':datacontroller')
+    compile 'com.squareup.retrofit2:retrofit:2.2.0'
+}
+
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"

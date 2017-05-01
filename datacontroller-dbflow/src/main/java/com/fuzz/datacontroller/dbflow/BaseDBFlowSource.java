@@ -8,7 +8,9 @@ import com.fuzz.datacontroller.source.Source;
 import com.raizlabs.android.dbflow.config.FlowManager;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 import com.raizlabs.android.dbflow.sql.queriable.ModelQueriable;
+import com.raizlabs.android.dbflow.structure.BaseModel;
 import com.raizlabs.android.dbflow.structure.Model;
+import com.raizlabs.android.dbflow.structure.database.DatabaseWrapper;
 import com.raizlabs.android.dbflow.structure.database.transaction.ProcessModelTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.QueryTransaction;
 import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
@@ -17,7 +19,7 @@ import com.raizlabs.android.dbflow.structure.database.transaction.Transaction;
  * Description:
  */
 public abstract class BaseDBFlowSource<TModel, TSource>
-        implements Source<TSource>, ProcessModelTransaction.ProcessModel<TModel> {
+    implements Source<TSource>, ProcessModelTransaction.ProcessModel<TModel> {
 
     private Transaction currentSaveTransaction;
     private Transaction currentLoadTransaction;
@@ -45,16 +47,22 @@ public abstract class BaseDBFlowSource<TModel, TSource>
     }
 
     @Override
-    public void processModel(TModel model) {
-        store(model);
+    public void processModel(TModel model, DatabaseWrapper wrapper) {
+        store(model, wrapper);
     }
 
     public void store(TModel model) {
+        this.store(model, FlowManager.getWritableDatabaseForTable(modelClass));
+    }
+
+    public void store(TModel model, DatabaseWrapper wrapper) {
         if (model != null) {
-            if (model instanceof Model) {
+            if (model instanceof BaseModel) {
+                ((BaseModel) model).save(wrapper);
+            } else if (model instanceof Model) {
                 ((Model) model).save();
             } else {
-                FlowManager.getModelAdapter(modelClass).save(model);
+                FlowManager.getModelAdapter(modelClass).save(model, wrapper);
             }
         }
     }
@@ -85,11 +93,11 @@ public abstract class BaseDBFlowSource<TModel, TSource>
     public void store(DataControllerResponse<TSource> response) {
         if (async) {
             ProcessModelTransaction.Builder<TModel> processBuilder = new ProcessModelTransaction
-                    .Builder<>(this);
+                .Builder<>(this);
             prepareStore(processBuilder, response);
             currentSaveTransaction = FlowManager.getDatabaseForTable(getModelClass())
-                    .beginTransactionAsync(processBuilder.build())
-                    .build();
+                .beginTransactionAsync(processBuilder.build())
+                .build();
             currentSaveTransaction.execute();
         } else {
             storeSync(response);
@@ -103,18 +111,18 @@ public abstract class BaseDBFlowSource<TModel, TSource>
         ModelQueriable<TModel> modelQueriable = params.getModelQueriable();
         if (async) {
             QueryTransaction.Builder<TModel> queryBuilder
-                    = new QueryTransaction.Builder<>(modelQueriable);
+                = new QueryTransaction.Builder<>(modelQueriable);
             prepareQuery(queryBuilder, success);
             currentLoadTransaction = FlowManager.getDatabaseForTable(getModelClass())
-                    .beginTransactionAsync(queryBuilder
-                            .build())
-                    .error(new Transaction.Error() {
-                        @Override
-                        public void onError(Transaction transaction, Throwable throwable) {
-                            error.onFailure(new DataResponseError.Builder(DataSource.SourceType.DISK,
-                                    throwable).build());
-                        }
-                    }).build();
+                .beginTransactionAsync(queryBuilder
+                    .build())
+                .error(new Transaction.Error() {
+                    @Override
+                    public void onError(Transaction transaction, Throwable throwable) {
+                        error.onFailure(new DataResponseError.Builder(DataSource.SourceType.DISK,
+                            throwable).build());
+                    }
+                }).build();
             currentLoadTransaction.execute();
         } else {
             success.onSuccess(executeSync(modelQueriable));
@@ -146,7 +154,7 @@ public abstract class BaseDBFlowSource<TModel, TSource>
 
         if (params == null) {
             throw new IllegalArgumentException("The passed dataSource params must implement "
-                    + DBFlowParamsInterface.class.getSimpleName());
+                + DBFlowParamsInterface.class.getSimpleName());
         }
         return params;
     }
@@ -156,7 +164,7 @@ public abstract class BaseDBFlowSource<TModel, TSource>
      * {@link ModelQueriable} it will use to load from the DB.
      */
     public static class DBFlowParams<TModel> extends DataSource.SourceParams
-            implements DBFlowParamsInterface<TModel> {
+        implements DBFlowParamsInterface<TModel> {
 
         private final ModelQueriable<TModel> modelQueriable;
 
