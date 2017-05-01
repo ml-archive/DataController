@@ -19,6 +19,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var db = false
     var singleDb = true
     var async = false
+    var network = false
 
     val params: List<DataRequestParamDefinition>
 
@@ -32,6 +33,13 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
         db = executableElement.annotation<DB>() != null
         memory = executableElement.annotation<Memory>() != null
+
+        executableElement.annotationMirrors.forEach {
+            val typeName = it.annotationType.typeName
+            if (retrofitMethodSet.contains(typeName)) {
+                network = true
+            }
+        }
 
         params = executableElement.parameters.map { DataRequestParamDefinition(it, managerDataController) }
 
@@ -82,12 +90,18 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
         public(DATACONTROLLER_REQUEST, elementName) {
             params.forEach { it.apply { this@public.addParamCode() } }
+            (element as ExecutableElement).annotationMirrors.forEach {
+                addAnnotation(AnnotationSpec.get(it))
+            }
             annotation(Override::class)
 
             statement("\$T request = $controllerName.request()",
                     ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, dataType))
             if (callbackParamName.isNotEmpty()) {
                 statement("request.register($callbackParamName)")
+            }
+            if (network) {
+
             }
             if (db) {
                 code {

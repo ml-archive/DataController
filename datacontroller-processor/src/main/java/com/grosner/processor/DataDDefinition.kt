@@ -35,6 +35,8 @@ class DataDDefinition(typeElement: TypeElement, dataControllerProcessorManager: 
 
     override fun onWriteDefinition(typeBuilder: TypeSpec.Builder) {
         val constructor = MethodSpec.constructorBuilder().modifiers(public)
+
+
         reqDefinitions.forEach {
             it.apply {
                 constructor.addToConstructor()

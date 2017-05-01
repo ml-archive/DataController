@@ -4,6 +4,7 @@ import com.grosner.datacontroller.annotations.DQuery
 import com.grosner.kpoet.param
 import com.grosner.kpoet.typeName
 import com.grosner.processor.utils.annotation
+import com.squareup.javapoet.AnnotationSpec
 import com.squareup.javapoet.MethodSpec
 import javax.lang.model.element.VariableElement
 
@@ -24,7 +25,9 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
     }
 
     fun MethodSpec.Builder.addParamCode() = apply {
-        addParameter(param(variable.asType().typeName, paramName).build())
+        val param = param(variable.asType().typeName, paramName)
+        variable.annotationMirrors.forEach { param.addAnnotation(AnnotationSpec.get(it)) }
+        addParameter(param.build())
     }
 
 }
