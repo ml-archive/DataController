@@ -1,4 +1,4 @@
-package com.grosner.processor
+package com.fuzz.processor
 
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.TypeSpec

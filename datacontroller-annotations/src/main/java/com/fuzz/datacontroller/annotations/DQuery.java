@@ -1,4 +1,4 @@
-package com.grosner.datacontroller.annotations;
+package com.fuzz.datacontroller.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

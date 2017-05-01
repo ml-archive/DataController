@@ -1,9 +1,6 @@
 package com.fuzz.datacontroller
 
-import com.grosner.datacontroller.annotations.DB
-import com.grosner.datacontroller.annotations.DQuery
-import com.grosner.datacontroller.annotations.DataDefinition
-import com.grosner.datacontroller.annotations.Memory
+import com.fuzz.datacontroller.annotations.*
 import com.raizlabs.android.dbflow.annotation.PrimaryKey
 import com.raizlabs.android.dbflow.annotation.Table
 import retrofit2.http.GET
@@ -21,5 +18,13 @@ interface ShoppingListApi {
     fun getShoppingList(@Path("listId") @DQuery("id") shoppingListId: String,
                         @Path("storeId") @DQuery("storeId") storeId: String,
                         dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
+            : DataControllerRequest<ShoppingList>
+
+    @Reuse("getShoppingList")
+    @GET("/shoppinglists/{listId}/{storeId}")
+    fun getShoppingListWithError(@Path("listId") @DQuery("id") shoppingListId: String,
+                                 @Path("storeId") @DQuery("storeId") storeId: String,
+                                 dataControllerCallback: DataController.DataControllerCallback<ShoppingList>,
+                                 errorFilter: DataControllerRequest.ErrorFilter)
             : DataControllerRequest<ShoppingList>
 }

@@ -27,6 +27,7 @@ dependencies {
     compile project(":datacontroller-dbflow")
     compile project(":datacontroller-okhttp")
     compile project(':datacontroller-annotations')
+    compile project(':datacontroller-retrofit')
     kapt project(":datacontroller-processor")
 
     compile 'com.squareup.retrofit2:retrofit:2.2.0'

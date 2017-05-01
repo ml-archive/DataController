@@ -1,4 +1,4 @@
-package com.grosner.processor
+package com.fuzz.processor
 
 import javax.annotation.processing.Messager
 import javax.annotation.processing.ProcessingEnvironment

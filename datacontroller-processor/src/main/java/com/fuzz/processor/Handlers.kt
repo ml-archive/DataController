@@ -1,7 +1,7 @@
-package com.grosner.processor
+package com.fuzz.processor
 
 import com.google.common.collect.Sets
-import com.grosner.datacontroller.annotations.DataDefinition
+import com.fuzz.datacontroller.annotations.DataDefinition
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement

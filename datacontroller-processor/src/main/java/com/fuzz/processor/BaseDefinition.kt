@@ -1,7 +1,7 @@
-package com.grosner.processor
+package com.fuzz.processor
 
+import com.fuzz.processor.utils.ElementUtility
 import com.grosner.kpoet.*
-import com.grosner.processor.utils.ElementUtility
 import com.raizlabs.android.dbflow.processor.definition.TypeDefinition
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.ParameterizedTypeName

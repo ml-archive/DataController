@@ -1,4 +1,4 @@
-package com.grosner;
+package com.fuzz.datacontroller.retrofit;
 
 import com.fuzz.datacontroller.DataController;
 import com.fuzz.datacontroller.DataControllerResponse;
@@ -21,19 +21,19 @@ import retrofit2.Response;
  */
 public class RetrofitSource<TResponse> implements DataSourceCaller<TResponse> {
 
-    public static <T> DataSource.Builder<T> newBuilder(ResponseHandler<T> responseHandler,
-                                                       ResponseErrorConverter<T> errorConverter) {
+    public static <T> DataSource.Builder<T> builderInstance(ResponseHandler<T> responseHandler,
+                                                            ResponseErrorConverter<T> errorConverter) {
         RetrofitSource<T> source = new RetrofitSource<>(responseHandler, errorConverter);
         return new DataSource.Builder<>(source);
     }
 
-    public static <T> DataSource.Builder<T> newBuilder(ResponseErrorConverter<T> errorConverter) {
+    public static <T> DataSource.Builder<T> builderInstance(ResponseErrorConverter<T> errorConverter) {
         RetrofitSource<T> source = new RetrofitSource<>(errorConverter);
         return new DataSource.Builder<>(source);
     }
 
 
-    public static <T> DataSource.Builder<T> newBuilder() {
+    public static <T> DataSource.Builder<T> builderInstance() {
         RetrofitSource<T> source = new RetrofitSource<>();
         return new DataSource.Builder<>(source);
     }

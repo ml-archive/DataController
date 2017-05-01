@@ -1,6 +1,6 @@
-package com.grosner.processor.utils
+package com.fuzz.processor.utils
 
-import com.grosner.processor.DataControllerProcessorManager
+import com.fuzz.processor.DataControllerProcessorManager
 import com.squareup.javapoet.ClassName
 import java.util.*
 import javax.lang.model.element.Element

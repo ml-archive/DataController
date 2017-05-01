@@ -1,7 +1,7 @@
-package com.grosner.processor;
+package com.fuzz.processor;
 
 import com.google.auto.service.AutoService;
-import com.grosner.datacontroller.annotations.DataDefinition;
+import com.fuzz.datacontroller.annotations.DataDefinition;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
