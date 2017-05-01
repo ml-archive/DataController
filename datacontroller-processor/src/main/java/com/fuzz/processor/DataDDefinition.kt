@@ -1,7 +1,6 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.DataDefinition
-import com.fuzz.processor.utils.ElementUtility
 import com.grosner.kpoet.`private final field`
 import com.grosner.kpoet.modifiers
 import com.grosner.kpoet.public
@@ -15,8 +14,8 @@ import javax.lang.model.element.TypeElement
 /**
  * Description: Represents [DataDefinition]
  */
-class DataDDefinition(typeElement: TypeElement, dataControllerProcessorManager: DataControllerProcessorManager)
-    : BaseDefinition(typeElement, dataControllerProcessorManager) {
+class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessorManager)
+    : BaseDefinition(typeElement, manager) {
 
     val reqDefinitions = mutableListOf<DataRequestDefinition>()
 
@@ -24,10 +23,10 @@ class DataDDefinition(typeElement: TypeElement, dataControllerProcessorManager: 
 
     init {
         setOutputClassName("_Def")
-        val members = ElementUtility.getAllElements(typeElement, dataControllerProcessorManager)
+        val members = typeElement.enclosedElements
         members.forEach {
             if (it is ExecutableElement) {
-                val definition = DataRequestDefinition(it, dataControllerProcessorManager)
+                val definition = DataRequestDefinition(it, manager)
                 if (definition.valid) {
                     reqDefinitions += definition
                 }

@@ -14,13 +14,19 @@ interface ShoppingListApi {
 
     @DB
     @Memory
+    @Network
+    @DataControllerRef
+    fun shoppingListDataController(): DataController<ShoppingList>
+
+
+    @Reuse("shoppingListDataController")
     @GET("/shoppinglists/{listId}/{storeId}")
     fun getShoppingList(@Path("listId") @DQuery("id") shoppingListId: String,
                         @Path("storeId") @DQuery("storeId") storeId: String,
                         dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
 
-    @Reuse("getShoppingList")
+    @Reuse("shoppingListDataController")
     fun getShoppingListWithError(@DQuery("id") shoppingListId: String,
                                  @DQuery("storeId") storeId: String,
                                  dataControllerCallback: DataController.DataControllerCallback<ShoppingList>,
@@ -28,9 +34,10 @@ interface ShoppingListApi {
             : DataControllerRequest<ShoppingList>
 
     @Targets
-    @Reuse("getShoppingList")
+    @Reuse("shoppingListDataController")
     @Memory
     fun getShoppingListFromMemory(dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
+
 
 }

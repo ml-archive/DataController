@@ -19,7 +19,7 @@ import javax.lang.model.type.TypeMirror
  */
 abstract class BaseDefinition : TypeDefinition {
 
-    val managerDataController: DataControllerProcessorManager
+    val manager: DataControllerProcessorManager
 
     var elementClassName: ClassName? = null
     var elementTypeName: TypeName? = null
@@ -35,9 +35,9 @@ abstract class BaseDefinition : TypeDefinition {
     var valid = true
 
     constructor(element: ExecutableElement, dataControllerProcessorManager: DataControllerProcessorManager) {
-        this.managerDataController = dataControllerProcessorManager
+        this.manager = dataControllerProcessorManager
         this.element = element
-        packageName = managerDataController.elements.getPackageOf(element)?.qualifiedName?.toString() ?: ""
+        packageName = manager.elements.getPackageOf(element)?.qualifiedName?.toString() ?: ""
         elementName = element.simpleName.toString()
 
         try {
@@ -56,9 +56,9 @@ abstract class BaseDefinition : TypeDefinition {
     }
 
     constructor(element: Element, dataControllerProcessorManager: DataControllerProcessorManager) {
-        this.managerDataController = dataControllerProcessorManager
+        this.manager = dataControllerProcessorManager
         this.element = element
-        packageName = managerDataController.elements.getPackageOf(element)?.qualifiedName?.toString() ?: ""
+        packageName = manager.elements.getPackageOf(element)?.qualifiedName?.toString() ?: ""
         try {
             val typeMirror: TypeMirror
             if (element is ExecutableElement) {
@@ -71,8 +71,8 @@ abstract class BaseDefinition : TypeDefinition {
             val erasedType = dataControllerProcessorManager.typeUtils.erasure(typeMirror)
             erasedTypeName = TypeName.get(erasedType)
         } catch (i: IllegalArgumentException) {
-            managerDataController.logError("Found illegal type: ${element.asType()} for ${element.simpleName}")
-            managerDataController.logError("Exception here: $i")
+            manager.logError("Found illegal type: ${element.asType()} for ${element.simpleName}")
+            manager.logError("Exception here: $i")
         }
 
         elementName = element.simpleName.toString()
@@ -86,18 +86,21 @@ abstract class BaseDefinition : TypeDefinition {
     }
 
     constructor(element: TypeElement, dataControllerProcessorManager: DataControllerProcessorManager) {
-        this.managerDataController = dataControllerProcessorManager
+        this.manager = dataControllerProcessorManager
         this.typeElement = element
         this.element = element
         elementClassName = ClassName.get(typeElement)
         elementTypeName = element.asType().typeName
         elementName = element.simpleName.toString()
-        packageName = managerDataController.elements.getPackageOf(element)?.qualifiedName?.toString() ?: ""
+        packageName = manager.elements.getPackageOf(element)?.qualifiedName?.toString() ?: ""
     }
+
+    val executableElement: ExecutableElement
+        get() = element as ExecutableElement
 
     protected open fun getElementClassName(element: Element?): ClassName? {
         try {
-            return ElementUtility.getClassName(element?.asType().toString(), managerDataController)
+            return ElementUtility.getClassName(element?.asType().toString(), manager)
         } catch (e: Exception) {
             return null
         }
@@ -150,13 +153,13 @@ abstract class BaseDefinition : TypeDefinition {
         var success = false
         try {
             javaFile(packageName) { typeSpec }
-                    .writeTo(managerDataController.processingEnvironment.filer)
+                    .writeTo(manager.processingEnvironment.filer)
             success = true
         } catch (e: IOException) {
             // ignored
         } catch (i: IllegalStateException) {
-            managerDataController.logError(BaseDefinition::class, "Found error for class:$elementName")
-            managerDataController.logError(BaseDefinition::class, i.message)
+            manager.logError(BaseDefinition::class, "Found error for class:$elementName")
+            manager.logError(BaseDefinition::class, i.message)
         }
 
         return success

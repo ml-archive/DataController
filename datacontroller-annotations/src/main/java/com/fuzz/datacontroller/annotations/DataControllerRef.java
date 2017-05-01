@@ -1,0 +1,16 @@
+package com.fuzz.datacontroller.annotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Description: Specifes a method to return a generated data controller.
+ * This is useful for customization. The name of method must match the name of data controller.
+ */
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface DataControllerRef {
+
+}
