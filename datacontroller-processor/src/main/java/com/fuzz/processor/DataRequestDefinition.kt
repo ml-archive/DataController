@@ -32,6 +32,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var hasMemoryAnnotation = false
     var hasDBAnnotation = false
 
+    var isSync = false
+
     val params: List<DataRequestParamDefinition>
 
     var dataType: ClassName? = null
@@ -85,17 +87,30 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         }
 
         // needs a proper annotation otherwise we throw it away.
-        if (!hasSourceAnnotations && !reuse && !isRef) {
+        if (!hasSourceAnnotations && !isRef && !reuse) {
             manager.logError(DataRequestDefinition::class, "The method $elementName must " +
                     "specify or target at least one source. Add an annotation to specify which to target.")
         } else {
 
+            // if none assume we want all
+            if (!hasSourceAnnotations) {
+                network = true
+                db = true
+                memory = true
+            }
+
             val returnType = executableElement.returnType.typeName
             validateReturnType(returnType)
-            (returnType as ParameterizedTypeName).let {
-
-                val typeParameters = it.typeArguments
+            if (returnType is ParameterizedTypeName) {
+                val typeParameters = returnType.typeArguments
                 dataType = typeParameters[0].toTypeElement().toClassName()
+            } else {
+                isSync = true
+                dataType = returnType.toTypeElement().toClassName()
+
+                if (!reuse) {
+                    manager.logError(DataRequestDefinition::class, "Synchronous requests must reuse another $DATACONTROLLER")
+                }
             }
         }
 
@@ -109,7 +124,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         get() = hasDBAnnotation || hasMemoryAnnotation || hasNetworkAnnotation
 
     private fun validateReturnType(returnType: TypeName) {
-        if (returnType !is ParameterizedTypeName ||
+        if (returnType is ParameterizedTypeName &&
                 (returnType.rawType != DATACONTROLLER_REQUEST && returnType.rawType != DATACONTROLLER)) {
             manager.logError(DataRequestDefinition::class, "Invalid return type found $returnType")
         }
@@ -207,6 +222,22 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             annotation(Override::class)
             if (isRef) {
                 `return`(reuseMethodName)
+            } else if (isSync) {
+                var sourceParams = "memoryParams"
+                if (db && !memory) {
+                    sourceParams = "diskParams"
+                }
+                statement("\$T storage = $controllerName\n\t.getDataSource(\$T.$sourceParams())\n\t.getStoredData()",
+                        dataType, DATA_SOURCE_PARAMS)
+
+                // memory is always first, followed by db
+                if (db && memory) {
+                    `if`("storage == null") {
+                        statement("storage = $controllerName\n\t.getDataSource(\$T.diskParams())\n\t.getStoredData()",
+                                DATA_SOURCE_PARAMS)
+                    }.end()
+                }
+                `return`("storage")
             } else {
 
                 statement("\$T request = $controllerName.request()",

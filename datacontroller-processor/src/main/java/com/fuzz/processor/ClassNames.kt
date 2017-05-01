@@ -10,6 +10,7 @@ val DATACONTROLLER_REQUEST = ClassName.get(package_name, "DataControllerRequest"
 
 val DATACONTROLLER_REQUEST_BUILDER = ClassName.get(package_name, "DataControllerRequest.Builder")
 
+val DATACONTROLLER_RESPONSE = ClassName.get(package_name, "DataControllerResponse")
 
 val DATACONTROLLER = ClassName.get(package_name, "DataController")
 

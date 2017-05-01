@@ -26,18 +26,12 @@ interface ShoppingListApi {
                         dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
 
-    @Reuse("shoppingListDataController")
-    fun getShoppingListWithError(@DQuery("id") shoppingListId: String,
-                                 @DQuery("storeId") storeId: String,
-                                 dataControllerCallback: DataController.DataControllerCallback<ShoppingList>,
-                                 errorFilter: DataControllerRequest.ErrorFilter)
-            : DataControllerRequest<ShoppingList>
-
     @Targets
     @Reuse("shoppingListDataController")
     @Memory
     fun getShoppingListFromMemory(dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
 
-
+    @Reuse("shoppingListDataController")
+    fun getShoppingListFromStorage(): ShoppingList
 }
