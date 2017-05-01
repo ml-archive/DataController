@@ -75,7 +75,9 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         } else {
 
             val returnType = executableElement.returnType.typeName
+            validateReturnType(returnType)
             (returnType as ParameterizedTypeName).let {
+
                 val typeParameters = it.typeArguments
                 dataType = typeParameters[0].toTypeElement().toClassName()
             }
@@ -87,6 +89,12 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     }
 
+    private fun validateReturnType(returnType: TypeName) {
+        if (returnType !is ParameterizedTypeName || returnType.rawType != DATACONTROLLER_REQUEST) {
+            managerDataController.logError(DataRequestDefinition::class, "Invalid return type found $returnType")
+        }
+    }
+
     fun evaluateReuse(reqDefinitions: MutableList<DataRequestDefinition>) {
         if (reuse) {
             val def = reqDefinitions.find { it.controllerName == reuseMethodName }
@@ -96,7 +104,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             } else {
                 if (def.dataType != dataType) {
                     managerDataController.logError(DataRequestDefinition::class,
-                            "The referenced $reuseMethodName must match data types. found ${def.dataType} for referenced.")
+                            "The referenced $reuseMethodName must match $dataType. found ${def.dataType}.")
                 } else {
                     network = def.network
                     db = def.db

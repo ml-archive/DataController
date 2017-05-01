@@ -32,4 +32,5 @@ interface ShoppingListApi {
     @Memory
     fun getShoppingListFromMemory(dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
+
 }
