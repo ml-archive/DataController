@@ -24,7 +24,6 @@ interface ShoppingListApi {
     @DataControllerRef
     fun shoppingListDataController(): DataController<ShoppingList>
 
-
     @Reuse("shoppingListDataController")
     @GET("/shoppinglists/{listId}/{storeId}")
     fun getShoppingList(@Path("listId") @DQuery("id") shoppingListId: String,

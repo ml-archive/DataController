@@ -196,12 +196,17 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                         sharedPrefsDefinition.preferenceDelegateType = def.sharedPrefsDefinition.preferenceDelegateType
                     }
                     sharedPrefsDefinition.preferenceDelegateName = def.sharedPrefsDefinition.preferenceDelegateName
+                    refInConstructor = def.refInConstructor
                 }
             }
         }
 
         if (sharedPrefsDefinition.enabled && dbDefinition.enabled) {
             manager.logError(DataRequestDefinition::class, "Cannot mix and match shared preferences and db references. Choose one for storage.")
+        }
+
+        if (refInConstructor && !targets && hasSourceAnnotations) {
+            manager.logError(DataRequestDefinition::class, "Specifying sources for already constructed $DATACONTROLLER is not allowed. ($elementName)")
         }
     }
 
@@ -242,9 +247,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 }
             } else {
                 addParameter(param(ParameterizedTypeName.get(DataController::class.className, dataType), controllerName).build())
-                code {
-                    add("this.$controllerName = $controllerName")
-                }
+                statement("this.$controllerName = $controllerName")
             }
         }
     }
