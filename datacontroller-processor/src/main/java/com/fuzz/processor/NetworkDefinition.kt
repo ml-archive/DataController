@@ -11,14 +11,14 @@ import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.TypeName
-import javax.lang.model.element.ExecutableElement
+import javax.lang.model.element.Element
 import javax.lang.model.type.MirroredTypeException
 
 /**
  * Description:
  */
-class NetworkDefinition(executableElement: ExecutableElement, processorManager: DataControllerProcessorManager)
-    : BaseDefinition(executableElement, processorManager) {
+class NetworkDefinition(element: Element, processorManager: DataControllerProcessorManager)
+    : BaseDefinition(element, processorManager) {
 
     var responseHandler = ClassName.OBJECT
     var errorConverter = ClassName.OBJECT
@@ -28,7 +28,7 @@ class NetworkDefinition(executableElement: ExecutableElement, processorManager: 
     var hasRetrofit = false
 
     init {
-        network = executableElement.annotation<Network>()?.let {
+        network = element.annotation<Network>()?.let {
             hasNetworkAnnotation = true
             try {
                 it.responseHandler
@@ -42,7 +42,7 @@ class NetworkDefinition(executableElement: ExecutableElement, processorManager: 
             }
         } != null
 
-        executableElement.annotationMirrors.forEach {
+        element.annotationMirrors.forEach {
             val typeName = it.annotationType.typeName
             if (retrofitMethodSet.contains(typeName)) {
                 hasRetrofit = true

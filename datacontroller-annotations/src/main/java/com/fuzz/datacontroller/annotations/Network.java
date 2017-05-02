@@ -7,9 +7,11 @@ import java.lang.annotation.Target;
 
 /**
  * Description: Used to define {@link DataControllerRef} with network component.
+ * If specified in a type that contains {@link DataDefinition}, the {@link #responseHandler()} and {@link #errorConverter()}
+ * are the global defaults when network is requested.
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface Network {
 
     /**

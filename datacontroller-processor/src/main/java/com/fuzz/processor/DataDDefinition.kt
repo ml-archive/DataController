@@ -19,6 +19,8 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
     val hasNetworkApi: Boolean
     val hasSharedPreferences: Boolean
 
+    val networkDefinition = NetworkDefinition(typeElement, manager)
+
     init {
         setOutputClassName("_Def")
         val members = typeElement.enclosedElements
@@ -36,7 +38,19 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
             manager.logError(DataDDefinition::class, "Interface methods in a DataDefinition must have unique names")
         }
 
-        reqDefinitions.forEach { it.evaluateReuse(reqDefinitions) }
+        reqDefinitions.forEach {
+            if (it.networkDefinition.network) {
+                // override non specified values
+                if (networkDefinition.responseHandler != ClassName.OBJECT && it.networkDefinition.responseHandler == ClassName.OBJECT) {
+                    it.networkDefinition.responseHandler = networkDefinition.responseHandler
+                }
+                if (networkDefinition.errorConverter != ClassName.OBJECT && it.networkDefinition.errorConverter == ClassName.OBJECT) {
+                    it.networkDefinition.errorConverter = networkDefinition.errorConverter
+                }
+            }
+
+            it.evaluateReuse(reqDefinitions)
+        }
 
         hasNetworkApi = reqDefinitions.find { it.network } != null
         hasSharedPreferences = reqDefinitions.find { it.sharedPrefs } != null
