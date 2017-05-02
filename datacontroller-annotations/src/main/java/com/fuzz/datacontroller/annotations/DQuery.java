@@ -12,7 +12,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 public @interface DQuery {
     /**
-     * @return The special
+     * @return The value that is the column name for which you want to retrieve data from. Must match
+     * type of passed object, otherwise will not work.
      */
     String value() default "";
 }

@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 dependencies {
-    compile project(':datacontroller')
+    compile project("${datacontroller_project_prefix}datacontroller")
     compile 'com.squareup.retrofit2:retrofit:2.2.0'
 }
 
