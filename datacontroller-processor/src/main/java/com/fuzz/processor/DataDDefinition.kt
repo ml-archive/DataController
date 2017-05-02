@@ -31,6 +31,11 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
             }
         }
 
+        // one of the methods is has same name. enforce unique method name restriction
+        if (reqDefinitions.distinctBy { it.elementName }.size != reqDefinitions.size) {
+            manager.logError(DataDDefinition::class, "Interface methods in a DataDefinition must have unique names")
+        }
+
         reqDefinitions.forEach { it.evaluateReuse(reqDefinitions) }
 
         hasNetworkApi = reqDefinitions.find { it.network } != null

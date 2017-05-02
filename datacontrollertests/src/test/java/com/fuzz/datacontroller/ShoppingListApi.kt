@@ -1,9 +1,13 @@
 package com.fuzz.datacontroller
 
 import com.fuzz.datacontroller.annotations.*
+import com.fuzz.datacontroller.retrofit.RetrofitSource
 import com.fuzz.datacontroller.sharedpreferences.PreferenceDelegate
+import com.fuzz.datacontroller.source.DataSource
 import com.raizlabs.android.dbflow.annotation.PrimaryKey
 import com.raizlabs.android.dbflow.annotation.Table
+import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 
@@ -15,7 +19,7 @@ interface ShoppingListApi {
 
     @DB
     @Memory
-    @Network
+    @Network(responseHandler = CustomResponseHandler::class, errorConverter = CustomErrorConverter::class)
     @DataControllerRef
     fun shoppingListDataController(): DataController<ShoppingList>
 
@@ -48,5 +52,26 @@ class PrefDelegate : PreferenceDelegate<ShoppingList> {
 
     override fun getValue(sharedPreferences: android.content.SharedPreferences): ShoppingList? {
         return null
+    }
+}
+
+class CustomResponseHandler : RetrofitSource.ResponseHandler<ShoppingList> {
+    override fun handleResponse(retrofitSource: RetrofitSource<ShoppingList>?, sourceParams: DataSource.SourceParams?,
+                                call: Call<ShoppingList>?, response: Response<ShoppingList>?,
+                                success: DataController.Success<ShoppingList>?, error: DataController.Error?, currentRetryCount: Int) {
+
+    }
+
+    override fun handleFailure(retrofitSource: RetrofitSource<ShoppingList>?, sourceParams: DataSource.SourceParams?,
+                               success: DataController.Success<ShoppingList>?, error: DataController.Error?,
+                               dataResponseError: DataResponseError?, currentRetryCount: Int) {
+
+    }
+}
+
+class CustomErrorConverter<T> : RetrofitSource.ResponseErrorConverter<T> {
+    override fun convertFromResponse(response: Response<T>): DataResponseError {
+        return DataResponseError.networkErrorOf(response.message(), response.code())
+                .userFacingMessage(response.message()).build()
     }
 }

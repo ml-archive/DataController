@@ -27,15 +27,14 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var preferenceDelegateType: ClassName? = null
 
     var network = false
+    var networkDefinition = NetworkDefinition(executableElement, manager)
+
     var reuse = false
     var reuseMethodName = ""
     var targets = false
 
     var isRef = false
 
-    var hasRetrofit = false
-
-    var hasNetworkAnnotation = false
     var hasMemoryAnnotation = false
     var hasDBAnnotation = false
 
@@ -80,17 +79,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             reuseMethodName = it.value
         }
 
-        executableElement.annotationMirrors.forEach {
-            val typeName = it.annotationType.typeName
-            if (retrofitMethodSet.contains(typeName)) {
-                hasRetrofit = true
-                network = true
-                hasNetworkAnnotation = true
-            }
-        }
-
         if (!network) {
-            network = executableElement.annotation<Network>()?.let { hasNetworkAnnotation = true } != null
+            network = networkDefinition.network
         }
 
         params = executableElement.parameters.map { DataRequestParamDefinition(it, manager) }
@@ -138,7 +128,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     val hasSourceAnnotations: Boolean
-        get() = hasDBAnnotation || hasMemoryAnnotation || hasNetworkAnnotation || hasSharedPrefsAnnotation
+        get() = hasDBAnnotation || hasMemoryAnnotation || networkDefinition.hasNetworkAnnotation || hasSharedPrefsAnnotation
 
     private fun validateReturnType(returnType: TypeName) {
         if (returnType is ParameterizedTypeName &&
@@ -211,7 +201,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                             arrayOf<Any?>(SHARED_PREFERENCES_SOURCE, dataType))
                 }
                 if (network) {
-                    builders.add("\n\$T.<\$T>builderInstance().build()" to arrayOf<Any?>(RETROFIT_SOURCE, dataType))
+                    networkDefinition.apply { builders.add(addToConstructor(dataType)) }
                 }
 
                 builders.forEachIndexed { index, (statement, args) ->
@@ -225,7 +215,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     fun TypeSpec.Builder.addToRetrofitInterface() {
-        if (hasRetrofit && (!reuse && network || hasNetworkAnnotation)) {
+        if (networkDefinition.hasRetrofit && (!reuse && network || networkDefinition.hasNetworkAnnotation)) {
             public(ParameterizedTypeName.get(CALL, dataType), elementName) {
                 applyAnnotations()
                 modifiers(abstract)
@@ -236,7 +226,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     fun addServiceCall(codeBlock: CodeBlock.Builder) {
-        codeBlock.add("${if (reuse && !hasNetworkAnnotation) controllerName else elementName}(")
+        codeBlock.add("${if (reuse && !networkDefinition.hasNetworkAnnotation) controllerName else elementName}(")
         codeBlock.add(params.filter { it.isQuery }.joinToString { it.paramName })
         codeBlock.add(")")
     }
@@ -277,16 +267,9 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 statement("\$T request = $controllerName.request()",
                         ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, dataType))
                 specialParams.forEach { it.apply { addSpecialCode() } }
-                if (hasRetrofit && network && (hasNetworkAnnotation || !targets)) {
-                    code {
-                        add("request.targetSource(\$T.networkParams(),", DATA_SOURCE_PARAMS)
-                        indent()
-                        add("\n new \$T<>(service.", RETROFIT_SOURCE_PARAMS)
-                        addServiceCall(this)
-                        add("));\n")
-                        unindent()
-                    }
-                }
+
+                networkDefinition.apply { addToType(params, controllerName, reuse, targets) }
+
                 if (db && (hasDBAnnotation || !targets)) {
                     code {
                         add("request.targetSource(\$T.diskParams(),", DATA_SOURCE_PARAMS)
@@ -314,9 +297,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     if (hasMemoryAnnotation) {
                         statement("request.addRequestSourceTarget(\$T.memoryParams())", DATA_SOURCE_PARAMS);
                     }
-                    if (hasNetworkAnnotation) {
-                        statement("request.addRequestSourceTarget(\$T.networkParams())", DATA_SOURCE_PARAMS);
-                    }
+                    networkDefinition.apply { addIfTargets() }
                 }
                 `return`("request.build()")
             }

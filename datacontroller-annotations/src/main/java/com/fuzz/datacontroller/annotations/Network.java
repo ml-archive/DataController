@@ -11,4 +11,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
 public @interface Network {
+
+    /**
+     * @return An instance to get invoked via default constructor to handle responses.
+     */
+    Class<?> responseHandler() default Object.class;
+
+    /**
+     * @return An instance to get invoked via default constructor to handle error conversions.
+     */
+    Class<?> errorConverter() default Object.class;
 }

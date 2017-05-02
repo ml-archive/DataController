@@ -27,6 +27,11 @@ public class RetrofitSource<TResponse> implements DataSourceCaller<TResponse> {
         return new DataSource.Builder<>(source);
     }
 
+    public static <T> DataSource.Builder<T> builderInstance(ResponseHandler<T> responseHandler) {
+        RetrofitSource<T> source = new RetrofitSource<>(responseHandler);
+        return new DataSource.Builder<>(source);
+    }
+
     public static <T> DataSource.Builder<T> builderInstance(ResponseErrorConverter<T> errorConverter) {
         RetrofitSource<T> source = new RetrofitSource<>(errorConverter);
         return new DataSource.Builder<>(source);
@@ -71,6 +76,11 @@ public class RetrofitSource<TResponse> implements DataSourceCaller<TResponse> {
         this.responseErrorConverter = responseErrorConverter;
     }
 
+    public RetrofitSource(ResponseHandler<TResponse> responseHandler) {
+        this.responseHandler = responseHandler;
+        this.responseErrorConverter = new DefaultResponseErrorConverter<>();
+    }
+
     public RetrofitSource() {
         this.responseErrorConverter = new DefaultResponseErrorConverter<>();
         this.responseHandler = new DefaultResponseHandler<>();
@@ -99,20 +109,20 @@ public class RetrofitSource<TResponse> implements DataSourceCaller<TResponse> {
                 @Override
                 public void onResponse(Call<TResponse> call, Response<TResponse> response) {
                     responseHandler.handleResponse(RetrofitSource.this,
-                        sourceParams, call, response, success, error, currentRetryCount);
+                            sourceParams, call, response, success, error, currentRetryCount);
                 }
 
                 @Override
                 public void onFailure(Call<TResponse> call, Throwable t) {
                     responseHandler.handleFailure(RetrofitSource.this,
-                        sourceParams, success, error,
-                        new DataResponseError.Builder(DataSource.SourceType.NETWORK, t).build(),
-                        currentRetryCount);
+                            sourceParams, success, error,
+                            new DataResponseError.Builder(DataSource.SourceType.NETWORK, t).build(),
+                            currentRetryCount);
                 }
             });
         } else {
             throw new IllegalStateException("No call found for this RetrofitDataSource. Please provide one " +
-                "in the constructor or through ApiSourceParams");
+                    "in the constructor or through ApiSourceParams");
         }
     }
 
@@ -163,11 +173,11 @@ public class RetrofitSource<TResponse> implements DataSourceCaller<TResponse> {
                     url = builder.build();
                 }
                 success.onSuccess(new DataControllerResponse<>(response.body(),
-                    DataSource.SourceType.NETWORK, url.toString()));
+                        DataSource.SourceType.NETWORK, url.toString()));
             } else {
                 handleFailure(retrofitSource, sourceParams, success, error,
-                    retrofitSource.responseErrorConverter.convertFromResponse(response),
-                    currentRetryCount);
+                        retrofitSource.responseErrorConverter.convertFromResponse(response),
+                        currentRetryCount);
             }
         }
 
@@ -199,8 +209,8 @@ public class RetrofitSource<TResponse> implements DataSourceCaller<TResponse> {
         @Override
         public DataResponseError convertFromResponse(Response<TResponse> response) {
             return new DataResponseError.Builder(DataSource.SourceType.NETWORK, response.message())
-                .status(response.code())
-                .userFacingMessage(response.message()).build();
+                    .status(response.code())
+                    .userFacingMessage(response.message()).build();
         }
     }
 
