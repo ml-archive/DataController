@@ -2,6 +2,7 @@ package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.DQuery
 import com.fuzz.datacontroller.annotations.ParamData
+import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.dataControllerAnnotation
 import com.grosner.kpoet.param
@@ -20,20 +21,23 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
     var paramName = ""
 
     var isParamData = false
+    var targetedSourceForParam = DataSource.SourceType.NETWORK
 
     init {
         paramName = elementName
         variable.annotation<DQuery>()?.let {
             paramName = it.value
         }
-        isParamData = variable.annotation<ParamData>() != null
+        isParamData = variable.annotation<ParamData>()?.let {
+            targetedSourceForParam = it.targetedSource
+        } != null
     }
 
     /**
      * If true, it is used in query and network requests, otherwise used as special kind of param.
      */
     val isQuery: Boolean
-        get() = (!isCallback && !isErrorFilter)
+        get() = (!isCallback && !isErrorFilter && !isParamData)
 
     val isCallback: Boolean
         get() {

@@ -1,1 +1,1 @@
-include ':datacontroller', ':datacontrollertests', ':datacontroller-dbflow', ':datacontroller-okhttp', ':datacontroller-annotations', ':datacontroller-retrofit', ':datacontroller-processor', ':datacontroller-sharedpreferences'
+include ':datacontroller', ':datacontrollertests', ':datacontroller-dbflow', ':datacontroller-okhttp', ':datacontroller-retrofit', ':datacontroller-processor', ':datacontroller-sharedpreferences'

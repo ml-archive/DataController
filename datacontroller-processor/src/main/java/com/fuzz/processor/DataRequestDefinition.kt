@@ -1,6 +1,7 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.*
+import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.dataControllerAnnotation
 import com.fuzz.processor.utils.toClassName
@@ -18,15 +19,11 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     var memory = false
 
-    var db = false
-    var singleDb = true
-    var async = false
-
     var sharedPrefs = false
     var hasSharedPrefsAnnotation = false
     var preferenceDelegateType: ClassName? = null
 
-    var network = false
+    var dbDefinition = DatabaseDefinition(executableElement, manager)
     var networkDefinition = NetworkDefinition(executableElement, manager)
 
     var reuse = false
@@ -36,7 +33,6 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var isRef = false
 
     var hasMemoryAnnotation = false
-    var hasDBAnnotation = false
 
     var isSync = false
 
@@ -65,7 +61,6 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     "Cannot specify both ${Targets::class} and ${DataControllerRef::class}")
         }
 
-        db = executableElement.annotation<DB>()?.let { hasDBAnnotation = true } != null
         memory = executableElement.annotation<Memory>()?.let { hasMemoryAnnotation = true } != null
 
         sharedPrefs = executableElement.annotation<SharedPreferences>()?.let {
@@ -80,10 +75,6 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         executableElement.annotation<Reuse>()?.let {
             reuse = true
             reuseMethodName = it.value
-        }
-
-        if (!network) {
-            network = networkDefinition.network
         }
 
         params = executableElement.parameters.map { DataRequestParamDefinition(it, manager) }
@@ -104,8 +95,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
             // if none assume we want all
             if (!hasSourceAnnotations) {
-                network = true
-                db = true
+                networkDefinition.network = true
+                dbDefinition.db = true
                 memory = true
             }
 
@@ -114,7 +105,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             if (returnType is ParameterizedTypeName) {
                 isSync = returnType.rawType != DATACONTROLLER_REQUEST
 
-                singleDb = !returnType.rawType.toTypeElement().implementsClass(List::class)
+                dbDefinition.singleDb = !returnType.rawType.toTypeElement().implementsClass(List::class)
 
                 val typeParameters = returnType.typeArguments
                 dataType = typeParameters[0]
@@ -144,14 +135,37 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             }
         }
 
-        // find special param types and keep track here.
-        params.filter { it.isCallback }.getOrNull(0)?.let { specialParams.add(it) }
-        params.filter { it.isErrorFilter }.getOrNull(0)?.let { specialParams.add(it) }
-        params.filter { it.isParamData }.getOrNull(0)?.let { specialParams.add(it) }
+        var hasErrorFilter = false
+        val paramDataMap = mutableMapOf<DataSource.SourceType, Boolean>()
+        params.forEach {
+            if (it.isCallback) {
+                specialParams.add(it)
+            }
+
+            if (it.isErrorFilter) {
+                if (hasErrorFilter) {
+                    manager.logError(DataRequestDefinition::class, "Cannot specify more than one $ERROR_FILTER.")
+                } else {
+                    hasErrorFilter = true
+                    specialParams.add(it)
+                }
+            }
+
+            if (it.isParamData) {
+                if (paramDataMap[it.targetedSourceForParam] != null) {
+                    manager.logError(DataRequestDefinition::class,
+                            "Cannot specify more than one ${ParamData::class} for ${it.targetedSourceForParam}")
+                } else {
+                    paramDataMap[it.targetedSourceForParam] = true
+                    specialParams.add(it)
+                }
+            }
+        }
     }
 
     val hasSourceAnnotations: Boolean
-        get() = hasDBAnnotation || hasMemoryAnnotation || networkDefinition.hasNetworkAnnotation || hasSharedPrefsAnnotation
+        get() = dbDefinition.hasDBAnnotation || hasMemoryAnnotation
+                || networkDefinition.hasNetworkAnnotation || hasSharedPrefsAnnotation
 
     private fun validateReturnType(returnType: TypeName) {
         if (returnType is ParameterizedTypeName &&
@@ -179,10 +193,10 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     manager.logError(DataRequestDefinition::class,
                             "The referenced $reuseMethodName must match $dataType. found ${def.dataType}.")
                 } else {
-                    network = def.network
-                    db = def.db
-                    singleDb = def.singleDb
-                    async = def.async
+                    networkDefinition.network = def.networkDefinition.network
+                    dbDefinition.db = def.dbDefinition.db
+                    dbDefinition.singleDb = def.dbDefinition.singleDb
+                    dbDefinition.async = def.dbDefinition.async
                     memory = def.memory
                     sharedPrefs = def.sharedPrefs
                     if (preferenceDelegateType == null) {
@@ -193,7 +207,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             }
         }
 
-        if (sharedPrefs && db) {
+        if (sharedPrefs && dbDefinition.db) {
             manager.logError(DataRequestDefinition::class, "Cannot mix and match shared preferences and db references. Choose one for storage.")
         }
     }
@@ -215,15 +229,15 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 if (memory) {
                     builders.add("\n\$T.<\$T>builderInstance().build()" to arrayOf<Any?>(MEMORY_SOURCE, dataType))
                 }
-                if (db) {
-                    builders.add("\n\$T.<\$T>builderInstance(\$T.class, ${async.L}).build()" to
-                            arrayOf<Any?>(if (singleDb) DBFLOW_SINGLE_SOURCE else DBFLOW_LIST_SOURCE, dataType, dataType))
+                if (dbDefinition.db) {
+                    dbDefinition.apply { builders.add(addToConstructor(dataType)) }
                 }
+
                 if (sharedPrefs) {
                     builders.add("\n\$T.<\$T>builderInstance(sharedPreferences, $preferenceDelegateName).build()" to
                             arrayOf<Any?>(SHARED_PREFERENCES_SOURCE, dataType))
                 }
-                if (network) {
+                if (networkDefinition.network) {
                     networkDefinition.apply { builders.add(addToConstructor(dataType)) }
                 }
 
@@ -238,7 +252,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     fun TypeSpec.Builder.addToRetrofitInterface() {
-        if (networkDefinition.hasRetrofit && (!reuse && network || networkDefinition.hasNetworkAnnotation)) {
+        if (networkDefinition.hasRetrofit && (!reuse && networkDefinition.network || networkDefinition.hasNetworkAnnotation)) {
             public(ParameterizedTypeName.get(CALL, dataType), elementName) {
                 applyAnnotations()
                 modifiers(abstract)
@@ -246,12 +260,6 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 this
             }
         }
-    }
-
-    fun addServiceCall(codeBlock: CodeBlock.Builder) {
-        codeBlock.add("${if (reuse && !networkDefinition.hasNetworkAnnotation) controllerName else elementName}(")
-        codeBlock.add(params.filter { it.isQuery }.joinToString { it.paramName })
-        codeBlock.add(")")
     }
 
     override fun TypeSpec.Builder.addToType() {
@@ -271,14 +279,14 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 `return`(reuseMethodName)
             } else if (isSync) {
                 var sourceParams = "memoryParams"
-                if (db && !memory) {
+                if (dbDefinition.db && !memory) {
                     sourceParams = "diskParams"
                 }
                 statement("\$T storage = $controllerName\n\t.getDataSource(\$T.$sourceParams())\n\t.getStoredData()",
                         dataType, DATA_SOURCE_PARAMS)
 
                 // memory is always first, followed by db
-                if (db && memory) {
+                if (dbDefinition.db && memory) {
                     `if`("storage == null") {
                         statement("storage = $controllerName\n\t.getDataSource(\$T.diskParams())\n\t.getStoredData()",
                                 DATA_SOURCE_PARAMS)
@@ -291,30 +299,14 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                         ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, dataType))
                 specialParams.forEach { it.apply { addSpecialCode() } }
 
-                networkDefinition.apply { addToType(params, controllerName, reuse, targets) }
+                networkDefinition.apply { addToType(params, dataType, controllerName, reuse, targets, specialParams) }
 
-                if (db && (hasDBAnnotation || !targets)) {
-                    code {
-                        add("request.targetSource(\$T.diskParams(),", DATA_SOURCE_PARAMS)
-                        indent()
-                        add("\nnew \$T(\n\$T.select().from(\$T.class).where()",
-                                DBFLOW_PARAMS, SQLITE, dataType)
-                        indent()
-                        params.forEach {
-                            if (it.isQuery) {
-                                add("\n.and(\$T.${it.paramName}.eq(${it.paramName}))",
-                                        ClassName.get(classDataType!!.packageName(), "${classDataType!!.simpleName()}_Table"))
-                            }
-                        }
-                        unindent()
-
-                        add("));\n")
-                        unindent()
-                    }
-                }
+                dbDefinition.apply { addToType(params, dataType, classDataType!!, controllerName, reuse, targets, specialParams) }
 
                 if (targets) {
-                    if (hasDBAnnotation || hasSharedPrefsAnnotation) {
+                    dbDefinition.apply { addIfTargets() }
+
+                    if (hasSharedPrefsAnnotation) {
                         statement("request.addRequestSourceTarget(\$T.diskParams())", DATA_SOURCE_PARAMS);
                     }
                     if (hasMemoryAnnotation) {

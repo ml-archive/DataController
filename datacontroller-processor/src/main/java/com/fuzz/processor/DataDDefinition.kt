@@ -52,7 +52,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
             it.evaluateReuse(reqDefinitions)
         }
 
-        hasNetworkApi = reqDefinitions.find { it.network } != null
+        hasNetworkApi = reqDefinitions.find { it.networkDefinition.network } != null
         hasSharedPreferences = reqDefinitions.find { it.sharedPrefs } != null
     }
 

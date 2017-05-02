@@ -1,16 +1,14 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.Network
+import com.fuzz.datacontroller.source.DataSource.SourceType.NETWORK
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.toClassName
 import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.code
 import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
-import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.CodeBlock
-import com.squareup.javapoet.MethodSpec
-import com.squareup.javapoet.TypeName
+import com.squareup.javapoet.*
 import javax.lang.model.element.Element
 import javax.lang.model.type.MirroredTypeException
 
@@ -74,28 +72,34 @@ class NetworkDefinition(element: Element, processorManager: DataControllerProces
     }
 
     fun MethodSpec.Builder.addToType(params: List<DataRequestParamDefinition>,
+                                     dataType: TypeName?,
                                      controllerName: String, reuse: Boolean,
-                                     targets: Boolean) {
+                                     targets: Boolean, specialParams: List<DataRequestParamDefinition>) {
         if (hasRetrofit && network && (hasNetworkAnnotation || !targets)) {
             this.code {
-                add("request.targetSource(\$T.networkParams(),", DATA_SOURCE_PARAMS)
-                indent()
-                add("\n new \$T<>(service.", RETROFIT_SOURCE_PARAMS)
-                addServiceCall(params, controllerName, reuse, this)
-                add("));\n")
-                unindent()
+                val param = specialParams.filter { it.isParamData && it.targetedSourceForParam == NETWORK }.getOrNull(0)
+                val paramsName = "params$NETWORK"
+
+                add("\$T $paramsName = new \$T<>(service.", ParameterizedTypeName.get(RETROFIT_SOURCE_PARAMS, dataType), RETROFIT_SOURCE_PARAMS)
+                addServiceCall(params, controllerName, reuse).add(");\n")
+                if (param != null) {
+                    statement("$paramsName.data = ${param.elementName}")
+                }
+                statement("request.targetSource(\$T.networkParams(), $paramsName)", DATA_SOURCE_PARAMS)
             }
         }
     }
 
-    fun addServiceCall(params: List<DataRequestParamDefinition>,
-                       controllerName: String, reuse: Boolean, codeBlock: CodeBlock.Builder) {
-        codeBlock.add("${if (reuse && !hasNetworkAnnotation) controllerName else elementName}(")
-        codeBlock.add(params.filter { it.isQuery }.joinToString { it.paramName })
-        codeBlock.add(")")
+    fun CodeBlock.Builder.addServiceCall(params: List<DataRequestParamDefinition>,
+                                         controllerName: String, reuse: Boolean) = apply {
+        add("${if (reuse && !hasNetworkAnnotation) controllerName else elementName}(")
+        add(params.filter { it.isQuery }.joinToString { it.paramName })
+        add(")")
     }
 
     fun MethodSpec.Builder.addIfTargets() {
-        statement("request.addRequestSourceTarget(\$T.networkParams())", DATA_SOURCE_PARAMS);
+        if (hasNetworkAnnotation) {
+            statement("request.addRequestSourceTarget(\$T.networkParams())", DATA_SOURCE_PARAMS);
+        }
     }
 }
