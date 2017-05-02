@@ -28,6 +28,7 @@ interface ShoppingListApi {
     @GET("/shoppinglists/{listId}/{storeId}")
     fun getShoppingList(@Path("listId") @DQuery("id") shoppingListId: String,
                         @Path("storeId") @DQuery("storeId") storeId: String,
+                        sourceParams: DataSource.SourceParams,
                         dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
 

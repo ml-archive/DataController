@@ -137,6 +137,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
         var hasErrorFilter = false
         val paramDataMap = mutableMapOf<DataSource.SourceType, Boolean>()
+        var hasSourceParams = false
         params.forEach {
             if (it.isCallback) {
                 specialParams.add(it)
@@ -157,6 +158,15 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                             "Cannot specify more than one ${ParamData::class} for ${it.targetedSourceForParam}")
                 } else {
                     paramDataMap[it.targetedSourceForParam] = true
+                    specialParams.add(it)
+                }
+            }
+
+            if (it.isSourceParams) {
+                if (hasSourceParams) {
+                    manager.logError(DataRequestDefinition::class, "Cannot specify more than one $SOURCE_PARAMS.")
+                } else {
+                    hasSourceParams = true
                     specialParams.add(it)
                 }
             }

@@ -31,6 +31,8 @@ val SHARED_PREFERENCES = ClassName.get("android.content", "SharedPreferences")
 
 val DATA_SOURCE_PARAMS = ClassName.get("$package_name.source", "DataSourceContainer", "DataSourceParams")
 
+val SOURCE_PARAMS = ClassName.get("$package_name.source", "DataSource", "SourceParams")
+
 val SOURCE_TYPE = ClassName.get("$package_name.source", "DataSource", "SourceType")
 
 val DBFLOW_PARAMS = ClassName.get("$package_name.dbflow", "BaseDBFlowSource", "DBFlowParams")

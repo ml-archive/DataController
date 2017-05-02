@@ -37,7 +37,7 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
      * If true, it is used in query and network requests, otherwise used as special kind of param.
      */
     val isQuery: Boolean
-        get() = (!isCallback && !isErrorFilter && !isParamData)
+        get() = (!isCallback && !isErrorFilter && !isParamData && !isSourceParams)
 
     val isCallback: Boolean
         get() {
@@ -48,11 +48,16 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
     val isErrorFilter: Boolean
         get() = variable.asType().typeName == ERROR_FILTER
 
+    val isSourceParams: Boolean
+        get() = variable.asType().typeName == SOURCE_PARAMS
+
     fun MethodSpec.Builder.addSpecialCode() {
         if (isCallback) {
             statement("request.register($paramName)")
         } else if (isErrorFilter) {
             statement("request.errorFilter($paramName)")
+        } else if (isSourceParams) {
+            statement("request.sourceParams($paramName)")
         }
     }
 
