@@ -7,7 +7,10 @@ import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.code
 import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
-import com.squareup.javapoet.*
+import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.CodeBlock
+import com.squareup.javapoet.MethodSpec
+import com.squareup.javapoet.TypeName
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.type.MirroredTypeException
 
@@ -70,11 +73,11 @@ class NetworkDefinition(executableElement: ExecutableElement, processorManager: 
         return returnString to args
     }
 
-    fun TypeSpec.Builder.addToType(params: List<DataRequestParamDefinition>,
-                                   controllerName: String, reuse: Boolean,
-                                   targets: Boolean) {
+    fun MethodSpec.Builder.addToType(params: List<DataRequestParamDefinition>,
+                                     controllerName: String, reuse: Boolean,
+                                     targets: Boolean) {
         if (hasRetrofit && network && (hasNetworkAnnotation || !targets)) {
-            code {
+            this.code {
                 add("request.targetSource(\$T.networkParams(),", DATA_SOURCE_PARAMS)
                 indent()
                 add("\n new \$T<>(service.", RETROFIT_SOURCE_PARAMS)
