@@ -13,4 +13,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface DataControllerRef {
 
+    /**
+     * @return if true, we construct the reference in constructor. We will not build sources
+     * and only allow targeting via {@link Targets}. Otherwise, we throw a compiler error.
+     */
+    boolean inConstructor() default false;
+
 }

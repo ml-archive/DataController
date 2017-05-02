@@ -1,14 +1,12 @@
 package com.fuzz.processor
 
+import com.fuzz.datacontroller.DataController
 import com.fuzz.datacontroller.annotations.DataControllerRef
 import com.fuzz.datacontroller.annotations.ParamData
 import com.fuzz.datacontroller.annotations.Reuse
 import com.fuzz.datacontroller.annotations.Targets
 import com.fuzz.datacontroller.source.DataSource
-import com.fuzz.processor.utils.annotation
-import com.fuzz.processor.utils.dataControllerAnnotation
-import com.fuzz.processor.utils.toClassName
-import com.fuzz.processor.utils.toTypeElement
+import com.fuzz.processor.utils.*
 import com.grosner.kpoet.*
 import com.squareup.javapoet.*
 import javax.lang.model.element.ExecutableElement
@@ -29,6 +27,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var targets = false
 
     var isRef = false
+    var refInConstructor = false
 
     var isSync = false
 
@@ -47,6 +46,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         isRef = executableElement.annotation<DataControllerRef>()?.let {
             controllerName = elementName
             reuseMethodName = elementName
+            refInConstructor = it.inConstructor
         } != null
 
         targets = executableElement.annotation<Targets>() != null
@@ -216,28 +216,35 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     fun MethodSpec.Builder.addToConstructor() {
         if (!reuse) {
-            code {
-                add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
-                val builders = arrayListOf<Pair<String, Array<Any?>>>()
-                if (memoryDefinition.enabled) {
-                    memoryDefinition.apply { builders.add(addToConstructor(dataType)) }
-                }
-                if (dbDefinition.enabled) {
-                    dbDefinition.apply { builders.add(addToConstructor(dataType)) }
-                }
-                if (sharedPrefsDefinition.enabled) {
-                    sharedPrefsDefinition.apply { builders.add(addToConstructor(dataType)) }
-                }
-                if (networkDefinition.enabled) {
-                    networkDefinition.apply { builders.add(addToConstructor(dataType)) }
-                }
+            if (!refInConstructor) {
+                code {
+                    add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
+                    val builders = arrayListOf<Pair<String, Array<Any?>>>()
+                    if (memoryDefinition.enabled) {
+                        memoryDefinition.apply { builders.add(addToConstructor(dataType)) }
+                    }
+                    if (dbDefinition.enabled) {
+                        dbDefinition.apply { builders.add(addToConstructor(dataType)) }
+                    }
+                    if (sharedPrefsDefinition.enabled) {
+                        sharedPrefsDefinition.apply { builders.add(addToConstructor(dataType)) }
+                    }
+                    if (networkDefinition.enabled) {
+                        networkDefinition.apply { builders.add(addToConstructor(dataType)) }
+                    }
 
-                builders.forEachIndexed { index, (statement, args) ->
-                    if (index > 0) add(",")
-                    add(CodeBlock.of(statement, *args))
-                }
+                    builders.forEachIndexed { index, (statement, args) ->
+                        if (index > 0) add(",")
+                        add(CodeBlock.of(statement, *args))
+                    }
 
-                add(");\n")
+                    add(");\n")
+                }
+            } else {
+                addParameter(param(ParameterizedTypeName.get(DataController::class.className, dataType), controllerName).build())
+                code {
+                    add("this.$controllerName = $controllerName")
+                }
             }
         }
     }
