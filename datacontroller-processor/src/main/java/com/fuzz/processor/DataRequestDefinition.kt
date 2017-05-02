@@ -42,7 +42,10 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     val params: List<DataRequestParamDefinition>
 
-    var dataType: ClassName? = null
+    var dataType: TypeName? = null
+
+    // simple representation of class
+    var classDataType: ClassName? = null
 
     var specialParams = arrayListOf<DataRequestParamDefinition>()
 
@@ -109,11 +112,31 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             val returnType = executableElement.returnType.typeName
             validateReturnType(returnType)
             if (returnType is ParameterizedTypeName) {
+                isSync = returnType.rawType != DATACONTROLLER_REQUEST
+
+                singleDb = !returnType.rawType.toTypeElement().implementsClass(List::class)
+
                 val typeParameters = returnType.typeArguments
-                dataType = typeParameters[0].toTypeElement().toClassName()
+                dataType = typeParameters[0]
+
+                dataType?.let { dataType ->
+                    if (dataType is ParameterizedTypeName) {
+                        val simpleType = dataType.typeArguments[0]
+                        if (simpleType is ClassName) {
+                            classDataType = simpleType
+                        }
+                    }
+                }
+                if (classDataType == null && dataType is ClassName) {
+                    classDataType = dataType as ClassName
+                }
+                if (classDataType == null) {
+                    manager.logError(DataRequestDefinition::class, "Invalid return type found $dataType")
+                }
             } else {
                 isSync = true
-                dataType = returnType.toTypeElement().toClassName()
+                dataType = returnType
+                classDataType = dataType.toTypeElement().toClassName()
 
                 if (!reuse) {
                     manager.logError(DataRequestDefinition::class, "Synchronous requests must reuse another $DATACONTROLLER")
@@ -280,7 +303,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                         params.forEach {
                             if (it.isQuery) {
                                 add("\n.and(\$T.${it.paramName}.eq(${it.paramName}))",
-                                        ClassName.get(dataType!!.packageName(), "${dataType!!.simpleName()}_Table"))
+                                        ClassName.get(classDataType!!.packageName(), "${classDataType!!.simpleName()}_Table"))
                             }
                         }
                         unindent()

@@ -7,10 +7,7 @@ import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.code
 import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
-import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.CodeBlock
-import com.squareup.javapoet.MethodSpec
-import com.squareup.javapoet.TypeSpec
+import com.squareup.javapoet.*
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.type.MirroredTypeException
 
@@ -52,7 +49,7 @@ class NetworkDefinition(executableElement: ExecutableElement, processorManager: 
         }
     }
 
-    fun MethodSpec.Builder.addToConstructor(dataType: ClassName?): Pair<String, Array<Any?>> {
+    fun MethodSpec.Builder.addToConstructor(dataType: TypeName?): Pair<String, Array<Any?>> {
         var args = arrayOf<Any?>(RETROFIT_SOURCE, dataType)
         val returnString = buildString {
             append("\n\$T.<\$T>builderInstance(")

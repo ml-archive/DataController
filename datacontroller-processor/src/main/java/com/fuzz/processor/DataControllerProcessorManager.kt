@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 class DataControllerProcessorManager internal constructor(val processingEnvironment: ProcessingEnvironment) : Handler {
 
     companion object {
-        lateinit var managerDataController: DataControllerProcessorManager
+        lateinit var manager: DataControllerProcessorManager
     }
 
 
@@ -24,7 +24,7 @@ class DataControllerProcessorManager internal constructor(val processingEnvironm
     val dataDefinitions = mutableListOf<DataDDefinition>()
 
     init {
-        managerDataController = this
+        manager = this
     }
 
     val messager: Messager = processingEnvironment.messager
