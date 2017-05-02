@@ -36,7 +36,7 @@ interface ShoppingListApi {
     @Reuse("shoppingListDataController")
     fun getShoppingListFromStorage(): ShoppingList?
 
-    @SharedPreferences
+    @SharedPreferences(preferenceDelegate = PrefDelegate::class)
     fun getShoppingListSharedPreferences(dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
             : DataControllerRequest<ShoppingList>
 }

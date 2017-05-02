@@ -8,6 +8,7 @@ import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.*
 import com.squareup.javapoet.*
 import javax.lang.model.element.ExecutableElement
+import javax.lang.model.type.MirroredTypeException
 
 /**
  * Description: Represents a method containing annotations that construct our request methods.
@@ -23,6 +24,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     var sharedPrefs = false
     var hasSharedPrefsAnnotation = false
+    var preferenceDelegateType: ClassName? = null
 
     var network = false
     var reuse = false
@@ -47,6 +49,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     val controllerName: String
 
+    var preferenceDelegateName = "preferenceDelegate_$elementName"
+
     init {
         isRef = executableElement.annotation<DataControllerRef>()?.let {
             controllerName = elementName
@@ -64,6 +68,11 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
         sharedPrefs = executableElement.annotation<SharedPreferences>()?.let {
             hasSharedPrefsAnnotation = true
+            try {
+                it.preferenceDelegate
+            } catch (mte: MirroredTypeException) {
+                preferenceDelegateType = mte.typeMirror.toTypeElement().toClassName()
+            }
         } != null
 
         executableElement.annotation<Reuse>()?.let {
@@ -163,6 +172,10 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     async = def.async
                     memory = def.memory
                     sharedPrefs = def.sharedPrefs
+                    if (preferenceDelegateType == null) {
+                        preferenceDelegateType = def.preferenceDelegateType
+                    }
+                    preferenceDelegateName = def.preferenceDelegateName
                 }
             }
         }
@@ -187,14 +200,18 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
                 val builders = arrayListOf<Pair<String, Array<Any?>>>()
                 if (memory) {
-                    builders.add("\n${controllerName}Provider.<\$T>provideDataSource(\$T.class, \$T.memoryParams())" to arrayOf<Any?>(dataType, dataType, DATA_SOURCE_PARAMS))
+                    builders.add("\n\$T.<\$T>builderInstance().build()" to arrayOf<Any?>(MEMORY_SOURCE, dataType))
                 }
-                if (db || sharedPrefs) {
-                    builders.add("\n${controllerName}Provider.<\$T>provideDataSource(\$T.class, \$T.diskParams())" to arrayOf<Any?>(dataType, dataType, DATA_SOURCE_PARAMS))
-
+                if (db) {
+                    builders.add("\n\$T.<\$T>builderInstance(\$T.class, ${async.L}).build()" to
+                            arrayOf<Any?>(if (singleDb) DBFLOW_SINGLE_SOURCE else DBFLOW_LIST_SOURCE, dataType, dataType))
+                }
+                if (sharedPrefs) {
+                    builders.add("\n\$T.<\$T>builderInstance(sharedPreferences, $preferenceDelegateName).build()" to
+                            arrayOf<Any?>(SHARED_PREFERENCES_SOURCE, dataType))
                 }
                 if (network) {
-                    builders.add("\n${controllerName}Provider.<\$T>provideDataSource(\$T.class, \$T.networkParams())" to arrayOf<Any?>(dataType, dataType, DATA_SOURCE_PARAMS))
+                    builders.add("\n\$T.<\$T>builderInstance().build()" to arrayOf<Any?>(RETROFIT_SOURCE, dataType))
                 }
 
                 builders.forEachIndexed { index, (statement, args) ->
@@ -227,6 +244,10 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     override fun TypeSpec.Builder.addToType() {
         if (!reuse) {
             `private final field`(ParameterizedTypeName.get(DATACONTROLLER, dataType), controllerName)
+        }
+
+        if (sharedPrefs) {
+            `private final field`(preferenceDelegateType!!, preferenceDelegateName)
         }
 
         public(executableElement.returnType.typeName, elementName) {
@@ -287,7 +308,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 }
 
                 if (targets) {
-                    if (hasDBAnnotation) {
+                    if (hasDBAnnotation || hasSharedPrefsAnnotation) {
                         statement("request.addRequestSourceTarget(\$T.diskParams())", DATA_SOURCE_PARAMS);
                     }
                     if (hasMemoryAnnotation) {

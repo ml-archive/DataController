@@ -17,6 +17,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
     val reqDefinitions = mutableListOf<DataRequestDefinition>()
 
     val hasNetworkApi: Boolean
+    val hasSharedPreferences: Boolean
 
     init {
         setOutputClassName("_Def")
@@ -33,6 +34,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
         reqDefinitions.forEach { it.evaluateReuse(reqDefinitions) }
 
         hasNetworkApi = reqDefinitions.find { it.network } != null
+        hasSharedPreferences = reqDefinitions.find { it.sharedPrefs } != null
     }
 
     override val implementsClasses
@@ -55,12 +57,17 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
 
         }
 
-        reqDefinitions.distinctBy { it.controllerName }.forEach {
-            constructor.addParameter(param(DATASOURCE_PROVIDER, "${it.controllerName}Provider").build())
+        if (hasSharedPreferences) {
+            constructor.apply {
+                addParameter(param(SHARED_PREFERENCES, "sharedPreferences").build())
+            }
         }
 
         val retrofitInterface = TypeSpec.interfaceBuilder(interfaceClass)
 
+        reqDefinitions.filter { it.hasSharedPrefsAnnotation }.forEach {
+            constructor.statement("this.${it.preferenceDelegateName} = new \$T()", it.preferenceDelegateType)
+        }
         reqDefinitions.forEach {
             it.apply {
                 retrofitInterface.addToRetrofitInterface()

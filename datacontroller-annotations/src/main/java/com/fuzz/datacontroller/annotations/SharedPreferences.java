@@ -12,4 +12,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface SharedPreferences {
 
+    /**
+     * @return The preference delegate matching type of data source to use in the data source.
+     */
+    Class<?> preferenceDelegate();
 }
