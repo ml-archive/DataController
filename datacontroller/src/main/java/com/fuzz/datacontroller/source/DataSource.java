@@ -84,7 +84,7 @@ public class DataSource<T> implements Source<T> {
         if (builder.refreshStrategy != null) {
             this.refreshStrategy = builder.refreshStrategy;
         } else {
-            this.refreshStrategy = new DefaultRefreshStrategy();
+            this.refreshStrategy = new DefaultRefreshStrategy<>();
         }
         this.defaultParams = builder.defaultParams;
     }
@@ -325,7 +325,7 @@ public class DataSource<T> implements Source<T> {
         public boolean force;
     }
 
-    private final class DefaultRefreshStrategy implements RefreshStrategy<T> {
+    public static final class DefaultRefreshStrategy<T> implements RefreshStrategy<T> {
 
         @Override
         public boolean shouldRefresh(DataSource<T> dataSource) {

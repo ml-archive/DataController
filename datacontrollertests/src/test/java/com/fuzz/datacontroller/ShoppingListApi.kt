@@ -4,6 +4,7 @@ import com.fuzz.datacontroller.annotations.*
 import com.fuzz.datacontroller.retrofit.RetrofitSource
 import com.fuzz.datacontroller.sharedpreferences.PreferenceDelegate
 import com.fuzz.datacontroller.source.DataSource
+import com.fuzz.datacontroller.strategy.OneShotRefreshStrategy
 import com.raizlabs.android.dbflow.annotation.PrimaryKey
 import com.raizlabs.android.dbflow.annotation.Table
 import retrofit2.Call
@@ -18,7 +19,7 @@ data class ShoppingList(@PrimaryKey var id: String = "", @PrimaryKey var storeId
 interface ShoppingListApi {
 
     @DB
-    @Memory
+    @Memory(refreshStrategy = OneShotRefreshStrategy::class)
     @Network(responseHandler = CustomResponseHandler::class, errorConverter = CustomErrorConverter::class)
     @DataControllerRef
     fun shoppingListDataController(): DataController<ShoppingList>

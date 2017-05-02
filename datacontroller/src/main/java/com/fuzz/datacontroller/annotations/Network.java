@@ -1,5 +1,8 @@
 package com.fuzz.datacontroller.annotations;
 
+import com.fuzz.datacontroller.source.DataSource;
+import com.fuzz.datacontroller.source.DataSource.RefreshStrategy;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,4 +26,9 @@ public @interface Network {
      * @return An instance to get invoked via default constructor to handle error conversions.
      */
     Class<?> errorConverter() default Object.class;
+
+    /**
+     * @return {@link RefreshStrategy} to use. Must have a default constructor.
+     */
+    Class<? extends RefreshStrategy> refreshStrategy() default DataSource.DefaultRefreshStrategy.class;
 }

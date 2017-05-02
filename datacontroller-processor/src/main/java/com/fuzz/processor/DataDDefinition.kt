@@ -39,7 +39,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
         }
 
         reqDefinitions.forEach {
-            if (it.networkDefinition.network) {
+            if (it.networkDefinition.enabled) {
                 // override non specified values
                 if (networkDefinition.responseHandler != ClassName.OBJECT && it.networkDefinition.responseHandler == ClassName.OBJECT) {
                     it.networkDefinition.responseHandler = networkDefinition.responseHandler
@@ -52,8 +52,8 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
             it.evaluateReuse(reqDefinitions)
         }
 
-        hasNetworkApi = reqDefinitions.find { it.networkDefinition.network } != null
-        hasSharedPreferences = reqDefinitions.find { it.sharedPrefs } != null
+        hasNetworkApi = reqDefinitions.find { it.networkDefinition.enabled } != null
+        hasSharedPreferences = reqDefinitions.find { it.sharedPrefsDefinition.enabled } != null
     }
 
     override val implementsClasses
@@ -84,8 +84,8 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
 
         val retrofitInterface = TypeSpec.interfaceBuilder(interfaceClass)
 
-        reqDefinitions.filter { it.hasSharedPrefsAnnotation }.forEach {
-            constructor.statement("this.${it.preferenceDelegateName} = new \$T()", it.preferenceDelegateType)
+        reqDefinitions.filter { it.sharedPrefsDefinition.hasAnnotationDirect }.forEach {
+            constructor.statement("this.${it.sharedPrefsDefinition.preferenceDelegateName} = new \$T()", it.sharedPrefsDefinition.preferenceDelegateType)
         }
         reqDefinitions.forEach {
             it.apply {
