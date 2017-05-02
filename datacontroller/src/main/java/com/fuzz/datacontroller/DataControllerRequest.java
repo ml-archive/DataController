@@ -88,6 +88,28 @@ public class DataControllerRequest<T> {
     }
 
     /**
+     * Attempts to cancel each source's execution. If they are synchronous, this will have not affect on that source.
+     */
+    public void cancel() {
+        if (targetedRequestSources.isEmpty()) {
+            List<DataSource<T>> dataSources = new ArrayList<>(requestSources());
+            for (DataSource<T> source : dataSources) {
+                if (source.isBusy()) {
+                    source.cancel();
+                }
+            }
+        } else {
+            List<DataSourceParams> dataSourceParams = new ArrayList<>(targetedRequestSources);
+            for (DataSourceParams params : dataSourceParams) {
+                DataSource<T> source = dataController.getDataSource(params);
+                if (source.isBusy()) {
+                    source.cancel();
+                }
+            }
+        }
+    }
+
+    /**
      * @return A set of {@link DataSource.SourceParams} that correspond to the {@link DataSourceParams}
      * passed in. We default to the {@link #sourceParams} when none found.
      */
