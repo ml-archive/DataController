@@ -1,6 +1,7 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.DQuery
+import com.fuzz.datacontroller.annotations.ParamData
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.dataControllerAnnotation
 import com.grosner.kpoet.param
@@ -18,11 +19,14 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
 
     var paramName = ""
 
+    var isParamData = false
+
     init {
         paramName = elementName
         variable.annotation<DQuery>()?.let {
             paramName = it.value
         }
+        isParamData = variable.annotation<ParamData>() != null
     }
 
     /**

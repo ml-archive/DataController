@@ -147,7 +147,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         // find special param types and keep track here.
         params.filter { it.isCallback }.getOrNull(0)?.let { specialParams.add(it) }
         params.filter { it.isErrorFilter }.getOrNull(0)?.let { specialParams.add(it) }
-
+        params.filter { it.isParamData }.getOrNull(0)?.let { specialParams.add(it) }
     }
 
     val hasSourceAnnotations: Boolean
