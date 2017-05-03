@@ -76,8 +76,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     "specify or target at least one source. Add an annotation to specify which to target.")
         } else {
 
-            // if none assume we want all
-            if (!hasSourceAnnotations) {
+            // if none assume we want all if not in constructor
+            if (!hasSourceAnnotations && !refInConstructor) {
                 networkDefinition.enabled = true
                 dbDefinition.enabled = true
                 memoryDefinition.enabled = true
@@ -174,7 +174,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     fun evaluateReuse(reqDefinitions: MutableList<DataRequestDefinition>) {
-        if (reuse || isRef && !hasSourceAnnotations) {
+        if (reuse || isRef && !hasSourceAnnotations && !refInConstructor) {
             val def = reqDefinitions.find { it.controllerName == controllerName && it != this && !it.reuse }
             if (def == null) {
                 manager.logError(DataRequestDefinition::class,
