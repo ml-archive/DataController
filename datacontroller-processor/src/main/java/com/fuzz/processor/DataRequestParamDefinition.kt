@@ -6,6 +6,7 @@ import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.dataControllerAnnotation
 import com.fuzz.processor.utils.toTypeElement
+import com.fuzz.processor.utils.toTypeErasedElement
 import com.grosner.kpoet.param
 import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
@@ -35,7 +36,7 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
         } != null
 
         if (isParamData) {
-            isSourceParamsData = element.toTypeElement().isSubclass(SOURCE_PARAMS)
+            isSourceParamsData = element.toTypeErasedElement().isSubclass(SOURCE_PARAMS)
         }
     }
 

@@ -19,4 +19,9 @@ public @interface DataControllerRef {
      */
     boolean inConstructor() default false;
 
+    /**
+     * @return if true, we will leave it out of a constructor that we generate as a parameter
+     * and instead generate null.
+     */
+    boolean optional() default false;
 }

@@ -28,8 +28,12 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     var isRef = false
     var refInConstructor = false
+    var refOptional = false
 
     var isSync = false
+
+    // if true, return type is of SourceParams or subclass.
+    var isParams = false
 
     val params: List<DataRequestParamDefinition>
 
@@ -42,12 +46,14 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     val nonSpecialParams: List<DataRequestParamDefinition>
 
     val controllerName: String
+    var controllerType: TypeName? = null
 
     init {
         isRef = executableElement.annotation<DataControllerRef>()?.let {
             controllerName = elementName
             reuseMethodName = elementName
             refInConstructor = it.inConstructor
+            refOptional = it.optional
         } != null
 
         targets = executableElement.annotation<Targets>() != null
@@ -87,7 +93,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             val returnType = executableElement.returnType.typeName
             validateReturnType(returnType)
             if (returnType is ParameterizedTypeName) {
-                isSync = returnType.rawType != DATACONTROLLER_REQUEST
+                isParams = returnType.rawType.toTypeElement().toTypeErasedElement().isSubclass(SOURCE_PARAMS)
+                isSync = returnType.rawType != DATACONTROLLER_REQUEST && !isParams
 
                 dbDefinition.singleDb = !returnType.rawType.toTypeElement().implementsClass(List::class)
 
@@ -159,6 +166,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
         // calculate non special params that are used for queries.
         nonSpecialParams = params.filterNot { specialParams.contains(it) }
+
+        controllerType = dataType
     }
 
     val hasSourceAnnotations: Boolean
@@ -167,7 +176,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
     private fun validateReturnType(returnType: TypeName) {
         if (returnType is ParameterizedTypeName &&
-                (returnType.rawType != DATACONTROLLER_REQUEST && returnType.rawType != DATACONTROLLER)) {
+                (returnType.rawType != DATACONTROLLER_REQUEST && returnType.rawType != DATACONTROLLER
+                        && !returnType.rawType.toTypeElement().isSubclass(SOURCE_PARAMS))) {
             manager.logError(DataRequestDefinition::class, "Invalid return type found $returnType")
         }
 
@@ -207,6 +217,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                         refInConstructor = def.refInConstructor
                     }
                 }
+                controllerType = def.controllerType
             }
         }
 
@@ -228,8 +239,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         }
     }
 
-    fun MethodSpec.Builder.addToConstructor() {
-        if (!reuse) {
+    fun MethodSpec.Builder.addToConstructor(optional: Boolean) {
+        if (!reuse && !isParams) {
             if (!refInConstructor) {
                 code {
                     add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
@@ -255,8 +266,12 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     add(");\n")
                 }
             } else {
-                addParameter(param(ParameterizedTypeName.get(DataController::class.className, dataType), controllerName).build())
-                statement("this.$controllerName = $controllerName")
+                if (!optional) {
+                    addParameter(param(ParameterizedTypeName.get(DataController::class.className, dataType), controllerName).build())
+                    statement("this.$controllerName = $controllerName")
+                } else {
+                    statement("this.$controllerName = null")
+                }
             }
         }
     }
@@ -273,13 +288,19 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     override fun TypeSpec.Builder.addToType() {
-        if (!reuse) {
+        if (!reuse && !isParams) {
             `private final field`(ParameterizedTypeName.get(DATACONTROLLER, dataType), controllerName)
         }
 
         sharedPrefsDefinition.apply { addToClass() }
 
-        public(executableElement.returnType.typeName, elementName) {
+        var methodReturnType = executableElement.returnType.typeName
+        if (reuse && methodReturnType is ParameterizedTypeName && methodReturnType.typeArguments[0] != controllerType) {
+            // remove generics on overridden method when type param of the source params do not match the datacontroller type.
+            methodReturnType = methodReturnType.rawType
+        }
+
+        public(methodReturnType, elementName) {
             params.forEach { it.apply { addParamCode() } }
             applyAnnotations()
             annotation(Override::class)
@@ -291,7 +312,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     sourceParams = "diskParams"
                 }
                 statement("\$T storage = $controllerName\n\t.getDataSource(\$T.$sourceParams())\n\t.getStoredData()",
-                        dataType, DATA_SOURCE_PARAMS)
+                        controllerType, DATA_SOURCE_PARAMS)
 
                 // memory is always first, followed by db
                 if (dbDefinition.enabled && memoryDefinition.enabled) {
@@ -301,10 +322,18 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                     }.end()
                 }
                 `return`("storage")
+            } else if (isParams) {
+                val dataRequestParamDefinition = ParamsDefinition(executableElement, manager)
+                var def: BaseSourceTypeDefinition<*> = networkDefinition
+                if (dataRequestParamDefinition.useDBParams) {
+                    def = dbDefinition
+                }
+                this@DataRequestDefinition.apply { addToParamsMethod("params", def) }
+                `return`("params")
             } else {
 
                 statement("\$T request = $controllerName.request()",
-                        ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, dataType))
+                        ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, controllerType))
                 specialParams.forEach { it.apply { addSpecialCode() } }
 
                 addToParamsToMethod(networkDefinition)

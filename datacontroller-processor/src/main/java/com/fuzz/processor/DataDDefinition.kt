@@ -21,6 +21,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
 
     val hasNetworkApi: Boolean
     val hasSharedPreferences: Boolean
+    val hasOptionalConstructor: Boolean
 
     val networkDefinition = NetworkDefinition(typeElement, manager)
 
@@ -64,20 +65,26 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
 
         hasNetworkApi = reqDefinitions.find { it.networkDefinition.enabled } != null
         hasSharedPreferences = reqDefinitions.find { it.sharedPrefsDefinition.enabled } != null
+
+        hasOptionalConstructor = reqDefinitions.find { it.refOptional } != null
     }
 
     override val implementsClasses
         get() = arrayOf(elementTypeName!!, DATA_DEFINITION)
 
     override fun onWriteDefinition(typeBuilder: TypeSpec.Builder) {
-        val constructor = MethodSpec.constructorBuilder().modifiers(public)
+        val fullConstructor = MethodSpec.constructorBuilder().modifiers(public)
+        val optionalConstructor = MethodSpec.constructorBuilder().modifiers(public)
+
         val interfaceClassName = elementClassName!!.simpleName().toString()
         val interfaceClass = ClassName.get(packageName, outputClassName!!.simpleName().toString(), interfaceClassName)
 
         if (hasNetworkApi) {
-            constructor.apply {
-                addParameter(RETROFIT, "retrofit").build()
-                statement("this.service = retrofit.create(\$T.class)", interfaceClass)
+            arrayOf(fullConstructor, optionalConstructor).forEach {
+                it.apply {
+                    addParameter(RETROFIT, "retrofit").build()
+                    statement("this.service = retrofit.create(\$T.class)", interfaceClass)
+                }
             }
 
             typeBuilder.apply {
@@ -87,27 +94,34 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
         }
 
         if (hasSharedPreferences) {
-            constructor.apply {
-                addParameter(param(SHARED_PREFERENCES, "sharedPreferences").build())
+            arrayOf(fullConstructor, optionalConstructor).forEach {
+                it.apply {
+                    addParameter(param(SHARED_PREFERENCES, "sharedPreferences").build())
+                }
             }
         }
 
         val retrofitInterface = TypeSpec.interfaceBuilder(interfaceClass)
 
         reqDefinitions.filter { it.sharedPrefsDefinition.hasAnnotationDirect }.forEach {
-            constructor.statement("this.${it.sharedPrefsDefinition.preferenceDelegateName} = new \$T()", it.sharedPrefsDefinition.preferenceDelegateType)
+            fullConstructor.statement("this.${it.sharedPrefsDefinition.preferenceDelegateName} = new \$T()", it.sharedPrefsDefinition.preferenceDelegateType)
+            optionalConstructor.statement("this.${it.sharedPrefsDefinition.preferenceDelegateName} = new \$T()", it.sharedPrefsDefinition.preferenceDelegateType)
         }
         reqDefinitions.forEach {
             it.apply {
                 retrofitInterface.addToRetrofitInterface()
-                constructor.addToConstructor()
+                fullConstructor.addToConstructor(false)
+                optionalConstructor.addToConstructor(true)
                 typeBuilder.addToType()
             }
         }
 
         paramsDefinitions.forEach { it.apply { typeBuilder.addToType() } }
 
-        typeBuilder.addMethod(constructor.build())
+        typeBuilder.addMethod(fullConstructor.build())
+        if (hasOptionalConstructor) {
+            typeBuilder.addMethod(optionalConstructor.build())
+        }
 
         if (hasNetworkApi) {
             typeBuilder.addType(retrofitInterface.build())
