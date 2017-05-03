@@ -66,7 +66,7 @@ abstract class BaseSourceTypeDefinition<in T : Annotation>(
         if (param == null || !param.isSourceParamsData) {
             addParams(paramsName, params, dataType, classDataType, controllerName, reuse)
             if (param != null) {
-                statement("$paramsName.data = ${param.elementName}")
+                statement("$paramsName.data = ${param.paramName}")
             }
         } else {
             // source params passed in as ParamsData override default implementation.

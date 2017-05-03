@@ -39,7 +39,6 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
             isSourceParamsData = element.toTypeErasedElement().isSubclass(SOURCE_PARAMS)
         }
     }
-
     /**
      * If true, it is used in query and network requests, otherwise used as special kind of param.
      */

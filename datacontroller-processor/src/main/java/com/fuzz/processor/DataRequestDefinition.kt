@@ -1,10 +1,7 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.DataController
-import com.fuzz.datacontroller.annotations.DataControllerRef
-import com.fuzz.datacontroller.annotations.ParamData
-import com.fuzz.datacontroller.annotations.Reuse
-import com.fuzz.datacontroller.annotations.Targets
+import com.fuzz.datacontroller.annotations.*
 import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.*
 import com.grosner.kpoet.*
@@ -35,6 +32,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     // if true, return type is of SourceParams or subclass.
     var isParams = false
 
+    var cancelDataController = false
+
     val params: List<DataRequestParamDefinition>
 
     var dataType: TypeName? = null
@@ -55,6 +54,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             refInConstructor = it.inConstructor
             refOptional = it.optional
         } != null
+
+        cancelDataController = executableElement.annotation<CancelDataController>() != null
 
         targets = executableElement.annotation<Targets>() != null
         if (targets && isRef) {
@@ -82,13 +83,6 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             manager.logError(DataRequestDefinition::class, "The method $elementName must " +
                     "specify or target at least one source. Add an annotation to specify which to target.")
         } else {
-
-            // if none assume we want all if not in constructor
-            if (!hasSourceAnnotations && !refInConstructor) {
-                networkDefinition.enabled = true
-                dbDefinition.enabled = true
-                memoryDefinition.enabled = true
-            }
 
             val returnType = executableElement.returnType.typeName
             validateReturnType(returnType)
@@ -199,6 +193,20 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             } else {
                 if (def.refInConstructor) {
                     refInConstructor = true
+                    if (def.networkDefinition.enabled) {
+                        networkDefinition.enabled = true
+                    }
+                    if (def.dbDefinition.enabled) {
+                        dbDefinition.enabled = true
+                        dbDefinition.singleDb = def.dbDefinition.singleDb
+                        dbDefinition.async = def.dbDefinition.async
+                    }
+                    if (def.memoryDefinition.enabled) {
+                        memoryDefinition.enabled = true
+                    }
+                    if (def.sharedPrefsDefinition.enabled) {
+                        sharedPrefsDefinition.enabled = true
+                    }
                 } else {
                     if (def.dataType != dataType) {
                         manager.logError(DataRequestDefinition::class,
@@ -225,8 +233,11 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             manager.logError(DataRequestDefinition::class, "Cannot mix and match shared preferences and db references. Choose one for storage.")
         }
 
-        if (refInConstructor && !targets && hasSourceAnnotations) {
-            manager.logError(DataRequestDefinition::class, "Specifying sources for already constructed $DATACONTROLLER is not allowed. ($elementName)")
+        // if none assume we want all if not in constructor
+        if (!hasSourceAnnotations && !refInConstructor) {
+            networkDefinition.enabled = true
+            dbDefinition.enabled = true
+            memoryDefinition.enabled = true
         }
     }
 
@@ -331,6 +342,9 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 this@DataRequestDefinition.apply { addToParamsMethod("params", def) }
                 `return`("params")
             } else {
+                if (cancelDataController) {
+                    statement("$controllerName.cancel()")
+                }
 
                 statement("\$T request = $controllerName.request()",
                         ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, controllerType))
@@ -338,6 +352,21 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
 
                 addToParamsToMethod(networkDefinition)
                 addToParamsToMethod(dbDefinition)
+
+                // apply default param data here if we do not specify source annotations.
+                if (!hasSourceAnnotations) {
+
+                    val param = specialParams.filter { it.isParamData }.getOrNull(0)
+                    if (param != null) {
+                        if (!param.isSourceParamsData) {
+                            statement("\$T __params = new \$T()", SOURCE_PARAMS, SOURCE_PARAMS)
+                            statement("__params.data = ${param.paramName}")
+                            statement("request.sourceParams(__params)")
+                        } else {
+                            statement("request.sourceParams(${param.paramName})")
+                        }
+                    }
+                }
 
                 if (targets) {
                     dbDefinition.apply { addIfTargets() }
