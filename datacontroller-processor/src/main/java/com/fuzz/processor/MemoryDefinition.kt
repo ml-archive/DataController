@@ -1,6 +1,7 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.Memory
+import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.toClassName
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.MethodSpec
@@ -12,6 +13,8 @@ class MemoryDefinition(element: Element, processorManager: DataControllerProcess
     : BaseSourceTypeDefinition<Memory>(Memory::class, element, processorManager) {
 
     override val requestSourceTarget = "memory"
+
+    override val requestSourceType = DataSource.SourceType.MEMORY
 
     override fun Memory.processAnnotation() {
         try {
@@ -35,5 +38,5 @@ class MemoryDefinition(element: Element, processorManager: DataControllerProcess
                                               dataType: TypeName?, classDataType: ClassName,
                                               controllerName: String, reuse: Boolean,
                                               targets: Boolean,
-                                              specialParams: List<DataRequestParamDefinition>) = Unit
+                                              specialParams: List<DataRequestParamDefinition>, refInConstructor: Boolean) = Unit
 }

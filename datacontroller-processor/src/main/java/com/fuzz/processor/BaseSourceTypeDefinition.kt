@@ -34,15 +34,46 @@ abstract class BaseSourceTypeDefinition<in T : Annotation>(
 
     abstract val requestSourceTarget: String
 
+    abstract val requestSourceType: DataSource.SourceType
+
     abstract fun MethodSpec.Builder.addToConstructor(dataType: TypeName?): Pair<String, Array<Any?>>
 
     open fun TypeSpec.Builder.addToClass() = Unit
+
+    open fun MethodSpec.Builder.addParams(paramsName: String,
+                                          params: List<DataRequestParamDefinition>,
+                                          dataType: TypeName?,
+                                          classDataType: ClassName,
+                                          controllerName: String,
+                                          reuse: Boolean) = Unit
 
     open fun MethodSpec.Builder.addToType(params: List<DataRequestParamDefinition>,
                                           dataType: TypeName?,
                                           classDataType: ClassName,
                                           controllerName: String, reuse: Boolean,
-                                          targets: Boolean, specialParams: List<DataRequestParamDefinition>) = Unit
+                                          targets: Boolean, specialParams: List<DataRequestParamDefinition>,
+                                          refInConstructor: Boolean) = Unit
+
+    fun MethodSpec.Builder.addRequestCode(params: List<DataRequestParamDefinition>,
+                                          dataType: TypeName?,
+                                          classDataType: ClassName,
+                                          controllerName: String,
+                                          reuse: Boolean,
+                                          specialParams: List<DataRequestParamDefinition>) {
+        val param = specialParams.filter { it.isParamData && it.targetedSourceForParam == requestSourceType }.getOrNull(0)
+        var paramsName = "params$requestSourceType"
+
+        if (param == null || !param.isSourceParamsData) {
+            addParams(paramsName, params, dataType, classDataType, controllerName, reuse)
+            if (param != null) {
+                statement("$paramsName.data = ${param.elementName}")
+            }
+        } else {
+            // source params passed in as ParamsData override default implementation.
+            paramsName = param.paramName
+        }
+        statement("request.targetSource(\$T.${requestSourceTarget}Params(), $paramsName)", DATA_SOURCE_PARAMS)
+    }
 
     fun appendRefreshStrategy(stringBuilder: StringBuilder,
                               args: MutableList<Any?>) {

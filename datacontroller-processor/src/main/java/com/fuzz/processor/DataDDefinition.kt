@@ -1,6 +1,8 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.DataDefinition
+import com.fuzz.datacontroller.annotations.Params
+import com.fuzz.processor.utils.annotation
 import com.grosner.kpoet.*
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.MethodSpec
@@ -15,6 +17,7 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
     : BaseDefinition(typeElement, manager) {
 
     val reqDefinitions = mutableListOf<DataRequestDefinition>()
+    val paramsDefinitions = mutableListOf<ParamsDefinition>()
 
     val hasNetworkApi: Boolean
     val hasSharedPreferences: Boolean
@@ -26,9 +29,14 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
         val members = typeElement.enclosedElements
         members.forEach {
             if (it is ExecutableElement) {
-                val definition = DataRequestDefinition(it, manager)
-                if (definition.valid) {
-                    reqDefinitions += definition
+                if (it.annotation<Params>() != null) {
+                    val def = ParamsDefinition(it, manager)
+                    paramsDefinitions += def
+                } else {
+                    val definition = DataRequestDefinition(it, manager)
+                    if (definition.valid) {
+                        reqDefinitions += definition
+                    }
                 }
             }
         }
@@ -51,6 +59,8 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
 
             it.evaluateReuse(reqDefinitions)
         }
+
+        paramsDefinitions.forEach { it.findDataRequestDef(reqDefinitions) }
 
         hasNetworkApi = reqDefinitions.find { it.networkDefinition.enabled } != null
         hasSharedPreferences = reqDefinitions.find { it.sharedPrefsDefinition.enabled } != null
@@ -94,6 +104,8 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
                 typeBuilder.addToType()
             }
         }
+
+        paramsDefinitions.forEach { it.apply { typeBuilder.addToType() } }
 
         typeBuilder.addMethod(constructor.build())
 

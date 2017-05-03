@@ -1,6 +1,7 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.SharedPreferences
+import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.toClassName
 import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.`private final field`
@@ -18,6 +19,8 @@ class SharedPreferencesDefinition(element: Element, manager: DataControllerProce
     var preferenceDelegateType: ClassName? = null
 
     var preferenceDelegateName = "preferenceDelegate_$elementName"
+
+    override val requestSourceType = DataSource.SourceType.DISK
 
     override fun SharedPreferences.processAnnotation() {
         try {

@@ -38,7 +38,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     // simple representation of class
     var classDataType: ClassName? = null
 
-    var specialParams = arrayListOf<DataRequestParamDefinition>()
+    val specialParams: List<DataRequestParamDefinition>
+    val nonSpecialParams: List<DataRequestParamDefinition>
 
     val controllerName: String
 
@@ -121,6 +122,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         var hasErrorFilter = false
         val paramDataMap = mutableMapOf<DataSource.SourceType, Boolean>()
         var hasSourceParams = false
+        specialParams = arrayListOf<DataRequestParamDefinition>()
         params.forEach {
             if (it.isCallback) {
                 specialParams.add(it)
@@ -154,6 +156,9 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 }
             }
         }
+
+        // calculate non special params that are used for queries.
+        nonSpecialParams = params.filterNot { specialParams.contains(it) }
     }
 
     val hasSourceAnnotations: Boolean
@@ -182,21 +187,25 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                                 " Ensure you specify the name properly. Or you define source type " +
                                 "annotations for a DataControllerRef")
             } else {
-                if (def.dataType != dataType) {
-                    manager.logError(DataRequestDefinition::class,
-                            "The referenced $reuseMethodName must match $dataType. found ${def.dataType}.")
+                if (def.refInConstructor) {
+                    refInConstructor = true
                 } else {
-                    networkDefinition.enabled = def.networkDefinition.enabled
-                    dbDefinition.enabled = def.dbDefinition.enabled
-                    dbDefinition.singleDb = def.dbDefinition.singleDb
-                    dbDefinition.async = def.dbDefinition.async
-                    memoryDefinition.enabled = def.memoryDefinition.enabled
-                    sharedPrefsDefinition.enabled = def.sharedPrefsDefinition.enabled
-                    if (sharedPrefsDefinition.preferenceDelegateType == null) {
-                        sharedPrefsDefinition.preferenceDelegateType = def.sharedPrefsDefinition.preferenceDelegateType
+                    if (def.dataType != dataType) {
+                        manager.logError(DataRequestDefinition::class,
+                                "The referenced $reuseMethodName must match $dataType. found ${def.dataType}.")
+                    } else {
+                        networkDefinition.enabled = def.networkDefinition.enabled
+                        dbDefinition.enabled = def.dbDefinition.enabled
+                        dbDefinition.singleDb = def.dbDefinition.singleDb
+                        dbDefinition.async = def.dbDefinition.async
+                        memoryDefinition.enabled = def.memoryDefinition.enabled
+                        sharedPrefsDefinition.enabled = def.sharedPrefsDefinition.enabled
+                        if (sharedPrefsDefinition.preferenceDelegateType == null) {
+                            sharedPrefsDefinition.preferenceDelegateType = def.sharedPrefsDefinition.preferenceDelegateType
+                        }
+                        sharedPrefsDefinition.preferenceDelegateName = def.sharedPrefsDefinition.preferenceDelegateName
+                        refInConstructor = def.refInConstructor
                     }
-                    sharedPrefsDefinition.preferenceDelegateName = def.sharedPrefsDefinition.preferenceDelegateName
-                    refInConstructor = def.refInConstructor
                 }
             }
         }
@@ -298,9 +307,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                         ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, dataType))
                 specialParams.forEach { it.apply { addSpecialCode() } }
 
-                networkDefinition.apply { addToType(params, dataType, classDataType!!, controllerName, reuse, targets, specialParams) }
-
-                dbDefinition.apply { addToType(params, dataType, classDataType!!, controllerName, reuse, targets, specialParams) }
+                addToParamsToMethod(networkDefinition)
+                addToParamsToMethod(dbDefinition)
 
                 if (targets) {
                     dbDefinition.apply { addIfTargets() }
@@ -310,6 +318,21 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 }
                 `return`("request.build()")
             }
+        }
+    }
+
+    fun MethodSpec.Builder.addToParamsToMethod(baseSourceTypeDefinition: BaseSourceTypeDefinition<*>) {
+        baseSourceTypeDefinition.apply {
+            addToType(params, dataType, classDataType!!, controllerName,
+                    reuse, targets, specialParams, refInConstructor)
+        }
+    }
+
+    fun MethodSpec.Builder.addToParamsMethod(paramsName: String,
+                                             baseSourceTypeDefinition: BaseSourceTypeDefinition<*>) {
+        baseSourceTypeDefinition.apply {
+            addParams(paramsName, params, dataType, classDataType!!, controllerName,
+                    reuse)
         }
     }
 }

@@ -1,11 +1,10 @@
 package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.Network
-import com.fuzz.datacontroller.source.DataSource.SourceType.NETWORK
+import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.toClassName
 import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.code
-import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
 import com.squareup.javapoet.*
 import javax.lang.model.element.Element
@@ -33,6 +32,10 @@ class NetworkDefinition(element: Element, processorManager: DataControllerProces
         }
     }
 
+    override val requestSourceType = DataSource.SourceType.NETWORK
+
+    override val requestSourceTarget = "network"
+
     override fun Network.processAnnotation() {
         try {
             responseHandler
@@ -51,7 +54,6 @@ class NetworkDefinition(element: Element, processorManager: DataControllerProces
         }
     }
 
-    override val requestSourceTarget = "network"
 
     override fun MethodSpec.Builder.addToConstructor(dataType: TypeName?): Pair<String, Array<Any?>> {
         val args = mutableListOf<Any?>(RETROFIT_SOURCE, dataType)
@@ -79,19 +81,19 @@ class NetworkDefinition(element: Element, processorManager: DataControllerProces
                                               dataType: TypeName?,
                                               classDataType: ClassName,
                                               controllerName: String, reuse: Boolean,
-                                              targets: Boolean, specialParams: List<DataRequestParamDefinition>) {
-        if (hasRetrofit && enabled && (hasAnnotationDirect || !targets)) {
-            this.code {
-                val param = specialParams.filter { it.isParamData && it.targetedSourceForParam == NETWORK }.getOrNull(0)
-                val paramsName = "params$NETWORK"
+                                              targets: Boolean, specialParams: List<DataRequestParamDefinition>, refInConstructor: Boolean) {
+        if (hasRetrofit && enabled && (hasAnnotationDirect || !targets || refInConstructor)) {
+            addRequestCode(params, dataType, classDataType, controllerName, reuse, specialParams)
+        }
+    }
 
-                add("\$T $paramsName = new \$T<>(service.", ParameterizedTypeName.get(RETROFIT_SOURCE_PARAMS, dataType), RETROFIT_SOURCE_PARAMS)
-                addServiceCall(params, controllerName, reuse).add(");\n")
-                if (param != null) {
-                    statement("$paramsName.data = ${param.elementName}")
-                }
-                statement("request.targetSource(\$T.networkParams(), $paramsName)", DATA_SOURCE_PARAMS)
-            }
+    override fun MethodSpec.Builder.addParams(paramsName: String,
+                                              params: List<DataRequestParamDefinition>,
+                                              dataType: TypeName?, classDataType: ClassName,
+                                              controllerName: String, reuse: Boolean) {
+        code {
+            add("\$T $paramsName = new \$T<>(service.", ParameterizedTypeName.get(RETROFIT_SOURCE_PARAMS, dataType), RETROFIT_SOURCE_PARAMS)
+            addServiceCall(params, controllerName, reuse).add(");\n")
         }
     }
 

@@ -54,14 +54,14 @@ fun TypeElement?.implementsClass(fqTn: String, processingEnvironment: Processing
 /**
  * Whether the specified element is assignable to the [className] parameter
  */
-fun TypeElement?.isSubclass(processingEnvironment: ProcessingEnvironment
-                            = manager.processingEnvironment, className: ClassName)
-        = isSubclass(processingEnvironment, className.toString())
+fun TypeElement?.isSubclass(className: ClassName, processingEnvironment: ProcessingEnvironment
+= manager.processingEnvironment)
+        = isSubclass(className.toString(), processingEnvironment)
 
 /**
  * Whether the specified element is assignable to the [fqTn] parameter
  */
-fun TypeElement?.isSubclass(processingEnvironment: ProcessingEnvironment, fqTn: String): Boolean {
+fun TypeElement?.isSubclass(fqTn: String, processingEnvironment: ProcessingEnvironment): Boolean {
     val typeElement = processingEnvironment.elementUtils.getTypeElement(fqTn)
     if (typeElement == null) {
         processingEnvironment.messager.printMessage(Diagnostic.Kind.ERROR, "Type Element was null for: $fqTn ensure that the visibility of the class is not private.")

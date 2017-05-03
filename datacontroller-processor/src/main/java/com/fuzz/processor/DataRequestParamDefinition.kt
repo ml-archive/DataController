@@ -5,6 +5,7 @@ import com.fuzz.datacontroller.annotations.ParamData
 import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.annotation
 import com.fuzz.processor.utils.dataControllerAnnotation
+import com.fuzz.processor.utils.toTypeElement
 import com.grosner.kpoet.param
 import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
@@ -21,6 +22,7 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
     var paramName = ""
 
     var isParamData = false
+    var isSourceParamsData = false
     var targetedSourceForParam = DataSource.SourceType.NETWORK
 
     init {
@@ -31,6 +33,10 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
         isParamData = variable.annotation<ParamData>()?.let {
             targetedSourceForParam = it.targetedSource
         } != null
+
+        if (isParamData) {
+            isSourceParamsData = element.toTypeElement().isSubclass(SOURCE_PARAMS)
+        }
     }
 
     /**
@@ -49,7 +55,7 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
         get() = variable.asType().typeName == ERROR_FILTER
 
     val isSourceParams: Boolean
-        get() = variable.asType().typeName == SOURCE_PARAMS
+        get() = !isParamData && variable.asType().toTypeElement().isSubclass(SOURCE_PARAMS)
 
     fun MethodSpec.Builder.addSpecialCode() {
         if (isCallback) {

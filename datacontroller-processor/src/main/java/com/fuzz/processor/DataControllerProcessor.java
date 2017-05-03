@@ -39,6 +39,6 @@ public class DataControllerProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         dataControllerProcessorManager.handle(dataControllerProcessorManager, roundEnv);
-        return true;
+        return false;
     }
 }
