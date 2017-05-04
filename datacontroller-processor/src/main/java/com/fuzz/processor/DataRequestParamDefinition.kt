@@ -3,10 +3,7 @@ package com.fuzz.processor
 import com.fuzz.datacontroller.annotations.DQuery
 import com.fuzz.datacontroller.annotations.ParamData
 import com.fuzz.datacontroller.source.DataSource
-import com.fuzz.processor.utils.annotation
-import com.fuzz.processor.utils.dataControllerAnnotation
-import com.fuzz.processor.utils.toTypeElement
-import com.fuzz.processor.utils.toTypeErasedElement
+import com.fuzz.processor.utils.*
 import com.grosner.kpoet.param
 import com.grosner.kpoet.statement
 import com.grosner.kpoet.typeName
@@ -25,6 +22,7 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
     var isParamData = false
     var isSourceParamsData = false
     var targetedSourceForParam = DataSource.SourceType.NETWORK
+    var isDataController = false
 
     init {
         paramName = elementName
@@ -38,12 +36,22 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
         if (isParamData) {
             isSourceParamsData = element.toTypeErasedElement().isSubclass(SOURCE_PARAMS)
         }
+
+        if (element.asType().typeName is ParameterizedTypeName) {
+            if (isParamData) {
+                isSourceParamsData = element.toTypeErasedElement().isSubclass(SOURCE_PARAMS)
+            }
+            isDataController = element.toTypeErasedElement().toClassName() == DATACONTROLLER
+        } else if (isParamData) {
+            isSourceParamsData = element.toTypeElement().isSubclass(SOURCE_PARAMS)
+        }
     }
+
     /**
      * If true, it is used in query and network requests, otherwise used as special kind of param.
      */
     val isQuery: Boolean
-        get() = (!isCallback && !isErrorFilter && !isParamData && !isSourceParams)
+        get() = (!isCallback && !isErrorFilter && !isParamData && !isSourceParams && !isDataController)
 
     val isCallback: Boolean
         get() {

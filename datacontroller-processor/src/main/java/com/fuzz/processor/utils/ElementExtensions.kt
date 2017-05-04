@@ -26,6 +26,9 @@ fun TypeMirror?.erasure(managerDataController: DataControllerProcessorManager = 
 
 fun TypeMirror?.toClassName(managerDataController: DataControllerProcessorManager = DataControllerProcessorManager.Companion.manager) = toTypeElement(managerDataController).toClassName()
 
+val TypeMirror?.typeName
+    get() = TypeName.get(this)
+
 // TypeName
 
 fun TypeName?.toTypeElement(managerDataController: DataControllerProcessorManager = DataControllerProcessorManager.Companion.manager): TypeElement? = managerDataController.elements.getTypeElement(toString())

@@ -38,6 +38,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     var isParams = false
 
     var cancelDataController = false
+    var passDataController = false // if true, we have one param acting as datacontroller
 
     val params: List<DataRequestParamDefinition>
 
@@ -46,11 +47,15 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     // simple representation of class
     var classDataType: ClassName? = null
 
-    val specialParams: List<DataRequestParamDefinition>
+    val specialParams = arrayListOf<DataRequestParamDefinition>()
     val nonSpecialParams: List<DataRequestParamDefinition>
 
     val controllerName: String
     var controllerType: TypeName? = null
+
+    val hasSourceAnnotations: Boolean
+        get() = dbDefinition.hasAnnotationDirect || memoryDefinition.hasAnnotationDirect
+                || networkDefinition.hasAnnotationDirect || sharedPrefsDefinition.hasAnnotationDirect
 
     init {
         isRef = executableElement.annotation<DataControllerRef>()?.let {
@@ -74,14 +79,6 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
         }
 
         params = executableElement.parameters.map { DataRequestParamDefinition(it, manager) }
-
-        val nameAllocator = NameAllocator()
-
-        if (!reuse) {
-            controllerName = nameAllocator.newName(elementName)
-        } else {
-            controllerName = reuseMethodName
-        }
 
         // needs a proper annotation otherwise we throw it away.
         if (!hasSourceAnnotations && !isRef && !reuse) {
@@ -126,13 +123,52 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
             }
         }
 
+        calculateSpecialParams()
+
+        // calculate non special params that are used for queries.
+        nonSpecialParams = params.filterNot { specialParams.contains(it) }
+
+        val nameAllocator = NameAllocator()
+
+        val dataControllerParam = specialParams.find { it.isDataController }
+        if (!reuse && !passDataController) {
+            controllerName = nameAllocator.newName(elementName)
+        } else if (passDataController) {
+            controllerName = dataControllerParam!!.paramName
+        } else {
+            controllerName = reuseMethodName
+        }
+
+        if (passDataController) {
+            controllerType = (dataControllerParam!!.element.asType().typeName as ParameterizedTypeName).typeArguments[0]
+        } else {
+            controllerType = dataType
+        }
+
+        // once constructed, calculate configuration options here.
+        sourcesArray.forEach {
+            it.postProcessAnnotation()
+        }
+    }
+
+    private fun calculateSpecialParams() {
         var hasErrorFilter = false
+        var hasDataController = false
         val paramDataMap = mutableMapOf<DataSource.SourceType, Boolean>()
         var hasSourceParams = false
-        specialParams = arrayListOf<DataRequestParamDefinition>()
         params.forEach {
             if (it.isCallback) {
-                specialParams.add(it)
+                specialParams += it
+            }
+
+            if (it.isDataController) {
+                if (hasDataController) {
+                    manager.logError(DataRequestDefinition::class, "Cannot specify more than one $DATACONTROLLER")
+                } else {
+                    passDataController = true
+                    hasDataController = true
+                    specialParams += it
+                }
             }
 
             if (it.isErrorFilter) {
@@ -140,7 +176,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
                     manager.logError(DataRequestDefinition::class, "Cannot specify more than one $ERROR_FILTER.")
                 } else {
                     hasErrorFilter = true
-                    specialParams.add(it)
+                    specialParams += it
                 }
             }
 
@@ -150,7 +186,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
                             "Cannot specify more than one ${ParamData::class} for ${it.targetedSourceForParam}")
                 } else {
                     paramDataMap[it.targetedSourceForParam] = true
-                    specialParams.add(it)
+                    specialParams += it
                 }
             }
 
@@ -159,25 +195,12 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
                     manager.logError(DataRequestDefinition::class, "Cannot specify more than one $SOURCE_PARAMS.")
                 } else {
                     hasSourceParams = true
-                    specialParams.add(it)
+                    specialParams += it
                 }
             }
         }
 
-        // calculate non special params that are used for queries.
-        nonSpecialParams = params.filterNot { specialParams.contains(it) }
-
-        controllerType = dataType
-
-        // once constructed, calculate configuration options here.
-        sourcesArray.forEach {
-            it.postProcessAnnotation()
-        }
     }
-
-    val hasSourceAnnotations: Boolean
-        get() = dbDefinition.hasAnnotationDirect || memoryDefinition.hasAnnotationDirect
-                || networkDefinition.hasAnnotationDirect || sharedPrefsDefinition.hasAnnotationDirect
 
     private fun validateReturnType(returnType: TypeName) {
         if (returnType is ParameterizedTypeName &&
@@ -263,7 +286,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     fun MethodSpec.Builder.addToConstructor(optional: Boolean) {
-        if (!reuse && !isParams && !isCall) {
+        if (!reuse && !isParams && !isCall && !passDataController) {
             if (!refInConstructor) {
                 code {
                     add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
@@ -311,14 +334,14 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     override fun TypeSpec.Builder.addToType() {
-        if (!reuse && !isParams && !isCall) {
+        if (!reuse && !isParams && !isCall && !passDataController) {
             `private final field`(ParameterizedTypeName.get(DATACONTROLLER, dataType), controllerName)
         }
 
         sharedPrefsDefinition.apply { addToClass() }
 
         var methodReturnType = executableElement.returnType.typeName
-        if (reuse && methodReturnType is ParameterizedTypeName && methodReturnType.typeArguments[0] != controllerType) {
+        if (methodReturnType is ParameterizedTypeName && methodReturnType.typeArguments[0] != controllerType) {
             // remove generics on overridden method when type param of the source params do not match the datacontroller type.
             methodReturnType = methodReturnType.rawType
         }

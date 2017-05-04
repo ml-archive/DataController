@@ -44,8 +44,11 @@ val OPTIONS = ClassName.get(retrofit_package_http, "OPTIONS")
 val PUT = ClassName.get(retrofit_package_http, "PUT")
 val DELETE = ClassName.get(retrofit_package_http, "DELETE")
 val POST = ClassName.get(retrofit_package_http, "POST")
+val PATCH = ClassName.get(retrofit_package_http, "PATCH")
+val HEAD = ClassName.get(retrofit_package_http, "HEAD")
 
-val retrofitMethodSet = setOf(GET, OPTIONS, PUT, DELETE, POST)
+
+val retrofitMethodSet = setOf(GET, OPTIONS, PUT, DELETE, POST, PATCH, HEAD)
 
 val CALL = ClassName.get(retrofit_package, "Call")
 val RETROFIT = ClassName.get(retrofit_package, "Retrofit")
