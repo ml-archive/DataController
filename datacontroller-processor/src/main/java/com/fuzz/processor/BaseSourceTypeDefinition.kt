@@ -14,6 +14,7 @@ import kotlin.reflect.KClass
  * Description: The base class for source type definitions that define code that gets generated based on sources used.
  */
 abstract class BaseSourceTypeDefinition<in T : Annotation>(
+        val config: DataControllerConfigDefinition?,
         annotationClass: KClass<T>,
         element: Element, processorManager: DataControllerProcessorManager)
     : BaseDefinition(element, processorManager) {
@@ -26,7 +27,15 @@ abstract class BaseSourceTypeDefinition<in T : Annotation>(
     init {
         enabled = element.getAnnotation(annotationClass.java)?.let {
             hasAnnotationDirect = true
-            apply { it.processAnnotation() }
+            apply {
+                it.processAnnotation()
+                config?.let {
+                    // default, override here
+                    if (refreshStrategyClassName == DataSource.DefaultRefreshStrategy::class.className) {
+                        refreshStrategyClassName = it.refreshStrategyClassName
+                    }
+                }
+            }
         } != null
     }
 
@@ -53,6 +62,8 @@ abstract class BaseSourceTypeDefinition<in T : Annotation>(
                                           controllerName: String, reuse: Boolean,
                                           targets: Boolean, specialParams: List<DataRequestParamDefinition>,
                                           refInConstructor: Boolean) = Unit
+
+    open fun postProcessAnnotation() = Unit
 
     fun MethodSpec.Builder.addRequestCode(params: List<DataRequestParamDefinition>,
                                           dataType: TypeName?,

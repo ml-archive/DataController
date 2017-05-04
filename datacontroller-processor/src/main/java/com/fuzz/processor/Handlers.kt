@@ -1,7 +1,8 @@
 package com.fuzz.processor
 
-import com.google.common.collect.Sets
+import com.fuzz.datacontroller.annotations.DataControllerConfig
 import com.fuzz.datacontroller.annotations.DataDefinition
+import com.google.common.collect.Sets
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
@@ -52,6 +53,22 @@ class DataDefinitionHandler : BaseHandler<DataDefinition>() {
     override fun onProcessElement(dataControllerProcessorManager: DataControllerProcessorManager, element: Element) {
         if (element is TypeElement) {
             dataControllerProcessorManager.dataDefinitions += DataDDefinition(element, dataControllerProcessorManager)
+        }
+    }
+}
+
+class DataControllerConfigHandler : BaseHandler<DataControllerConfig>() {
+    override val annotationClass = DataControllerConfig::class
+
+    override fun onProcessElement(dataControllerProcessorManager: DataControllerProcessorManager, element: Element) {
+        if (element is TypeElement) {
+            if (dataControllerProcessorManager.dataControllerConfigDefinition != null) {
+                dataControllerProcessorManager.logError(DataControllerConfigDefinition::class,
+                        "Cannot specify more than one ${DataControllerConfig::class}")
+            } else {
+                dataControllerProcessorManager.dataControllerConfigDefinition =
+                        DataControllerConfigDefinition(element, dataControllerProcessorManager)
+            }
         }
     }
 }

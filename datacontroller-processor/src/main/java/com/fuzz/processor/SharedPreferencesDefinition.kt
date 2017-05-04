@@ -12,9 +12,10 @@ import com.squareup.javapoet.TypeSpec
 import javax.lang.model.element.Element
 import javax.lang.model.type.MirroredTypeException
 
-class SharedPreferencesDefinition(element: Element, manager: DataControllerProcessorManager)
+class SharedPreferencesDefinition(config: DataControllerConfigDefinition?,
+                                  element: Element, manager: DataControllerProcessorManager)
 
-    : BaseSourceTypeDefinition<SharedPreferences>(SharedPreferences::class, element, manager) {
+    : BaseSourceTypeDefinition<SharedPreferences>(config, SharedPreferences::class, element, manager) {
 
     var preferenceDelegateType: ClassName? = null
 

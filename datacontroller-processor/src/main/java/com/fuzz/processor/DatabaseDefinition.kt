@@ -15,8 +15,9 @@ import javax.lang.model.type.MirroredTypeException
 /**
  * Description:
  */
-class DatabaseDefinition(element: Element, processorManager: DataControllerProcessorManager)
-    : BaseSourceTypeDefinition<DB>(DB::class, element, processorManager) {
+class DatabaseDefinition(config: DataControllerConfigDefinition?,
+                         element: Element, processorManager: DataControllerProcessorManager)
+    : BaseSourceTypeDefinition<DB>(config, DB::class, element, processorManager) {
 
     var singleDb = true
     var async = false

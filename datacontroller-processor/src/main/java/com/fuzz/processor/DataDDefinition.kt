@@ -19,54 +19,65 @@ class DataDDefinition(typeElement: TypeElement, manager: DataControllerProcessor
     val reqDefinitions = mutableListOf<DataRequestDefinition>()
     val paramsDefinitions = mutableListOf<ParamsDefinition>()
 
-    val hasNetworkApi: Boolean
-    val hasSharedPreferences: Boolean
-    val hasOptionalConstructor: Boolean
+    var hasNetworkApi = false
+    var hasSharedPreferences = false
+    var hasOptionalConstructor = false
 
-    val networkDefinition = NetworkDefinition(typeElement, manager)
+    var prepared = false
+
+    lateinit var networkDefinition: NetworkDefinition
 
     init {
         setOutputClassName("_Def")
-        val members = typeElement.enclosedElements
-        members.forEach {
-            if (it is ExecutableElement) {
-                if (it.annotation<Params>() != null) {
-                    val def = ParamsDefinition(it, manager)
-                    paramsDefinitions += def
-                } else {
-                    val definition = DataRequestDefinition(it, manager)
-                    if (definition.valid) {
-                        reqDefinitions += definition
+    }
+
+    fun prepareToWrite(configDefinition: DataControllerConfigDefinition?) {
+        if (!prepared) {
+            prepared = true
+            networkDefinition = NetworkDefinition(configDefinition, typeElement!!, manager)
+
+            val members = typeElement!!.enclosedElements
+            members.forEach {
+                if (it is ExecutableElement) {
+                    if (it.annotation<Params>() != null) {
+                        val def = ParamsDefinition(it, manager)
+                        paramsDefinitions += def
+                    } else {
+                        val definition = DataRequestDefinition(configDefinition, it, manager)
+                        if (definition.valid) {
+                            reqDefinitions += definition
+                        }
                     }
                 }
             }
-        }
 
-        // one of the methods is has same name. enforce unique method name restriction
-        if (reqDefinitions.distinctBy { it.elementName }.size != reqDefinitions.size) {
-            manager.logError(DataDDefinition::class, "Interface methods in a DataDefinition must have unique names")
-        }
-
-        reqDefinitions.forEach {
-            if (it.networkDefinition.enabled) {
-                // override non specified values
-                if (networkDefinition.responseHandler != ClassName.OBJECT && it.networkDefinition.responseHandler == ClassName.OBJECT) {
-                    it.networkDefinition.responseHandler = networkDefinition.responseHandler
-                }
-                if (networkDefinition.errorConverter != ClassName.OBJECT && it.networkDefinition.errorConverter == ClassName.OBJECT) {
-                    it.networkDefinition.errorConverter = networkDefinition.errorConverter
-                }
+            // one of the methods is has same name. enforce unique method name restriction
+            if (reqDefinitions.distinctBy { it.elementName }.size != reqDefinitions.size) {
+                manager.logError(DataDDefinition::class, "Interface methods in a DataDefinition must have unique names. " +
+                        "Found ${reqDefinitions.map { it.elementName }} from $elementName")
             }
 
-            it.evaluateReuse(reqDefinitions)
+            reqDefinitions.forEach {
+                if (it.networkDefinition.enabled) {
+                    // override non specified values
+                    if (networkDefinition.responseHandler != ClassName.OBJECT && it.networkDefinition.responseHandler == ClassName.OBJECT) {
+                        it.networkDefinition.responseHandler = networkDefinition.responseHandler
+                    }
+                    if (networkDefinition.errorConverter != ClassName.OBJECT && it.networkDefinition.errorConverter == ClassName.OBJECT) {
+                        it.networkDefinition.errorConverter = networkDefinition.errorConverter
+                    }
+                }
+
+                it.evaluateReuse(reqDefinitions)
+            }
+
+            paramsDefinitions.forEach { it.findDataRequestDef(reqDefinitions) }
+
+            hasNetworkApi = reqDefinitions.find { it.networkDefinition.enabled } != null
+            hasSharedPreferences = reqDefinitions.find { it.sharedPrefsDefinition.enabled } != null
+
+            hasOptionalConstructor = reqDefinitions.find { it.refOptional } != null
         }
-
-        paramsDefinitions.forEach { it.findDataRequestDef(reqDefinitions) }
-
-        hasNetworkApi = reqDefinitions.find { it.networkDefinition.enabled } != null
-        hasSharedPreferences = reqDefinitions.find { it.sharedPrefsDefinition.enabled } != null
-
-        hasOptionalConstructor = reqDefinitions.find { it.refOptional } != null
     }
 
     override val implementsClasses

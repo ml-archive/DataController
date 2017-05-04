@@ -11,13 +11,17 @@ import javax.lang.model.element.ExecutableElement
 /**
  * Description: Represents a method containing annotations that construct our request methods.
  */
-class DataRequestDefinition(executableElement: ExecutableElement, dataControllerProcessorManager: DataControllerProcessorManager)
+class DataRequestDefinition(config: DataControllerConfigDefinition?,
+                            executableElement: ExecutableElement,
+                            dataControllerProcessorManager: DataControllerProcessorManager)
     : BaseDefinition(executableElement, dataControllerProcessorManager), TypeAdder {
 
-    val memoryDefinition = MemoryDefinition(executableElement, manager)
-    val dbDefinition = DatabaseDefinition(executableElement, manager)
-    val networkDefinition = NetworkDefinition(executableElement, manager)
-    val sharedPrefsDefinition = SharedPreferencesDefinition(executableElement, manager)
+    val memoryDefinition = MemoryDefinition(config, executableElement, manager)
+    val dbDefinition = DatabaseDefinition(config, executableElement, manager)
+    val networkDefinition = NetworkDefinition(config, executableElement, manager)
+    val sharedPrefsDefinition = SharedPreferencesDefinition(config, executableElement, manager)
+
+    val sourcesArray = arrayOf(networkDefinition, dbDefinition, sharedPrefsDefinition, memoryDefinition)
 
     var reuse = false
     var reuseMethodName = ""
@@ -164,6 +168,11 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
         nonSpecialParams = params.filterNot { specialParams.contains(it) }
 
         controllerType = dataType
+
+        // once constructed, calculate configuration options here.
+        sourcesArray.forEach {
+            it.postProcessAnnotation()
+        }
     }
 
     val hasSourceAnnotations: Boolean
@@ -362,9 +371,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 statement("\$T request = $controllerName.request()",
                         ParameterizedTypeName.get(DATACONTROLLER_REQUEST_BUILDER, controllerType))
                 specialParams.forEach { it.apply { addSpecialCode() } }
-
-                addToParamsToMethod(networkDefinition)
-                addToParamsToMethod(dbDefinition)
+                sourcesArray.forEach { addToParamsToMethod(it) }
 
                 // apply default param data here if we do not specify source annotations.
                 if (!hasSourceAnnotations) {
@@ -382,10 +389,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 }
 
                 if (targets) {
-                    dbDefinition.apply { addIfTargets() }
-                    sharedPrefsDefinition.apply { addIfTargets() }
-                    memoryDefinition.apply { addIfTargets() }
-                    networkDefinition.apply { addIfTargets() }
+                    sourcesArray.forEach { it.apply { addIfTargets() } }
                 }
                 `return`("request.build()")
             }

@@ -19,9 +19,11 @@ class DataControllerProcessorManager internal constructor(val processingEnvironm
     }
 
 
-    private val handlers = mutableSetOf<Handler>(DataDefinitionHandler())
+    private val handlers = mutableSetOf<Handler>(DataDefinitionHandler(), DataControllerConfigHandler())
 
     val dataDefinitions = mutableListOf<DataDDefinition>()
+
+    var dataControllerConfigDefinition: DataControllerConfigDefinition? = null
 
     init {
         manager = this
@@ -55,6 +57,7 @@ class DataControllerProcessorManager internal constructor(val processingEnvironm
     override fun handle(dataControllerProcessorManager: DataControllerProcessorManager, roundEnvironment: RoundEnvironment) {
         handlers.forEach { it.handle(dataControllerProcessorManager, roundEnvironment) }
 
+        dataDefinitions.forEach { it.prepareToWrite(dataControllerConfigDefinition) }
         dataDefinitions.forEach { it.write() }
     }
 

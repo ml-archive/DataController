@@ -13,11 +13,12 @@ import javax.lang.model.type.MirroredTypeException
 /**
  * Description:
  */
-class NetworkDefinition(element: Element, processorManager: DataControllerProcessorManager)
-    : BaseSourceTypeDefinition<Network>(Network::class, element, processorManager) {
+class NetworkDefinition(config: DataControllerConfigDefinition?,
+                        element: Element, processorManager: DataControllerProcessorManager)
+    : BaseSourceTypeDefinition<Network>(config, Network::class, element, processorManager) {
 
-    var responseHandler = ClassName.OBJECT
-    var errorConverter = ClassName.OBJECT
+    var responseHandler = ClassName.OBJECT!!
+    var errorConverter = ClassName.OBJECT!!
 
     var hasRetrofit = false
 
@@ -42,11 +43,13 @@ class NetworkDefinition(element: Element, processorManager: DataControllerProces
         } catch (mte: MirroredTypeException) {
             this@NetworkDefinition.responseHandler = mte.typeMirror.toTypeElement().toClassName()
         }
+
         try {
             errorConverter
         } catch (mte: MirroredTypeException) {
             this@NetworkDefinition.errorConverter = mte.typeMirror.toTypeElement().toClassName()
         }
+
         try {
             refreshStrategy
         } catch (mte: MirroredTypeException) {
@@ -54,6 +57,18 @@ class NetworkDefinition(element: Element, processorManager: DataControllerProces
         }
     }
 
+    override fun postProcessAnnotation() {
+        // config overrides values here
+        config?.let {
+            if (errorConverter == ClassName.OBJECT) {
+                errorConverter = it.errorConverter
+            }
+            if (responseHandler == ClassName.OBJECT) {
+                responseHandler = it.responseHandler
+            }
+        }
+
+    }
 
     override fun MethodSpec.Builder.addToConstructor(dataType: TypeName?): Pair<String, Array<Any?>> {
         val args = mutableListOf<Any?>(RETROFIT_SOURCE, dataType)

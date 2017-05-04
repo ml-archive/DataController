@@ -9,8 +9,8 @@ import com.squareup.javapoet.TypeName
 import javax.lang.model.element.Element
 import javax.lang.model.type.MirroredTypeException
 
-class MemoryDefinition(element: Element, processorManager: DataControllerProcessorManager)
-    : BaseSourceTypeDefinition<Memory>(Memory::class, element, processorManager) {
+class MemoryDefinition(config: DataControllerConfigDefinition?, element: Element, processorManager: DataControllerProcessorManager)
+    : BaseSourceTypeDefinition<Memory>(config, Memory::class, element, processorManager) {
 
     override val requestSourceTarget = "memory"
 
