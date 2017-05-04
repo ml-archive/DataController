@@ -28,6 +28,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     var refOptional = false
 
     var isSync = false
+    var isCall = false
 
     // if true, return type is of SourceParams or subclass.
     var isParams = false
@@ -87,8 +88,9 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
             val returnType = executableElement.returnType.typeName
             validateReturnType(returnType)
             if (returnType is ParameterizedTypeName) {
+                isCall = returnType.rawType == CALL
                 isParams = returnType.rawType.toTypeElement().toTypeErasedElement().isSubclass(SOURCE_PARAMS)
-                isSync = returnType.rawType != DATACONTROLLER_REQUEST && !isParams
+                isSync = returnType.rawType != DATACONTROLLER_REQUEST && !isParams && !isCall
 
                 dbDefinition.singleDb = !returnType.rawType.toTypeElement().implementsClass(List::class)
 
@@ -171,7 +173,8 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     private fun validateReturnType(returnType: TypeName) {
         if (returnType is ParameterizedTypeName &&
                 (returnType.rawType != DATACONTROLLER_REQUEST && returnType.rawType != DATACONTROLLER
-                        && !returnType.rawType.toTypeElement().isSubclass(SOURCE_PARAMS))) {
+                        && !returnType.rawType.toTypeElement().isSubclass(SOURCE_PARAMS))
+                && returnType.rawType != CALL) {
             manager.logError(DataRequestDefinition::class, "Invalid return type found $returnType")
         }
 
@@ -251,7 +254,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     fun MethodSpec.Builder.addToConstructor(optional: Boolean) {
-        if (!reuse && !isParams) {
+        if (!reuse && !isParams && !isCall) {
             if (!refInConstructor) {
                 code {
                     add("$controllerName = \$T.controllerOf(", DATACONTROLLER)
@@ -299,7 +302,7 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
     }
 
     override fun TypeSpec.Builder.addToType() {
-        if (!reuse && !isParams) {
+        if (!reuse && !isParams && !isCall) {
             `private final field`(ParameterizedTypeName.get(DATACONTROLLER, dataType), controllerName)
         }
 
@@ -341,6 +344,16 @@ class DataRequestDefinition(executableElement: ExecutableElement, dataController
                 }
                 this@DataRequestDefinition.apply { addToParamsMethod("params", def) }
                 `return`("params")
+            } else if (isCall) {
+                networkDefinition.apply {
+                    code {
+                        add("return service.")
+                        addServiceCall(params, controllerName, reuse)
+                        add(";\n")
+                    }
+                }
+
+                this
             } else {
                 if (cancelDataController) {
                     statement("$controllerName.cancel()")
