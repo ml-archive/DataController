@@ -218,7 +218,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     fun evaluateReuse(reqDefinitions: MutableList<DataRequestDefinition>) {
-        if (reuse || isRef && !hasSourceAnnotations && !refInConstructor) {
+        if (!passDataController && (reuse || isRef && !hasSourceAnnotations && !refInConstructor)) {
             val def = reqDefinitions.find { it.controllerName == controllerName && it != this && !it.reuse }
             if (def == null) {
                 manager.logError(DataRequestDefinition::class,
@@ -243,9 +243,11 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
                         sharedPrefsDefinition.enabled = true
                     }
                 } else {
-                    if (def.dataType != dataType) {
+                    if (def.controllerType != controllerType) {
                         manager.logError(DataRequestDefinition::class,
-                                "The referenced $reuseMethodName must match $dataType. found ${def.dataType}.")
+                                "The referenced $reuseMethodName has invalid $DATACONTROLLER type ${def.controllerType}. " +
+                                        "Change $elementName so that either the $DATACONTROLLER has same type or the $DATACONTROLLER_REQUEST type." +
+                                        " Found $controllerType.")
                     } else {
                         networkDefinition.enabled = def.networkDefinition.enabled
                         dbDefinition.enabled = def.dbDefinition.enabled
@@ -323,14 +325,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     fun TypeSpec.Builder.addToRetrofitInterface() {
-        if (networkDefinition.hasRetrofit && (!reuse && networkDefinition.enabled || networkDefinition.hasAnnotationDirect)) {
-            public(ParameterizedTypeName.get(CALL, dataType), elementName) {
-                applyAnnotations()
-                modifiers(abstract)
-                params.filter { it.isQuery }.forEach { it.apply { this@public.addRetrofitParamCode() } }
-                this
-            }
-        }
+        networkDefinition.apply { addToRetrofitInterface(this@DataRequestDefinition) }
     }
 
     override fun TypeSpec.Builder.addToType() {

@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller.annotations;
 
+import com.fuzz.datacontroller.DataControllerRequest;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.source.DataSource.RefreshStrategy;
 
@@ -31,4 +32,10 @@ public @interface Network {
      * @return {@link RefreshStrategy} to use. Must have a default constructor.
      */
     Class<? extends RefreshStrategy> refreshStrategy() default DataSource.DefaultRefreshStrategy.class;
+
+    /**
+     * @return By default the call return type is the return type of the parameter from {@link DataControllerRequest}.
+     * This allows you to determine what the return type is.
+     */
+    Class<?> callReturnType() default Object.class;
 }

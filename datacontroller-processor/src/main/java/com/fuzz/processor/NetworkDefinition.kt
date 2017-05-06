@@ -4,8 +4,7 @@ import com.fuzz.datacontroller.annotations.Network
 import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.toClassName
 import com.fuzz.processor.utils.toTypeElement
-import com.grosner.kpoet.code
-import com.grosner.kpoet.typeName
+import com.grosner.kpoet.*
 import com.squareup.javapoet.*
 import javax.lang.model.element.Element
 import javax.lang.model.type.MirroredTypeException
@@ -19,6 +18,7 @@ class NetworkDefinition(config: DataControllerConfigDefinition?,
 
     var responseHandler = ClassName.OBJECT!!
     var errorConverter = ClassName.OBJECT!!
+    var callReturnType = ClassName.OBJECT!!
 
     var hasRetrofit = false
 
@@ -54,6 +54,12 @@ class NetworkDefinition(config: DataControllerConfigDefinition?,
             refreshStrategy
         } catch (mte: MirroredTypeException) {
             refreshStrategyClassName = mte.typeMirror.toClassName()
+        }
+
+        try {
+            callReturnType
+        } catch (mte: MirroredTypeException) {
+            this@NetworkDefinition.callReturnType = mte.typeMirror.toClassName()
         }
     }
 
@@ -111,6 +117,22 @@ class NetworkDefinition(config: DataControllerConfigDefinition?,
             addServiceCall(params, controllerName, reuse).add(");\n")
         }
     }
+
+    fun TypeSpec.Builder.addToRetrofitInterface(definition: DataRequestDefinition) {
+        var returnType = definition.dataType
+        if (callReturnType != ClassName.OBJECT) {
+            returnType = callReturnType
+        }
+        if (hasRetrofit && (!definition.reuse && enabled || hasAnnotationDirect)) {
+            public(ParameterizedTypeName.get(CALL, returnType), elementName) {
+                definition.apply { applyAnnotations() }
+                modifiers(abstract)
+                definition.params.filter { it.isQuery }.forEach { it.apply { this@public.addRetrofitParamCode() } }
+                this
+            }
+        }
+    }
+
 
     fun CodeBlock.Builder.addServiceCall(params: List<DataRequestParamDefinition>,
                                          controllerName: String, reuse: Boolean) = apply {
