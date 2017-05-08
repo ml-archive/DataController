@@ -59,8 +59,6 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
 
     init {
         isRef = executableElement.annotation<DataControllerRef>()?.let {
-            controllerName = elementName
-            reuseMethodName = elementName
             refInConstructor = it.inConstructor
             refOptional = it.optional
         } != null
@@ -91,7 +89,13 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
             if (returnType is ParameterizedTypeName) {
                 isCall = returnType.rawType == CALL
                 isParams = returnType.rawType.toTypeElement().toTypeErasedElement().isSubclass(SOURCE_PARAMS)
-                isSync = returnType.rawType != DATACONTROLLER_REQUEST && !isParams && !isCall
+
+                // no annotation, return type becomes reference
+                if (!isRef) {
+                    isRef = returnType.rawType == DATACONTROLLER
+                }
+
+                isSync = returnType.rawType != DATACONTROLLER_REQUEST && !isParams && !isCall && !isRef
 
                 dbDefinition.singleDb = !returnType.rawType.toTypeElement().implementsClass(List::class)
 
@@ -131,12 +135,21 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
         val nameAllocator = NameAllocator()
 
         val dataControllerParam = specialParams.find { it.isDataController }
-        if (!reuse && !passDataController) {
-            controllerName = nameAllocator.newName(elementName)
-        } else if (passDataController) {
-            controllerName = dataControllerParam!!.paramName
+        if (!isRef) {
+            if (!reuse && !passDataController) {
+                controllerName = nameAllocator.newName(elementName)
+            } else if (passDataController) {
+                controllerName = dataControllerParam!!.paramName
+            } else {
+                controllerName = reuseMethodName
+            }
         } else {
-            controllerName = reuseMethodName
+            if (isRef) {
+                controllerName = elementName
+                reuseMethodName = elementName
+            } else {
+                controllerName = reuseMethodName
+            }
         }
 
         if (passDataController) {
@@ -218,7 +231,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     fun evaluateReuse(reqDefinitions: MutableList<DataRequestDefinition>) {
-        if (!passDataController && (reuse || isRef && !hasSourceAnnotations && !refInConstructor)) {
+        if (!passDataController && !isCall && (reuse || isRef && !hasSourceAnnotations && !refInConstructor)) {
             val def = reqDefinitions.find { it.controllerName == controllerName && it != this && !it.reuse }
             if (def == null) {
                 manager.logError(DataRequestDefinition::class,

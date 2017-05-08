@@ -4,7 +4,10 @@ import com.fuzz.datacontroller.annotations.Network
 import com.fuzz.datacontroller.source.DataSource
 import com.fuzz.processor.utils.toClassName
 import com.fuzz.processor.utils.toTypeElement
-import com.grosner.kpoet.*
+import com.grosner.kpoet.abstract
+import com.grosner.kpoet.code
+import com.grosner.kpoet.modifiers
+import com.grosner.kpoet.public
 import com.squareup.javapoet.*
 import javax.lang.model.element.Element
 import javax.lang.model.type.MirroredTypeException
@@ -24,8 +27,8 @@ class NetworkDefinition(config: DataControllerConfigDefinition?,
 
     init {
         element.annotationMirrors.forEach {
-            val typeName = it.annotationType.typeName
-            if (retrofitMethodSet.contains(typeName)) {
+            val typeName = it.annotationType.toClassName()
+            if (typeName.packageName().startsWith("retrofit2")) {
                 hasRetrofit = true
                 enabled = true
                 hasAnnotationDirect = true
