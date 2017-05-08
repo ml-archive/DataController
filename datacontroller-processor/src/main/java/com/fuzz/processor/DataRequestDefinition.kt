@@ -77,9 +77,10 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
         }
 
         params = executableElement.parameters.map { DataRequestParamDefinition(it, manager) }
+        calculateSpecialParams()
 
         // needs a proper annotation otherwise we throw it away.
-        if (!hasSourceAnnotations && !isRef && !reuse) {
+        if (!hasSourceAnnotations && !isRef && !reuse && !passDataController) {
             manager.logError(DataRequestDefinition::class, "The method $elementName must " +
                     "specify or target at least one source. Add an annotation to specify which to target.")
         } else {
@@ -126,8 +127,6 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
                 }
             }
         }
-
-        calculateSpecialParams()
 
         // calculate non special params that are used for queries.
         nonSpecialParams = params.filterNot { specialParams.contains(it) }
@@ -283,8 +282,8 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
             manager.logError(DataRequestDefinition::class, "Cannot mix and match shared preferences and db references. Choose one for storage.")
         }
 
-        // if none assume we want all if not in constructor
-        if (!hasSourceAnnotations && !refInConstructor) {
+        // if none assume we want all if not in constructor or passed in.
+        if (!hasSourceAnnotations && !refInConstructor && !passDataController) {
             networkDefinition.enabled = true
             dbDefinition.enabled = true
             memoryDefinition.enabled = true
@@ -428,6 +427,9 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     fun MethodSpec.Builder.addToParamsToMethod(baseSourceTypeDefinition: BaseSourceTypeDefinition<*>) {
+        if (classDataType == null) {
+            throw IllegalArgumentException("Found null class data type for $elementName")
+        }
         baseSourceTypeDefinition.apply {
             addToType(params, dataType, classDataType!!, controllerName,
                     reuse, targets, specialParams, refInConstructor)
