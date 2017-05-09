@@ -12,6 +12,8 @@ import javax.lang.model.type.TypeMirror
 
 fun Element?.toTypeElement(managerDataController: DataControllerProcessorManager = DataControllerProcessorManager.Companion.manager) = this?.asType().toTypeElement(managerDataController)
 
+val Element?.typeName
+    get() = this?.asType().typeName
 
 fun Element?.toTypeErasedElement(managerDataController: DataControllerProcessorManager = DataControllerProcessorManager.Companion.manager) = this?.asType().erasure(managerDataController).toTypeElement(managerDataController)
 
@@ -27,7 +29,7 @@ fun TypeMirror?.erasure(managerDataController: DataControllerProcessorManager = 
 fun TypeMirror?.toClassName(managerDataController: DataControllerProcessorManager = DataControllerProcessorManager.Companion.manager) = toTypeElement(managerDataController).toClassName()
 
 val TypeMirror?.typeName
-    get() = TypeName.get(this)
+    get() = TypeName.get(this)!!
 
 // TypeName
 

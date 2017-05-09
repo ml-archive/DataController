@@ -2,7 +2,8 @@ package com.fuzz.processor
 
 import com.fuzz.datacontroller.annotations.DataControllerConfig
 import com.fuzz.datacontroller.annotations.DataDefinition
-import com.google.common.collect.Sets
+import com.fuzz.datacontroller.annotations.ErrorMethod
+import com.fuzz.datacontroller.annotations.SuccessMethod
 import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
@@ -17,11 +18,11 @@ interface Handler {
     /**
      * Called when the process of the [DataControllerProcessor] is called
 
-     * @param dataControllerProcessorManager The manager that holds processing information
+     * @param manager The manager that holds processing information
      * *
      * @param roundEnvironment The round environment
      */
-    fun handle(dataControllerProcessorManager: DataControllerProcessorManager, roundEnvironment: RoundEnvironment)
+    fun handle(manager: DataControllerProcessorManager, roundEnvironment: RoundEnvironment)
 }
 
 
@@ -30,11 +31,11 @@ interface Handler {
  */
 abstract class BaseHandler<AnnotationClass : Annotation> : Handler {
 
-    override fun handle(dataControllerProcessorManager: DataControllerProcessorManager, roundEnvironment: RoundEnvironment) {
-        val annotatedElements = Sets.newLinkedHashSet(roundEnvironment.getElementsAnnotatedWith(annotationClass.java))
-        processElements(dataControllerProcessorManager, annotatedElements)
+    override fun handle(manager: DataControllerProcessorManager, roundEnvironment: RoundEnvironment) {
+        val annotatedElements = LinkedHashSet(roundEnvironment.getElementsAnnotatedWith(annotationClass.java))
+        processElements(manager, annotatedElements)
         if (annotatedElements.size > 0) {
-            annotatedElements.forEach { onProcessElement(dataControllerProcessorManager, it) }
+            annotatedElements.forEach { onProcessElement(manager, it) }
         }
     }
 
@@ -69,6 +70,24 @@ class DataControllerConfigHandler : BaseHandler<DataControllerConfig>() {
                 dataControllerProcessorManager.dataControllerConfigDefinition =
                         DataControllerConfigDefinition(element, dataControllerProcessorManager)
             }
+        }
+    }
+}
+
+class CallbackHandler : Handler {
+    override fun handle(manager: DataControllerProcessorManager, roundEnvironment: RoundEnvironment) {
+        // find classes that have callback error and success methods
+        val annotatedElements = LinkedHashSet(roundEnvironment.getElementsAnnotatedWith(SuccessMethod::class.java)
+                .map { it.enclosingElement })
+        LinkedHashSet(roundEnvironment.getElementsAnnotatedWith(ErrorMethod::class.java))
+                .mapTo(annotatedElements) { it.enclosingElement }
+        if (annotatedElements.size > 0) {
+            annotatedElements.asSequence()
+                    .filter { it is TypeElement }
+                    .map { it as TypeElement }
+                    .forEach {
+                        manager.callbackDefinitions += CallbackDefinition(it, manager)
+                    }
         }
     }
 }

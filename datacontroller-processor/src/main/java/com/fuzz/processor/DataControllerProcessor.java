@@ -1,7 +1,9 @@
 package com.fuzz.processor;
 
-import com.google.auto.service.AutoService;
 import com.fuzz.datacontroller.annotations.DataDefinition;
+import com.fuzz.datacontroller.annotations.ErrorMethod;
+import com.fuzz.datacontroller.annotations.SuccessMethod;
+import com.google.auto.service.AutoService;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -22,6 +24,8 @@ public class DataControllerProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> supportedTypes = new LinkedHashSet<>();
         supportedTypes.add(DataDefinition.class.getCanonicalName());
+        supportedTypes.add(SuccessMethod.class.getCanonicalName());
+        supportedTypes.add(ErrorMethod.class.getCanonicalName());
         return supportedTypes;
     }
 
