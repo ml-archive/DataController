@@ -160,7 +160,7 @@ class CallbackDefinition(element: TypeElement, manager: DataControllerProcessorM
                                                 responseObjectName)) {
                                     annotation(Override::class)
                                     `if`("$callbackObjectName != null") {
-                                        successByMethods.getValue(it).forEach {
+                                        successByMethods[it]?.forEach {
                                             it.apply { this@`public`.addMethodCall() }
                                         }
                                         this
@@ -171,7 +171,7 @@ class CallbackDefinition(element: TypeElement, manager: DataControllerProcessorM
                                 public(TypeName.VOID, "onFailure", param(DataResponseError::class.typeName, errorObjectName)) {
                                     annotation(Override::class)
                                     `if`("$callbackObjectName != null") {
-                                        errorByMethods.getValue(it).forEach {
+                                        errorByMethods[it]?.forEach {
                                             it.apply { this@`public`.addMethodCall() }
                                         }
                                         this
