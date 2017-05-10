@@ -290,10 +290,10 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
         }
     }
 
-    fun MethodSpec.Builder.applyAnnotations() {
+    fun MethodSpec.Builder.applyAnnotations(addRetrofitAnnotations: Boolean = false) {
         // don't redeclare any library annotations. forward anything else through.
         executableElement.annotationMirrors.filterNot {
-            it.dataControllerAnnotation()
+            it.dataControllerAnnotation() || !addRetrofitAnnotations && it.retrofitAnnotation()
         }.forEach {
             addAnnotation(AnnotationSpec.get(it))
         }

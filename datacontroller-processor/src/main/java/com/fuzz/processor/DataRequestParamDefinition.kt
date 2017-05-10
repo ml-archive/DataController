@@ -77,7 +77,9 @@ class DataRequestParamDefinition(element: VariableElement, processorManager: Dat
 
     fun MethodSpec.Builder.addParamCode() = apply {
         val param = param(variable.asType().typeName, paramName)
-        variable.annotationMirrors.forEach { param.addAnnotation(AnnotationSpec.get(it)) }
+        variable.annotationMirrors
+                .filterNot { it.dataControllerAnnotation() || it.retrofitAnnotation() }
+                .forEach { param.addAnnotation(AnnotationSpec.get(it)) }
         addParameter(param.build())
     }
 

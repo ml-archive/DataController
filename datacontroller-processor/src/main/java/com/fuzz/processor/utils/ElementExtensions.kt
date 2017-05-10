@@ -48,3 +48,12 @@ fun AnnotationMirror?.dataControllerAnnotation(): Boolean {
         annotationType.toTypeElement().getPackage().toString().startsWith("com.fuzz.datacontroller")
     }
 }
+
+
+fun AnnotationMirror?.retrofitAnnotation(): Boolean {
+    return if (this == null) {
+        false
+    } else {
+        annotationType.toTypeElement().getPackage().toString().startsWith("retrofit2")
+    }
+}

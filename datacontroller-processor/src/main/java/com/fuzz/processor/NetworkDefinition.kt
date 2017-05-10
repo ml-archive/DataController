@@ -128,7 +128,7 @@ class NetworkDefinition(config: DataControllerConfigDefinition?,
         }
         if (hasRetrofit && (!definition.reuse && enabled || hasAnnotationDirect)) {
             public(ParameterizedTypeName.get(CALL, returnType), elementName) {
-                definition.apply { applyAnnotations() }
+                definition.apply { applyAnnotations(true) }
                 modifiers(abstract)
                 definition.params.filter { it.isQuery }.forEach { it.apply { this@public.addRetrofitParamCode() } }
                 this
