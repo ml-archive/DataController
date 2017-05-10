@@ -21,7 +21,6 @@ interface ShoppingListApi {
     @DB
     @Memory(refreshStrategy = OneShotRefreshStrategy::class)
     @Network(responseHandler = CustomResponseHandler::class, errorConverter = CustomErrorConverter::class)
-    @DataControllerRef
     fun shoppingListDataController(): DataController<ShoppingList>
 
     @Reuse("shoppingListDataController")
@@ -41,9 +40,6 @@ interface ShoppingListApi {
     @Reuse("shoppingListDataController")
     fun getShoppingListFromStorage(): ShoppingList?
 
-    @SharedPreferences(preferenceDelegate = PrefDelegate::class)
-    fun getShoppingListSharedPreferences(dataControllerCallback: DataController.DataControllerCallback<ShoppingList>)
-            : DataControllerRequest<ShoppingList>
 }
 
 class PrefDelegate : PreferenceDelegate<ShoppingList> {

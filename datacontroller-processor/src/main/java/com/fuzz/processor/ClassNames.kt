@@ -44,5 +44,8 @@ val RETROFIT = ClassName.get(retrofit_package, "Retrofit")
 val RETROFIT_SOURCE = ClassName.get("$package_name.retrofit", "RetrofitSource")
 val RETROFIT_SOURCE_PARAMS = ClassName.get("$package_name.retrofit", "RetrofitSource", "RetrofitSourceParams")
 
+val CREATOR = ClassName.get("$package_name.codegen", "Creator")
+val BASE_GENERATED_DEFINITION_HOLDER = ClassName.get("$package_name.codegen", "BaseGeneratedDefinitionHolder")
+
 
 

@@ -1,10 +1,9 @@
 package com.fuzz.processor
 
-import com.grosner.kpoet.`interface`
-import com.grosner.kpoet.`public final class`
-import com.grosner.kpoet.constructor
-import com.grosner.kpoet.javaFile
-import com.squareup.javapoet.TypeVariableName
+import com.grosner.kpoet.*
+import com.squareup.javapoet.ParameterizedTypeName
+import com.squareup.javapoet.TypeName
+import javax.annotation.processing.FilerException
 import javax.annotation.processing.Messager
 import javax.annotation.processing.ProcessingEnvironment
 import javax.annotation.processing.RoundEnvironment
@@ -69,6 +68,46 @@ class DataControllerProcessorManager internal constructor(val processingEnvironm
 
         callbackDefinitions.forEach { it.write() }
 
+        try {
+            javaFile("com.fuzz.datatacontroller.codegen") {
+                `public final class`("GeneratedDefinitionHolder") {
+                    extends(BASE_GENERATED_DEFINITION_HOLDER)
+                    constructor() {
+                        dataDefinitions.forEach {
+                            if (it.hasNetworkApi && !it.hasSharedPreferences) {
+                                code {
+                                    add("addRetrofitCreatorForClass(\$T.class, ", it.elementTypeName)
+                                    add("\$L", `anonymous class`("") {
+                                        extends(ParameterizedTypeName.get(CREATOR, it.elementTypeName, RETROFIT))
+                                        public(it.elementTypeName!!, "newInstance",
+                                                param(RETROFIT, "retrofit")) {
+                                            `return`("new \$T(retrofit)", it.outputClassName)
+                                        }
+                                    })
+                                    add(");\n")
+                                }
+                            } else if (!it.hasSharedPreferences) {
+                                code {
+                                    add("addDefaultCreatorForClass(\$T.class, ", it.elementTypeName)
+                                    add("\$L", `anonymous class`("") {
+                                        extends(ParameterizedTypeName.get(CREATOR, it.elementTypeName, TypeName.VOID))
+                                        public(it.elementTypeName!!, "newInstance",
+                                                param(TypeName.VOID, "v")) {
+                                            `return`("new \$T()", it.outputClassName)
+                                        }
+                                    })
+                                    add(");\n")
+                                }
+                            }
+                        }
+                        this
+                    }
+                }
+            }.writeTo(manager.processingEnvironment.filer)
+
+        } catch (fe: FilerException) {
+            // ignored.
+        }
     }
 
 }

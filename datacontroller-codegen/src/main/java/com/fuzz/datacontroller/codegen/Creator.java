@@ -1,4 +1,4 @@
-package com.fuzz.datacontroller.internal;
+package com.fuzz.datacontroller.codegen;
 
 /**
  * Description: Used internally to construct _Def classes.
