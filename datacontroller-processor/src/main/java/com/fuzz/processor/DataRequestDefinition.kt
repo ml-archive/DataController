@@ -230,7 +230,7 @@ class DataRequestDefinition(config: DataControllerConfigDefinition?,
     }
 
     fun evaluateReuse(reqDefinitions: MutableList<DataRequestDefinition>) {
-        if (!passDataController && !isCall && (reuse || isRef && !hasSourceAnnotations && !refInConstructor)) {
+        if (!isParams && !passDataController && !isCall && (reuse || isRef && !hasSourceAnnotations && !refInConstructor)) {
             val def = reqDefinitions.find { it.controllerName == controllerName && it != this && !it.reuse }
             if (def == null) {
                 manager.logError(DataRequestDefinition::class,
