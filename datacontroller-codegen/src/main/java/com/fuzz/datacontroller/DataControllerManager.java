@@ -1,6 +1,7 @@
 package com.fuzz.datacontroller;
 
 import com.fuzz.datacontroller.codegen.BaseGeneratedDefinitionHolder;
+import com.fuzz.datacontroller.codegen.Creator;
 
 import retrofit2.Retrofit;
 
@@ -24,10 +25,20 @@ public class DataControllerManager {
     }
 
     public <T> T create(Class<T> tClass) {
-        return getHolder().getDefaultCreator(tClass).newInstance(null);
+        final Creator<T, Void> creator = getHolder().getDefaultCreator(tClass);
+        if (creator == null) {
+            throw new IllegalStateException("Cannot find class " + tClass + " default creator." +
+                    " Ensure you added a DataDefinition annotation and that the constructor is not different.");
+        }
+        return creator.newInstance(null);
     }
 
     public <T> T create(Class<T> tClass, Retrofit retrofit) {
-        return getHolder().getRetrofitCreator(tClass).newInstance(retrofit);
+        final Creator<T, Retrofit> retrofitCreator = getHolder().getRetrofitCreator(tClass);
+        if (retrofit == null) {
+            throw new IllegalStateException("Cannot find class " + tClass + " retrofit creator." +
+                    " Ensure you added a DataDefinition annotation and that there's a network component.");
+        }
+        return retrofitCreator.newInstance(retrofit);
     }
 }
