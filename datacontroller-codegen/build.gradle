@@ -11,8 +11,8 @@ android {
 }
 
 dependencies {
-    compile project("${datacontroller_project_prefix}datacontroller")
-    compile project("${datacontroller_project_prefix}datacontroller-dbflow")
-    compile project("${datacontroller_project_prefix}datacontroller-retrofit")
-    compile project("${datacontroller_project_prefix}datacontroller-sharedpreferences")
+    provided project("${datacontroller_project_prefix}datacontroller")
+    provided project("${datacontroller_project_prefix}datacontroller-dbflow")
+    provided project("${datacontroller_project_prefix}datacontroller-retrofit")
+    provided project("${datacontroller_project_prefix}datacontroller-sharedpreferences")
 }
