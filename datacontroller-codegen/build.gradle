@@ -13,7 +13,6 @@ android {
 dependencies {
     compile project("${datacontroller_project_prefix}datacontroller")
     compile project("${datacontroller_project_prefix}datacontroller-dbflow")
-    compile project("${datacontroller_project_prefix}datacontroller-okhttp")
     compile project("${datacontroller_project_prefix}datacontroller-retrofit")
     compile project("${datacontroller_project_prefix}datacontroller-sharedpreferences")
 }
