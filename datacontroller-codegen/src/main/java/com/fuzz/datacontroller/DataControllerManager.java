@@ -3,6 +3,8 @@ package com.fuzz.datacontroller;
 import com.fuzz.datacontroller.codegen.BaseGeneratedDefinitionHolder;
 import com.fuzz.datacontroller.codegen.Creator;
 
+import java.lang.reflect.Constructor;
+
 import retrofit2.Retrofit;
 
 /**
@@ -10,13 +12,15 @@ import retrofit2.Retrofit;
  */
 public class DataControllerManager {
 
-    private BaseGeneratedDefinitionHolder holder;
+    private static BaseGeneratedDefinitionHolder holder;
 
-    private BaseGeneratedDefinitionHolder getHolder() {
+    private static BaseGeneratedDefinitionHolder getHolder() {
         if (holder == null) {
             try {
-                holder = (BaseGeneratedDefinitionHolder)
-                        Class.forName("com.fuzz.datacontroller.codegen.GeneratedDefinitionHolder").newInstance();
+                final Class<?> clazz = Class.forName("com.fuzz.datacontroller.codegen.GeneratedDefinitionHolder");
+                final Constructor<?> constructor = clazz.getConstructor();
+                constructor.setAccessible(true);
+                holder = (BaseGeneratedDefinitionHolder) constructor.newInstance();
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -24,7 +28,7 @@ public class DataControllerManager {
         return holder;
     }
 
-    public <T> T create(Class<T> tClass) {
+    public static <T> T create(Class<T> tClass) {
         final Creator<T, Void> creator = getHolder().getDefaultCreator(tClass);
         if (creator == null) {
             throw new IllegalStateException("Cannot find class " + tClass + " default creator." +
@@ -33,7 +37,7 @@ public class DataControllerManager {
         return creator.newInstance(null);
     }
 
-    public <T> T create(Class<T> tClass, Retrofit retrofit) {
+    public static <T> T create(Class<T> tClass, Retrofit retrofit) {
         final Creator<T, Retrofit> retrofitCreator = getHolder().getRetrofitCreator(tClass);
         if (retrofit == null) {
             throw new IllegalStateException("Cannot find class " + tClass + " retrofit creator." +
