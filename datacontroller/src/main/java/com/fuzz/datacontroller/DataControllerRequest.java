@@ -1,5 +1,6 @@
 package com.fuzz.datacontroller;
 
+import com.fuzz.datacontroller.DataController.DataControllerCallback;
 import com.fuzz.datacontroller.source.DataSource;
 import com.fuzz.datacontroller.source.DataSourceContainer.DataSourceParams;
 
@@ -53,10 +54,17 @@ public class DataControllerRequest<T> {
         this.sourceParams = builder.sourceParams;
         this.targetParamsMap = builder.targetParamsMap;
         this.successFilter = builder.successFilter;
-        for (DataController.DataControllerCallback<T> callback : builder.callbackGroup) {
+        for (DataControllerCallback<T> callback : builder.callbackGroup) {
             callbackGroup.registerForCallbacks(callback);
         }
         this.errorFilter = builder.errorFilter;
+    }
+
+    /**
+     * Registers a temp {@link DataControllerCallback} to the running request.
+     */
+    public void register(DataControllerCallback<T> callback) {
+        callbackGroup.registerForCallbacks(callback);
     }
 
     /**
@@ -104,7 +112,7 @@ public class DataControllerRequest<T> {
     /**
      * Deregister a callback from this {@link DataControllerRequest}.
      */
-    public void deregister(DataController.DataControllerCallback<T> dataControllerCallback) {
+    public void deregister(DataControllerCallback<T> dataControllerCallback) {
         callbackGroup.deregisterForCallbacks(dataControllerCallback);
     }
 
@@ -179,7 +187,7 @@ public class DataControllerRequest<T> {
 
     public static final class Builder<T> {
 
-        private final Set<DataController.DataControllerCallback<T>> callbackGroup
+        private final Set<DataControllerCallback<T>> callbackGroup
                 = new LinkedHashSet<>();
 
         private final Set<DataSourceParams> targetedRequestSources
@@ -205,7 +213,7 @@ public class DataControllerRequest<T> {
         /**
          * Appends a specific source param for a {@link DataSource} to call when executing request.
          * This will override the  default {@link #sourceParams(DataSource.SourceParams)}.
-         * If you wish to only target a specific source in general, call {@link #addRequestSourceTarget(DataSourceParams)}
+         * If you wish to only target a specific source in general, call {@link #requestTargetOnly(DataSourceParams)}
          */
         public Builder<T> targetSource(DataSourceParams dataSourceParams,
                                        DataSource.SourceParams sourceParams) {
@@ -241,7 +249,7 @@ public class DataControllerRequest<T> {
          * Adds a {@link DataSource} that we wish to query from directly. Specifying at least one direct
          * target means that we won't target any of the {@link DataController} sources.
          */
-        public Builder<T> addRequestSourceTarget(DataSourceParams dataSource) {
+        public Builder<T> requestTargetOnly(DataSourceParams dataSource) {
             this.targetedRequestSources.add(dataSource);
             return this;
         }
@@ -249,7 +257,7 @@ public class DataControllerRequest<T> {
         /**
          * Adds a group of {@link DataSource} we wish to query from.
          */
-        public Builder<T> addRequestSourceTargets(Collection<DataSourceParams> dataSource) {
+        public Builder<T> requestTargetOnlyThese(Collection<DataSourceParams> dataSource) {
             this.targetedRequestSources.addAll(dataSource);
             return this;
         }
@@ -260,7 +268,7 @@ public class DataControllerRequest<T> {
          * Specifying at least one direct target means that we won't target any of the {@link DataController} sources
          * when we receive a response from another {@link DataSource}.
          */
-        public Builder<T> addStorageSourceTarget(DataSourceParams dataSource) {
+        public Builder<T> storageTargetOnly(DataSourceParams dataSource) {
             this.targetedStorageSources.add(dataSource);
             return this;
         }
@@ -268,7 +276,7 @@ public class DataControllerRequest<T> {
         /**
          * Adds a group of {@link DataSource} we wish to only store in passing the results of this request.
          */
-        public Builder<T> addStorageSourceTargets(Collection<DataSourceParams> dataSource) {
+        public Builder<T> storageTargetOnlyThese(Collection<DataSourceParams> dataSource) {
             this.targetedStorageSources.addAll(dataSource);
             return this;
         }
@@ -278,7 +286,7 @@ public class DataControllerRequest<T> {
          *
          * @param callback The callback used.
          */
-        public Builder<T> register(DataController.DataControllerCallback<T> callback) {
+        public Builder<T> register(DataControllerCallback<T> callback) {
             this.callbackGroup.add(callback);
             return this;
         }

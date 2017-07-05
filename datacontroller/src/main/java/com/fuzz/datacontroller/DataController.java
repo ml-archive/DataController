@@ -144,12 +144,12 @@ public class DataController<T> {
     }
 
     public void requestSpecific(DataSourceContainer.DataSourceParams dataSourceParams) {
-        request(dataSourceParams).build().execute();
+        requestOnly(dataSourceParams).build().execute();
     }
 
     public void requestSpecific(DataSourceContainer.DataSourceParams dataSourceParams,
                                 DataSource.SourceParams sourceParams) {
-        request(dataSourceParams).sourceParams(sourceParams)
+        requestOnly(dataSourceParams).sourceParams(sourceParams)
                 .build().execute();
     }
 
@@ -158,9 +158,9 @@ public class DataController<T> {
         return new DataControllerRequest.Builder<>(this);
     }
 
-    public DataControllerRequest.Builder<T> request(DataSourceContainer.DataSourceParams params) {
+    public DataControllerRequest.Builder<T> requestOnly(DataSourceContainer.DataSourceParams params) {
         return new DataControllerRequest.Builder<>(this)
-                .addRequestSourceTarget(params);
+                .requestTargetOnly(params);
     }
 
     public Collection<DataSource<T>> dataSources() {
